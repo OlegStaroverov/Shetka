@@ -522,7 +522,7 @@ body {
 
 .appLogo{
   width: auto;
-  height: 62px;          /* НОРМАЛЬНЫЙ размер */
+  height: 180px;          /* НОРМАЛЬНЫЙ размер */
   max-width: 92vw;
   object-fit: contain;
   background: none;
