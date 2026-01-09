@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>ЩЁТКА</title>
+  <link rel="stylesheet" href="app.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="app" class="app" aria-label="ЩЁТКА mini app">
+
+    <!-- Top bar -->
+    <header class="topbar glass" role="banner">
+      <div class="brand">
+        <img class="brandLogo" src="logo.png" alt="ЩЁТКА" />
+      </div>
+
+      <div class="topActions">
+        <button class="iconBtn" id="themeToggle" type="button" aria-label="Переключить тему" title="Тема">
+          <span class="icon" data-ico="sun" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main content (pages) -->
+    <main class="stage" role="main">
+
+      <!-- HOME -->
+      <section class="page" data-page="home" aria-label="Главная">
+        <div class="hero glass">
+          <div class="heroGlow" aria-hidden="true"></div>
+          <div class="heroRow">
+            <div class="heroTitle">
+              <div class="kicker">Премиум‑сервис</div>
+              <h1>Чисто. Быстро. Красиво.</h1>
+              <p>Оформляй заказ и следи за статусом — а мы сделаем остальное.</p>
+            </div>
+            <div class="heroBadge" aria-label="Сроки">
+              <div class="badgeTop">Сроки</div>
+              <div class="badgeBig">3–5</div>
+              <div class="badgeBot">дней</div>
+            </div>
+          </div>
+          <div class="ctaRow">
+            <button class="cta primary" data-send="courier_start" type="button">
+              <span class="ctaIco" aria-hidden="true">🚚</span>
+              <span class="ctaText">
+                <span class="ctaTitle">Вызвать курьера</span>
+                <span class="ctaSub">заберём и привезём</span>
+              </span>
+            </button>
+            <button class="cta" data-send="estimate_start" type="button">
+              <span class="ctaIco" aria-hidden="true">📸</span>
+              <span class="ctaText">
+                <span class="ctaTitle">Оценка по фото</span>
+                <span class="ctaSub">быстрый расчёт</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <button class="tile glass" data-nav="orders" type="button">
+            <div class="tileIco" aria-hidden="true">📦</div>
+            <div class="tileTxt">
+              <div class="tileTitle">Мои заказы</div>
+              <div class="tileSub">история и статусы</div>
+            </div>
+            <div class="tileChevron" aria-hidden="true">›</div>
+          </button>
+
+          <button class="tile glass" data-send="track_order" type="button">
+            <div class="tileIco" aria-hidden="true">🔎</div>
+            <div class="tileTxt">
+              <div class="tileTitle">Отследить заказ</div>
+              <div class="tileSub">по номеру</div>
+            </div>
+            <div class="tileChevron" aria-hidden="true">›</div>
+          </button>
+
+          <button class="tile glass" data-send="support_start" type="button">
+            <div class="tileIco" aria-hidden="true">💬</div>
+            <div class="tileTxt">
+              <div class="tileTitle">Поддержка</div>
+              <div class="tileSub">на связи</div>
+            </div>
+            <div class="tileChevron" aria-hidden="true">›</div>
+          </button>
+
+          <button class="tile glass" data-nav="price" type="button">
+            <div class="tileIco" aria-hidden="true">💳</div>
+            <div class="tileTxt">
+              <div class="tileTitle">Прайс</div>
+              <div class="tileSub">реальные цены</div>
+            </div>
+            <div class="tileChevron" aria-hidden="true">›</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="page" data-page="orders" aria-label="Заказы" hidden>
+        <div class="pageHead">
+          <button class="backBtn" data-back type="button" aria-label="Назад">←</button>
+          <div>
+            <div class="pageTitle">Мои заказы</div>
+            <div class="pageSub">Открывай карточку — детали и медиа.</div>
+          </div>
+        </div>
+
+        <div class="notice glass">
+          <div class="noticeDot" aria-hidden="true"></div>
+          <div class="noticeTxt">
+            Данные показываются из общей базы бота. Если заказов пока нет — оформи курьера или оценку.
+          </div>
+        </div>
+
+        <div class="orders" id="ordersList" aria-live="polite">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="ordersActions">
+          <button class="cta primary" data-send="show_orders" type="button">Обновить в боте</button>
+          <button class="cta" data-send="track_order" type="button">Отследить по номеру</button>
+        </div>
+      </section>
+
+      <!-- PRICE -->
+      <section class="page" data-page="price" aria-label="Прайс" hidden>
+        <div class="pageHead">
+          <button class="backBtn" data-back type="button" aria-label="Назад">←</button>
+          <div>
+            <div class="pageTitle">Прайс</div>
+            <div class="pageSub">Актуальный прайс. Итог зависит от состояния изделия.</div>
+          </div>
+        </div>
+
+        <div class="price">
+          <div class="priceCard glass">
+            <div class="priceH">1) Химчистка обуви</div>
+            <ul class="priceList">
+              <li><span>Открытая обувь</span><b>от 1690</b></li>
+              <li><span>Кроссовки / Туфли</span><b>от 1990</b></li>
+              <li><span>Полусапоги / ботинки</span><b>от 2390</b></li>
+              <li><span>Сапоги / ботфорты</span><b>от 2690</b></li>
+              <li><span>Детская обувь</span><b>от 1290</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 3–5 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">2) Химчистка сумок</div>
+            <ul class="priceList">
+              <li><span>Маленькая</span><b>от 2200</b></li>
+              <li><span>Средняя</span><b>от 2700</b></li>
+              <li><span>Большая</span><b>от 3800</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 3–5 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">3) Химчистка колясок / автокресел</div>
+            <ul class="priceList">
+              <li><span>Коляски</span><b>от 2500</b></li>
+              <li><span>Автокресла</span><b>от 2000</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 5–10 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">4) Глобальная чистка кожаных курток / изделий</div>
+            <ul class="priceList">
+              <li><span>Кож. изделия</span><b>от 5500</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 5–10 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">5) Дезинфекция</div>
+            <ul class="priceList">
+              <li><span>Устранение запаха</span><b>от 500</b></li>
+            </ul>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">6) Ремонт подошвы</div>
+            <ul class="priceList">
+              <li><span>Замена подошвы</span><b>3500</b></li>
+              <li><span>Прошивка круговая</span><b>1500</b></li>
+              <li><span>Переклейка подошвы</span><b>1500</b></li>
+              <li><span>Прошивка и проклейка</span><b>2000</b></li>
+              <li><span>Изготовление подошвы</span><b>от 4500</b></li>
+              <li><span>Замена наката</span><b>2000</b></li>
+              <li><span>Переклейка наката</span><b>1000</b></li>
+              <li><span>Замена супинатора</span><b>1500</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 7–10 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">7) Швейные работы</div>
+            <ul class="priceList">
+              <li><span>Замена молнии</span><b>600 / 10 см</b></li>
+              <li><span>Латки</span><b>от 350</b></li>
+              <li><span>Прошивка</span><b>от 500</b></li>
+              <li><span>Замена бегунка</span><b>500</b></li>
+              <li><span>Ремонт задников</span><b>от 1500</b></li>
+              <li><span>Замена обувных резинок</span><b>от 800</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 3–5 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">8) Изготовление стелек</div>
+            <ul class="priceList">
+              <li><span>Стельки</span><b>от 1000</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 3–5 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">9) Покраска изделий</div>
+            <ul class="priceList">
+              <li><span>Покраска</span><b>от 1000</b></li>
+            </ul>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">10) Полный уход сумок с покраской</div>
+            <ul class="priceList">
+              <li><span>Маленькая</span><b>от 3500</b></li>
+              <li><span>Средняя</span><b>от 4500</b></li>
+              <li><span>Большая</span><b>от 5000</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 7–10 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">11) Комплекс: реставрация + покрас + восстановление</div>
+            <ul class="priceList">
+              <li><span>Туфли / кроссовки</span><b>от 4500</b></li>
+              <li><span>Полусапоги / ботинки</span><b>от 5500</b></li>
+              <li><span>Сапоги</span><b>от 6000</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 7–10 рабочих дней</div>
+          </div>
+
+          <div class="priceCard glass">
+            <div class="priceH">13) Восстановление / покрас курток</div>
+            <ul class="priceList">
+              <li><span>До 50 см</span><b>от 6000</b></li>
+              <li><span>Свыше 50 см</span><b>от 8000</b></li>
+            </ul>
+            <div class="priceNote">Сроки: 10–15 рабочих дней</div>
+          </div>
+
+          <div class="priceFoot glass">
+            <div class="priceFootTitle">Нужна точная стоимость?</div>
+            <div class="priceFootSub">Отправь фото — мы быстро оценим.</div>
+            <button class="cta primary" data-send="estimate_start" type="button">Оценка по фото</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="page" data-page="profile" aria-label="Профиль" hidden>
+        <div class="pageHead">
+          <button class="backBtn" data-back type="button" aria-label="Назад">←</button>
+          <div>
+            <div class="pageTitle">Профиль</div>
+            <div class="pageSub">Настройки и уведомления — в боте.</div>
+          </div>
+        </div>
+
+        <div class="profile glass">
+          <div class="profileRow">
+            <div class="avatar">Щ</div>
+            <div>
+              <div class="profileName" id="profileName">Ваш профиль</div>
+              <div class="profileHint">Открой настройки — и мы всё запомним.</div>
+            </div>
+          </div>
+          <div class="profileBtns">
+            <button class="cta primary" data-send="open_profile" type="button">Открыть профиль в боте</button>
+            <button class="cta" data-send="support_start" type="button">Написать в поддержку</button>
+          </div>
+        </div>
+
+        
+        <div class="settings glass" aria-label="Настройки вида">
+          <div class="settingsTitle">Вид</div>
+
+          <div class="settingRow">
+            <div class="settingText">
+              <div class="settingName">Бесконечный фон</div>
+              <div class="settingDesc">Лёгкий паттерн в стиле Telegram × химчистка. Можно выключить.</div>
+            </div>
+            <button class="switch" id="patternToggle" type="button" role="switch" aria-checked="false" aria-label="Переключить бесконечный фон">
+              <span class="knob" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="adminNote glass" id="adminNote" hidden>
+          <div class="adminTitle">Админка</div>
+          <div class="adminText">Админ‑функции доступны в боте. Mini App подключим к общей базе и API — будет полный дашборд.</div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Tabbar (only core) -->
+    <nav class="tabbar glass" aria-label="Навигация">
+      <button class="tab active" data-nav="home" type="button">
+        <span class="tIco" aria-hidden="true">⌂</span>
+        <span class="tTxt">Главная</span>
+      </button>
+      <button class="tab" data-nav="orders" type="button">
+        <span class="tIco" aria-hidden="true">📦</span>
+        <span class="tTxt">Заказы</span>
+      </button>
+      <button class="tab" data-nav="price" type="button">
+        <span class="tIco" aria-hidden="true">₽</span>
+        <span class="tTxt">Прайс</span>
+      </button>
+      <button class="tab" data-nav="profile" type="button">
+        <span class="tIco" aria-hidden="true">☺</span>
+        <span class="tTxt">Профиль</span>
+      </button>
+    </nav>
+
+    <!-- Order modal -->
+    <div class="modal" id="orderModal" aria-hidden="true">
+      <div class="modalBackdrop" data-close></div>
+      <div class="modalCard glass" role="dialog" aria-modal="true" aria-label="Карточка заказа">
+        <button class="modalClose" type="button" aria-label="Закрыть" data-close>✕</button>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <!-- Support chat widget -->
+    <button class="chatFab" id="chatFab" type="button" aria-label="Открыть чат поддержки">
+      <span class="chatFabDot" aria-hidden="true"></span>
+      💬
+    </button>
+
+    <div class="chat" id="chat" aria-hidden="true">
+      <div class="chatBackdrop" data-chat-close></div>
+      <div class="chatPanel glass" role="dialog" aria-modal="true" aria-label="Чат поддержки">
+        <div class="chatHead">
+          <div>
+            <div class="chatTitle">Поддержка ЩЁТКА</div>
+            <div class="chatSub">Ответим быстро в Telegram</div>
+          </div>
+          <button class="iconBtn" type="button" aria-label="Закрыть чат" data-chat-close>
+            <span class="icon" data-ico="close" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="chatBody" id="chatBody">
+          <div class="bubble bot">
+            Привет! Напиши сообщение — я передам его менеджеру.
+          </div>
+        </div>
+        <form class="chatForm" id="chatForm">
+          <input class="chatInput" id="chatInput" type="text" placeholder="Сообщение…" autocomplete="off" />
+          <button class="chatSend" type="submit" aria-label="Отправить">➤</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
