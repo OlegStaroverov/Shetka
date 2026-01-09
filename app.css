@@ -513,3 +513,17 @@ body {
 .switch:active .knob{ transform: translateX(1px) scale(.98); }
 .switch[aria-checked="true"]:active .knob{ transform: translateX(17px) scale(.98); }
 
+.appHeader{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 12px 10px;
+}
+
+.appLogo{
+  width: auto;
+  height: 42px;          /* НОРМАЛЬНЫЙ размер */
+  max-width: 92vw;
+  object-fit: contain;
+  background: none;
+}
