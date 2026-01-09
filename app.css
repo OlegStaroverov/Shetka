@@ -545,3 +545,15 @@ body {
 .switch:active .knob{ transform: translateX(1px) scale(.98); }
 .switch[aria-checked="true"]:active .knob{ transform: translateX(17px) scale(.98); }
 
+.appHeader{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding: 14px 0 10px;
+}
+
+.appLogo{
+  height: 36px;     /* идеально для mini app */
+  max-width: 90%;
+  object-fit: contain;
+}
