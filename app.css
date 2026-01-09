@@ -66,24 +66,7 @@ button{ border:0; background:none; }
 }
 
 /* Topbar */
-.topbar{
-  position: sticky;
-  top: calc(8px + var(--safeTop));
-  z-index: 10;
-  padding: 12px 14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-.brand{ display:flex; align-items:center; gap:12px; }
-.brandLogo{
-  height: 32px;
-  width: auto;
-  max-width: 220px;
-  display:block;
-  filter: drop-shadow(0 10px 20px rgba(215,255,0,.18));
-}
+
 
 .brandMark{
   width:42px; height:42px;
