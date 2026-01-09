@@ -54,6 +54,9 @@
   themeBtn?.addEventListener('click', () => {
     const current = root.getAttribute('data-theme') || 'light';
     applyTheme(current === 'dark' ? 'light' : 'dark');
+
+    setPatternEnabled(getPatternEnabled());
+    
     haptic('light');
   });
 
