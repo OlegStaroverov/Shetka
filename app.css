@@ -486,7 +486,7 @@ body {
     pointer-events:none;
     z-index: -1;
     background-repeat: repeat;
-    background-size: 280px 280px;
+    background-size: 320px 320px;
     transition: opacity .28s ease;
   }
 
