@@ -7,6 +7,17 @@
     try { tg.disableVerticalSwipes(); } catch (e) {}
   }
 
+  function setPatternEnabled(enabled) {
+    const root = document.body;
+    if (enabled) root.classList.add("pattern-on");
+    else root.classList.remove("pattern-on");
+    localStorage.setItem("patternEnabled", enabled ? "1" : "0");
+  }
+  
+  function getPatternEnabled() {
+    return localStorage.getItem("patternEnabled") !== "0"; // по умолчанию включен
+  }
+  
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -39,6 +50,7 @@
   };
 
   applyTheme(getPreferred());
+  setPatternEnabled(getPatternEnabled());
   themeBtn?.addEventListener('click', () => {
     const current = root.getAttribute('data-theme') || 'light';
     applyTheme(current === 'dark' ? 'light' : 'dark');
