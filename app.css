@@ -486,7 +486,7 @@ body {
     pointer-events:none;
     z-index: -1;
     background-repeat: repeat;
-    background-size: 220px 220px; /* меньше = "телеграмнее" */
+    background-size: 280px 280px;
     transition: opacity .28s ease;
   }
 
