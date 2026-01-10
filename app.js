@@ -34,8 +34,6 @@
 
   const applyTheme = (mode) => {
     html.setAttribute('data-theme', mode);
-    document.body.classList.toggle('dark', mode === 'dark');
-    document.body.classList.toggle('light', mode !== 'dark');
     localStorage.setItem('shetka_theme', mode);
 
     if (themeBtn) {
@@ -69,7 +67,7 @@
   };
 
   const setPatternEnabled = (enabled) => {
-    document.body.classList.toggle('pattern-on', !!enabled);
+    html.classList.toggle('pattern-on', !!enabled);
     localStorage.setItem('patternEnabled', enabled ? '1' : '0');
     syncPatternSwitch();
   };
