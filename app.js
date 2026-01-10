@@ -1,7 +1,7 @@
 (() => {
   const tg = window.Telegram?.WebApp;
 
-  // ---------- telegram init ----------
+  // telegram init
   if (tg) {
     tg.ready();
     tg.expand();
@@ -11,7 +11,9 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  // ---------- sendData bridge ----------
+  const html = document.documentElement;
+
+  // sendData bridge
   const sendToBot = (cmd, payload = {}) => {
     const data = JSON.stringify({ cmd, ...payload, ts: Date.now() });
     if (tg) tg.sendData(data);
@@ -23,8 +25,7 @@
     try { tg.HapticFeedback.impactOccurred(kind); } catch (_) {}
   };
 
-  // ---------- theme ----------
-  const html = document.documentElement;
+  // ---------------- THEME ----------------
   const themeBtn = $("#themeToggle");
 
   const getPreferredTheme = () => {
@@ -38,19 +39,6 @@
     html.setAttribute("data-theme", mode);
     localStorage.setItem("shetka_theme", mode);
 
-    if (themeBtn) {
-      themeBtn.innerHTML = mode === "dark"
-        ? `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-             <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7 7 0 1 0 11.5 11.5Z"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-           </svg>`
-        : `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-             <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
-             <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-           </svg>`;
-    }
-
     if (tg) {
       try {
         tg.setHeaderColor(mode === "dark" ? "#0f1115" : "#ffffff");
@@ -59,7 +47,23 @@
     }
   };
 
-  // ---------- pattern toggle ----------
+  const syncThemeSwitch = () => {
+    if (!themeBtn) return;
+    const cur = html.getAttribute("data-theme") || "light";
+    themeBtn.setAttribute("aria-checked", cur === "dark" ? "true" : "false");
+  };
+
+  const toggleTheme = () => {
+    const cur = html.getAttribute("data-theme") || "light";
+    const next = cur === "dark" ? "light" : "dark";
+    applyTheme(next);
+    syncThemeSwitch();
+    // pattern image depends on theme
+    setPatternEnabled(getPatternEnabled());
+    haptic("light");
+  };
+
+  // ---------------- PATTERN ----------------
   const patternBtn = $("#patternToggle");
 
   const getPatternEnabled = () => localStorage.getItem("patternEnabled") !== "0";
@@ -79,21 +83,12 @@
   // init theme + pattern
   applyTheme(getPreferredTheme());
   setPatternEnabled(getPatternEnabled());
+  syncThemeSwitch();
 
-  themeBtn?.addEventListener("click", () => {
-    const current = html.getAttribute("data-theme") || "light";
-    applyTheme(current === "dark" ? "light" : "dark");
-    // pattern depends on theme image
-    setPatternEnabled(getPatternEnabled());
-    haptic("light");
-  });
+  themeBtn?.addEventListener("click", toggleTheme);
+  patternBtn?.addEventListener("click", () => { setPatternEnabled(!getPatternEnabled()); haptic("light"); });
 
-  patternBtn?.addEventListener("click", () => {
-    setPatternEnabled(!getPatternEnabled());
-    haptic("light");
-  });
-
-  // ---------- navigation ----------
+  // ---------------- NAV ----------------
   let currentPage = "home";
   const pageStack = ["home"];
 
@@ -136,25 +131,13 @@
   });
   $$("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
 
-  // ---------- action buttons ----------
-  $$("[data-send]").forEach(el => {
-    el.addEventListener("click", () => {
-      sendToBot(el.dataset.send);
-      haptic("light");
-    });
-  });
-
-  // ---------- status mapping ----------
-  // Выкидываем внутренние/логистические статусы и “админские формулировки”
+  // ---------------- STATUS NORMALIZATION ----------------
   const normalizeStatus = (raw) => {
     if (!raw) return { label: "Принят", dot: "blue" };
-
     const s = String(raw).toLowerCase();
 
-    // скрываемо/внутреннее
-    const internal = [
-      "из симфера", "из муссона", "отправили", "в цех", "севастополь"
-    ];
+    // скрываем внутрянку/логистику: для клиента сводим
+    const internal = ["из симфера", "из муссона", "отправили", "в цех", "севастополь"];
     if (internal.some(x => s.includes(x))) return { label: "В логистике", dot: "orange" };
 
     if (s.includes("соглас")) return { label: "Согласование", dot: "orange" };
@@ -163,12 +146,10 @@
     if (s.includes("возврат")) return { label: "Возврат", dot: "red" };
     if (s.includes("закрыт") || s.includes("выдан") || s.includes("заверш")) return { label: "Завершён", dot: "gray" };
     if (s.includes("нов")) return { label: "Принят", dot: "blue" };
-
-    // fallback
     return { label: "В работе", dot: "orange" };
   };
 
-  // ---------- orders (demo now; ready for API) ----------
+  // ---------------- ORDERS (demo, ready for API) ----------------
   const ordersList = $("#ordersList");
   const searchInput = $("#orderSearchInput");
   const searchBtn = $("#orderSearchBtn");
@@ -177,41 +158,27 @@
   const modal = $("#orderModal");
   const modalContent = $("#modalContent");
 
-  // В реальности это будет API из общей базы бота.
-  // Сейчас — демо, чтобы UI и логика работали.
   const now = Date.now();
   const myTgId = tg?.initDataUnsafe?.user?.id || 0;
 
   let ORDERS = [
     {
       id: "10234",
-      owner_tg_id: myTgId,               // "мой"
+      owner_tg_id: myTgId,
       created_ts: now - 2 * 60 * 60 * 1000,
       item: "Обувь · кроссовки",
       services: ["Химчистка обуви"],
       status_raw: "В работе чистка",
-      price: 1990,
-      comment: "Ожидаем осмотр"
-    },
-    {
-      id: "10111",
-      owner_tg_id: myTgId,               // "мой"
-      created_ts: now - 26 * 60 * 60 * 1000, // старше суток
-      item: "Сумка · средняя",
-      services: ["Полный уход сумок с покраской"],
-      status_raw: "Закрыт",
-      price: 4500,
-      comment: "Завершено"
+      price: 1990
     },
     {
       id: "77777",
-      owner_tg_id: 999999,               // "чужой"
+      owner_tg_id: 999999,
       created_ts: now - 8 * 60 * 60 * 1000,
       item: "Обувь · ботинки",
       services: ["Ремонт подошвы"],
       status_raw: "Готов к выдаче",
-      price: 3500,
-      comment: "—"
+      price: 3500
     }
   ];
 
@@ -253,7 +220,7 @@
 
   const isMine = (o) => !!(myTgId && o.owner_tg_id === myTgId);
 
-  const orderCardHtml = (o, { limited = false } = {}) => {
+  const orderCard = (o, limited) => {
     const st = normalizeStatus(o.status_raw);
     const date = formatDate(o.created_ts);
 
@@ -271,18 +238,20 @@
         <div class="orderLine"><span>Дата:</span> ${escapeHtml(date)}</div>
       `;
 
-    return `
-      <div class="order glass" role="button">
-        <div class="orderTop">
-          <div>
-            <div class="orderId">Заказ №${escapeHtml(o.id)}</div>
-            <div class="orderMeta">${escapeHtml(date)}</div>
-          </div>
-          <div class="status"><span class="sDot ${st.dot}"></span>${escapeHtml(st.label)}</div>
+    const wrap = document.createElement("div");
+    wrap.className = "order glass";
+    wrap.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderId">Заказ №${escapeHtml(o.id)}</div>
+          <div class="orderMeta">${escapeHtml(date)}</div>
         </div>
-        <div class="orderBody">${lines}</div>
+        <div class="status"><span class="sDot ${st.dot}"></span>${escapeHtml(st.label)}</div>
       </div>
+      <div class="orderBody">${lines}</div>
     `;
+    wrap.addEventListener("click", () => openOrderModal(o, limited));
+    return wrap;
   };
 
   const renderOrders = () => {
@@ -290,40 +259,9 @@
     if (!ordersList) return;
 
     const my = ORDERS.filter(o => isMine(o));
-
     ordersList.innerHTML = "";
 
-    if (!my.length) {
-      const empty = document.createElement("div");
-      empty.className = "order glass";
-      empty.innerHTML = `
-        <div class="orderTop">
-          <div>
-            <div class="orderId">Пока нет заказов</div>
-            <div class="orderMeta">Оформите курьера или оценку по фото</div>
-          </div>
-          <div class="status"><span class="sDot blue"></span>—</div>
-        </div>
-        <div class="orderBody">
-          <div class="orderLine"><span>Быстрые действия:</span> на главной странице</div>
-        </div>
-      `;
-      ordersList.appendChild(empty);
-      return;
-    }
-
-    my.forEach(o => {
-      const wrap = document.createElement("div");
-      wrap.innerHTML = orderCardHtml(o, { limited: false });
-      const card = wrap.firstElementChild;
-
-      card.addEventListener("click", () => {
-        openOrderModal(o, { limited: false });
-        haptic("light");
-      });
-
-      ordersList.appendChild(card);
-    });
+    my.forEach(o => ordersList.appendChild(orderCard(o, false)));
   };
 
   const renderSearchResult = (order) => {
@@ -337,7 +275,7 @@
         <div class="orderTop">
           <div>
             <div class="orderId">Ничего не найдено</div>
-            <div class="orderMeta">Проверьте номер и попробуйте ещё раз</div>
+            <div class="orderMeta">Проверьте номер заказа</div>
           </div>
         </div>
       `;
@@ -346,16 +284,7 @@
     }
 
     const limited = !isMine(order);
-    const wrap = document.createElement("div");
-    wrap.innerHTML = orderCardHtml(order, { limited });
-
-    const card = wrap.firstElementChild;
-    card.addEventListener("click", () => {
-      openOrderModal(order, { limited });
-      haptic("light");
-    });
-
-    searchResult.appendChild(card);
+    searchResult.appendChild(orderCard(order, limited));
   };
 
   const findOrderById = (id) => {
@@ -378,15 +307,15 @@
     }
   });
 
-  // ---------- modal ----------
-  const openOrderModal = (o, { limited = false } = {}) => {
+  // ---------------- ORDER MODAL ----------------
+  const openOrderModal = (o, limited) => {
     if (!modal || !modalContent) return;
     const st = normalizeStatus(o.status_raw);
     const date = formatDate(o.created_ts);
 
     modalContent.innerHTML = `
       <div class="modalH">Заказ №${escapeHtml(o.id)}</div>
-      <p class="modalP">${limited ? "Доступна краткая карточка заказа." : "Детали вашего заказа."}</p>
+      <p class="modalP">${limited ? "Показана краткая карточка заказа." : "Детали вашего заказа."}</p>
 
       <div class="modalGrid">
         <div class="modalRow"><span>Статус</span><b>${escapeHtml(st.label)}</b></div>
@@ -397,7 +326,7 @@
       </div>
 
       <div style="height:12px"></div>
-      <button class="cta primary" type="button" id="modalAsk">Задать вопрос</button>
+      <button class="smallBtn primary" type="button" id="modalAsk">Написать в поддержку</button>
     `;
 
     $("#modalAsk")?.addEventListener("click", () => {
@@ -420,91 +349,61 @@
 
   $$("[data-close]").forEach(el => el.addEventListener("click", closeModal));
 
-  // ---------- price ----------
+  // ---------------- PRICE ----------------
   const priceTabs = $("#priceTabs");
   const priceContent = $("#priceContent");
 
-  // Категории — как ты просил (без сроков и без мусора).
-  // Если позже дашь полный список из CRM — заменим массив.
   const PRICE = [
-    {
-      key: "clean_shoes",
-      title: "Чистка обуви",
-      items: [
-        ["Открытая обувь", 1690],
-        ["Кроссовки / Туфли", 1990],
-        ["Полусапоги / Ботинки", 2390],
-        ["Сапоги / Ботфорты", 2690],
-        ["Детская обувь", 1290],
-      ]
-    },
-    {
-      key: "bags",
-      title: "Сумки",
-      items: [
-        ["Сумка маленькая", 2200],
-        ["Сумка средняя", 2700],
-        ["Сумка большая", 3800],
-        ["Полный уход сумок с покраской — маленькая", 3500],
-        ["Полный уход сумок с покраской — средняя", 4500],
-        ["Полный уход сумок с покраской — большая", 5000],
-      ]
-    },
-    {
-      key: "other_clean",
-      title: "Химчистка других изделий",
-      items: [
-        ["Колясок", 2500],
-        ["Автокресел", 2000],
-        ["Глобальная чистка кожаных курток и изделий", 5500],
-      ]
-    },
-    {
-      key: "disinfection",
-      title: "Дезинфекция",
-      items: [
-        ["Устранение запаха", 500],
-      ]
-    },
-    {
-      key: "repair_sole",
-      title: "Ремонт • Подошва",
-      items: [
-        ["Замена подошвы", 3500],
-        ["Прошивка круговая", 1500],
-        ["Переклейка подошвы", 1500],
-        ["Прошивка + проклейка", 2000],
-        ["Изготовление подошвы", 4500],
-        ["Замена наката", 2000],
-        ["Переклейка наката", 1000],
-        ["Замена супинатора", 1500],
-      ]
-    },
-    {
-      key: "repair_sewing",
-      title: "Ремонт • Швейные работы",
-      items: [
-        ["Замена молнии (за 10 см)", 600],
-        ["Латки", 350],
-        ["Прошивка", 500],
-        ["Замена бегунка", 500],
-        ["Ремонт задников", 1500],
-        ["Замена обувных резинок", 800],
-        ["Изготовление стелек", 1000],
-      ]
-    },
-    {
-      key: "coloring",
-      title: "Покраска",
-      items: [
-        ["Покраска изделий", 1000],
-        ["Комплексная реставрация обуви — туфли/кроссовки", 4500],
-        ["Комплексная реставрация обуви — полусапоги/ботинки", 5500],
-        ["Комплексная реставрация обуви — сапоги", 6000],
-        ["Восстановление/покраска курток до 50 см", 6000],
-        ["Восстановление/покраска курток свыше 50 см", 8000],
-      ]
-    }
+    { key:"clean_shoes", title:"Чистка обуви", items:[
+      ["Открытая обувь", 1690],
+      ["Кроссовки / Туфли", 1990],
+      ["Полусапоги / Ботинки", 2390],
+      ["Сапоги / Ботфорты", 2690],
+      ["Детская обувь", 1290],
+    ]},
+    { key:"bags", title:"Сумки", items:[
+      ["Сумка маленькая", 2200],
+      ["Сумка средняя", 2700],
+      ["Сумка большая", 3800],
+      ["Полный уход с покраской — маленькая", 3500],
+      ["Полный уход с покраской — средняя", 4500],
+      ["Полный уход с покраской — большая", 5000],
+    ]},
+    { key:"other", title:"Другие изделия", items:[
+      ["Колясок", 2500],
+      ["Автокресел", 2000],
+      ["Глобальная чистка кожи", 5500],
+    ]},
+    { key:"dis", title:"Дезинфекция", items:[
+      ["Устранение запаха", 500],
+    ]},
+    { key:"sole", title:"Ремонт • Подошва", items:[
+      ["Замена подошвы", 3500],
+      ["Прошивка круговая", 1500],
+      ["Переклейка подошвы", 1500],
+      ["Прошивка + проклейка", 2000],
+      ["Изготовление подошвы", 4500],
+      ["Замена наката", 2000],
+      ["Переклейка наката", 1000],
+      ["Замена супинатора", 1500],
+    ]},
+    { key:"sew", title:"Ремонт • Швейные работы", items:[
+      ["Замена молнии (10 см)", 600],
+      ["Латки", 350],
+      ["Прошивка", 500],
+      ["Замена бегунка", 500],
+      ["Ремонт задников", 1500],
+      ["Замена обувных резинок", 800],
+      ["Изготовление стелек", 1000],
+    ]},
+    { key:"color", title:"Покраска", items:[
+      ["Покраска изделий", 1000],
+      ["Реставрация — туфли/кроссовки", 4500],
+      ["Реставрация — полусапоги/ботинки", 5500],
+      ["Реставрация — сапоги", 6000],
+      ["Куртки до 50 см", 6000],
+      ["Куртки свыше 50 см", 8000],
+    ]},
   ];
 
   let activePriceKey = PRICE[0].key;
@@ -547,26 +446,27 @@
     priceContent.appendChild(card);
   };
 
-  // ---------- profile ----------
+  // ---------------- PROFILE ----------------
+  const addPhoneBtn = $("#addPhoneBtn");
+  const phoneValue = $("#tgPhoneValue");
+
+  const getStoredPhone = () => localStorage.getItem("shetka_phone") || "";
+  const setStoredPhone = (v) => localStorage.setItem("shetka_phone", v);
+
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
 
     const nameEl = $("#tgName");
-    const phoneEl = $("#tgPhone");
     const imgEl = $("#tgAvatar");
     const fbEl = $("#avatarFallback");
 
-    const displayName =
-      user?.username ? `@${user.username}` :
-      [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Пользователь";
+    const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+    if (nameEl) nameEl.textContent = fullName || "Пользователь";
 
-    if (nameEl) nameEl.textContent = displayName;
+    const phone = getStoredPhone();
+    if (phoneValue) phoneValue.textContent = phone ? phone : "—";
+    if (addPhoneBtn) addPhoneBtn.hidden = !!phone;
 
-    // телефона в initData обычно нет, поэтому показываем “—”
-    if (phoneEl) phoneEl.textContent = "Телефон: —";
-
-    // аватар: Telegram WebApp редко даёт photo_url.
-    // Если будет — покажем.
     const photo = user?.photo_url;
     if (photo && imgEl) {
       imgEl.src = photo;
@@ -576,12 +476,54 @@
       if (imgEl) imgEl.hidden = true;
       if (fbEl) {
         fbEl.hidden = false;
-        fbEl.textContent = (user?.first_name?.[0] || user?.username?.[0] || "Щ").toUpperCase();
+        fbEl.textContent = (user?.first_name?.[0] || "Щ").toUpperCase();
       }
     }
   };
 
-  // ---------- chat ----------
+  // Phone modal
+  const phoneModal = $("#phoneModal");
+  const phoneInput = $("#phoneInput");
+  const phoneSaveBtn = $("#phoneSaveBtn");
+  const phoneRequestBtn = $("#phoneRequestBtn");
+
+  const openPhoneModal = () => {
+    if (!phoneModal) return;
+    phoneModal.classList.add("show");
+    phoneModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    if (phoneInput) phoneInput.value = getStoredPhone();
+    setTimeout(() => phoneInput?.focus(), 60);
+  };
+
+  const closePhoneModal = () => {
+    if (!phoneModal) return;
+    phoneModal.classList.remove("show");
+    phoneModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  addPhoneBtn?.addEventListener("click", () => { openPhoneModal(); haptic("light"); });
+  $$("[data-phone-close]").forEach(el => el.addEventListener("click", closePhoneModal));
+
+  phoneSaveBtn?.addEventListener("click", () => {
+    const v = (phoneInput?.value || "").trim();
+    if (!v) return;
+    setStoredPhone(v);
+    sendToBot("set_phone", { phone: v });
+    closePhoneModal();
+    hydrateProfile();
+    haptic("light");
+  });
+
+  phoneRequestBtn?.addEventListener("click", () => {
+    sendToBot("request_phone");
+    // бот должен отправить запрос контакта
+    closePhoneModal();
+    haptic("light");
+  });
+
+  // ---------------- CHAT (persist) ----------------
   const chat = $("#chat");
   const chatFab = $("#chatFab");
   const chatForm = $("#chatForm");
@@ -591,12 +533,46 @@
   const supportOpenFromHome = $("#supportOpenFromHome");
   const supportOpenFromProfile = $("#supportOpenFromProfile");
 
+  const CHAT_KEY = "shetka_chat_v1";
+
+  const loadChat = () => {
+    try {
+      const raw = localStorage.getItem(CHAT_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveChat = (arr) => {
+    try { localStorage.setItem(CHAT_KEY, JSON.stringify(arr)); } catch {}
+  };
+
+  let chatMessages = loadChat();
+
+  const renderChat = () => {
+    if (!chatBody) return;
+    chatBody.innerHTML = "";
+    if (!chatMessages.length) {
+      chatMessages = [{ who:"bot", text:"Привет! 👋 Напишите, что нужно сделать — мы поможем." }];
+      saveChat(chatMessages);
+    }
+    chatMessages.forEach(m => {
+      const b = document.createElement("div");
+      b.className = `bubble ${m.who === "me" ? "me" : "bot"}`;
+      b.textContent = m.text;
+      chatBody.appendChild(b);
+    });
+    chatBody.scrollTop = chatBody.scrollHeight;
+  };
+
   const isChatOpen = () => chat?.classList.contains("show");
 
   const flashChatFab = () => {
     if (!chatFab) return;
     chatFab.classList.remove("flash");
-    // restart animation
     void chatFab.offsetWidth;
     chatFab.classList.add("flash");
     setTimeout(() => chatFab.classList.remove("flash"), 650);
@@ -608,11 +584,11 @@
       flashChatFab();
       return;
     }
+    renderChat();
     chat.classList.add("show");
     chat.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    setTimeout(() => chatInput?.focus(), 60);
-
+    setTimeout(() => chatInput?.focus(), 80);
     if (!fromInside) haptic("light");
   };
 
@@ -630,24 +606,10 @@
   $$("[data-chat-close]").forEach(el => el.addEventListener("click", closeChat));
 
   const addBubble = (text, who = "me") => {
-    if (!chatBody) return;
-    const b = document.createElement("div");
-    b.className = `bubble ${who}`;
-    b.textContent = text;
-    chatBody.appendChild(b);
-    chatBody.scrollTop = chatBody.scrollHeight;
+    chatMessages.push({ who, text });
+    saveChat(chatMessages);
+    renderChat();
   };
-
-  // emoji buttons
-  $$("[data-emoji]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const e = btn.getAttribute("data-emoji") || "";
-      if (!chatInput) return;
-      chatInput.value = (chatInput.value || "") + e;
-      chatInput.focus();
-      haptic("light");
-    });
-  });
 
   chatForm?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -657,17 +619,89 @@
     addBubble(text, "me");
     chatInput.value = "";
 
-    // отправляем в бота
     sendToBot("support_message", { text });
     haptic("light");
 
-    // локальная подсказка (UI)
     setTimeout(() => {
-      addBubble("Сообщение отправлено ✅ Менеджер ответит в Telegram.", "bot");
-    }, 420);
+      addBubble("✅ Сообщение принято. Администратор скоро ответит.", "bot");
+    }, 450);
   });
 
-  // ---------- initial ----------
+  // ---------------- SHEETS: courier / estimate ----------------
+  const courierSheet = $("#courierSheet");
+  const estimateSheet = $("#estimateSheet");
+
+  const openCourierSheetBtn = $("#openCourierSheet");
+  const openEstimateSheetBtn = $("#openEstimateSheet");
+
+  const courierAddress = $("#courierAddress");
+  const courierComment = $("#courierComment");
+  const courierSendBtn = $("#courierSendBtn");
+
+  const estimateCategory = $("#estimateCategory");
+  const estimateComment = $("#estimateComment");
+  const estimateSendBtn = $("#estimateSendBtn");
+  const estimateGoPhotosBtn = $("#estimateGoPhotosBtn");
+
+  const openSheet = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  const closeSheet = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  openCourierSheetBtn?.addEventListener("click", () => { openSheet(courierSheet); haptic("light"); });
+  openEstimateSheetBtn?.addEventListener("click", () => { openSheet(estimateSheet); haptic("light"); });
+
+  $$("[data-courier-close]").forEach(el => el.addEventListener("click", () => closeSheet(courierSheet)));
+  $$("[data-estimate-close]").forEach(el => el.addEventListener("click", () => closeSheet(estimateSheet)));
+
+  courierSendBtn?.addEventListener("click", () => {
+    const address = (courierAddress?.value || "").trim();
+    const comment = (courierComment?.value || "").trim();
+
+    if (!address) {
+      haptic("light");
+      return;
+    }
+
+    sendToBot("courier_request", { address, comment });
+    closeSheet(courierSheet);
+
+    // чтобы было ощущение подтверждения:
+    openChat(true);
+    addBubble(`🚚 Заявка на курьера: ${address}${comment ? " • " + comment : ""}`, "me");
+    addBubble("✅ Заявка принята. Администратор скоро свяжется.", "bot");
+  });
+
+  estimateSendBtn?.addEventListener("click", () => {
+    const category = (estimateCategory?.value || "").trim();
+    const comment = (estimateComment?.value || "").trim();
+
+    sendToBot("estimate_request", { category, comment });
+    haptic("light");
+
+    closeSheet(estimateSheet);
+    openChat(true);
+    addBubble(`📸 Оценка по фото: ${category}${comment ? " • " + comment : ""}`, "me");
+    addBubble("✅ Заявка принята. Пришлите фото в бота — и мы посчитаем стоимость.", "bot");
+  });
+
+  estimateGoPhotosBtn?.addEventListener("click", () => {
+    // запускаем штатный сценарий бота для медиа
+    sendToBot("estimate_start");
+    closeSheet(estimateSheet);
+    haptic("light");
+  });
+
+  // ---------------- INIT ----------------
   setTabActive("home");
   hydrateProfile();
+  renderChat();
 })();
