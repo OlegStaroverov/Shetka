@@ -42,11 +42,19 @@ html,body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,Segoe UI,Roboto,Arial;
   color:var(--txt);
-  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+  background: transparent; 
   overflow-x:hidden;
 }
 
-
+html{ position: relative; }
+html::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  z-index: -2;                /* градиент самый нижний */
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+  pointer-events:none;
+}
 
 button,input{ font:inherit; color:inherit; }
 button{ border:0; background:none; }
