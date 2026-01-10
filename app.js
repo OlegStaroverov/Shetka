@@ -38,7 +38,16 @@
     document.body.classList.toggle('light', mode !== 'dark');
     localStorage.setItem('shetka_theme', mode);
 
-    if (themeBtn) themeBtn.innerHTML = (mode === 'dark') ? '☾' : '☀︎';
+    if (themeBtn) {
+      themeBtn.innerHTML = mode === 'dark'
+        ? `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+             <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7 7 0 1 0 11.5 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+           </svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+             <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="2"/>
+             <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+           </svg>`;
+    }
 
     if (tg) {
       try {
