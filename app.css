@@ -71,15 +71,21 @@ button{ border:0; background:none; }
   top: 0;
   z-index: 20;
 
-  /* фиксируем высоту, чтобы контент ниже НЕ прыгал */
   height: clamp(64px, 9vh, 92px);
   padding: 10px 12px;
 
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
 
   background: transparent;
+}
+
+.topbar,
+.topbar *{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
 }
 
 .brandMark{
@@ -466,47 +472,36 @@ button{ border:0; background:none; }
   box-shadow: inset 0 10px 18px rgba(0,0,0,.08);
 }
 
-/* ====== BACKGROUND PATTERN (MOBILE ONLY) ====== */
+/* ===== BACKGROUND PATTERN (ALL SCREENS) ===== */
+body.pattern-on::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
 
-/* по умолчанию: без паттерна (особенно на десктопе) */
-body {
-  background: var(--bg);
+  background-repeat: repeat;
+  background-size: 220px 220px; /* сделай 200-260 по вкусу */
+
+  opacity: var(--patternOpacity);
+  transition: opacity .25s ease, background-image .25s ease;
 }
 
-/* мобильные экраны: паттерн включается только если есть body.pattern-on */
-@media (max-width: 768px) {
-  body.pattern-on::before,
-  body.pattern-on::after{
-    content:"";
-    position: fixed;
-    inset: 0;
-    pointer-events:none;
-    z-index: -1;
-    background-repeat: repeat;
-    background-size: 320px 320px;
-    transition: opacity .28s ease;
-  }
-
-  /* слой светлого паттерна */
-  body.pattern-on::before{
-    background-image: url("pattern-light.png");
-    opacity: 0;
-  }
-
-  /* слой тёмного паттерна */
-  body.pattern-on::after{
-    background-image: url("pattern-dark.png");
-    opacity: 0;
-  }
-
-  /* кроссфейд по теме */
-  body.pattern-on.light::before { opacity: .22; }
-  body.pattern-on.light::after  { opacity: 0; }
-
-  body.pattern-on.dark::before  { opacity: 0; }
-  body.pattern-on.dark::after   { opacity: .18; }
+/* фон по теме */
+html[data-theme="light"] body.pattern-on::before{
+  background-image: url("pattern-light.png");
 }
-.switch[aria-checked="true"] .knob{ transform: translateX(18px); background: rgba(255,255,255,.98); }
+
+html[data-theme="dark"] body.pattern-on::before{
+  background-image: url("pattern-dark.png");
+}
+
+.switch[aria-checked="true"]{
+  background: color-mix(in oklab, var(--lime) 55%, rgba(255,255,255,.22));
+  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
+  box-shadow: inset 0 10px 18px rgba(0,0,0,.08);
+}
+
 .switch:active .knob{ transform: translateX(1px) scale(.98); }
 .switch[aria-checked="true"]:active .knob{ transform: translateX(17px) scale(.98); }
 
@@ -542,7 +537,6 @@ body {
   /* визуальный размер — адаптивный */
   transform: scale(5);
   transform-origin: center;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.06));
 }
 
 /* ===== Theme toggle button ===== */
