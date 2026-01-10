@@ -128,7 +128,7 @@ button{ border:0; background:none; cursor:pointer; }
   height: 100%;
   object-fit: contain;
   display:block;
-  transform: scale(1.25);
+  transform: scale(5);
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
 }
