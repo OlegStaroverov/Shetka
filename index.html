@@ -14,14 +14,10 @@
 <body>
   <div class="app" id="app">
 
-    <!-- HEADER -->
+    <!-- FIXED HEADER -->
     <header class="topbar" role="banner">
       <div class="brandSlot" aria-hidden="true">
         <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
-      </div>
-
-      <div class="topActions">
-        <button class="iconBtn" id="themeToggle" type="button" aria-label="Сменить тему"></button>
       </div>
     </header>
 
@@ -34,21 +30,23 @@
           <div class="heroGlow" aria-hidden="true"></div>
 
           <div class="heroTop">
-            <div class="kicker">Химчистка • Покраска • Ремонт</div>
-            <div class="heroTitle">Сервис ЩЁТКА</div>
-            <div class="heroSub">Оценка по фото, курьер и поддержка — в пару нажатий.</div>
+            <div class="kickerCenter">Химчистка • Покраска • Ремонт</div>
+            <div class="heroTitleCenter">Сервис ЩЁТКА</div>
+            <div class="heroSubCenter">
+              Быстро оформляйте услуги, отслеживайте заказы и общайтесь с менеджером — всё в одном месте.
+            </div>
           </div>
 
           <div class="ctaRow">
-            <button class="cta primary" type="button" data-send="estimate_start">
+            <button class="cta primary" type="button" id="openEstimateSheet">
               <div class="ctaIco">📸</div>
               <div class="ctaText">
                 <div class="ctaTitle">Оценка по фото</div>
-                <div class="ctaSub">Отправь фото — скажем цену</div>
+                <div class="ctaSub">Расскажем стоимость и варианты</div>
               </div>
             </button>
 
-            <button class="cta" type="button" data-send="courier_start">
+            <button class="cta" type="button" id="openCourierSheet">
               <div class="ctaIco">🚚</div>
               <div class="ctaText">
                 <div class="ctaTitle">Вызвать курьера</div>
@@ -63,7 +61,7 @@
             <div class="tileIco">📦</div>
             <div class="tileTxt">
               <div class="tileTitle">Заказы</div>
-              <div class="tileSub">Статусы, стоимость, детали</div>
+              <div class="tileSub">Статусы и детали</div>
             </div>
             <div class="tileChevron">›</div>
           </button>
@@ -130,7 +128,7 @@
           <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
           <div>
             <div class="pageTitle">Профиль</div>
-            <div class="pageSub">Тема и фон</div>
+            <div class="pageSub">Вид и контакты</div>
           </div>
         </div>
 
@@ -143,13 +141,28 @@
 
             <div class="profileMeta">
               <div id="tgName" class="profileName">—</div>
-              <div id="tgPhone" class="profileHint">Телефон: —</div>
+              <div class="profileHint" id="tgPhoneLine">Телефон: <span id="tgPhoneValue">—</span></div>
             </div>
+          </div>
+
+          <div class="profileActions">
+            <button class="profileBtn" id="addPhoneBtn" type="button" hidden>Добавить номер</button>
           </div>
         </div>
 
         <div class="settings glass">
           <div class="settingsTitle">Вид</div>
+
+          <div class="settingRow">
+            <div class="settingText">
+              <div class="settingName">Тема</div>
+              <div class="settingDesc">Светлая или тёмная</div>
+            </div>
+
+            <button id="themeToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="Тема">
+              <span class="knob"></span>
+            </button>
+          </div>
 
           <div class="settingRow">
             <div class="settingText">
@@ -203,26 +216,16 @@
     <section class="chat" id="chat" aria-hidden="true">
       <div class="chatBackdrop" data-chat-close></div>
 
-      <div class="chatPanel glass" role="dialog" aria-label="Поддержка">
+      <div class="chatPanel" role="dialog" aria-label="Поддержка">
         <div class="chatHead">
           <div>
             <div class="chatTitle">Поддержка</div>
-            <div class="chatSub">Ответим в Telegram</div>
+            <div class="chatSub">Мы на связи</div>
           </div>
           <button class="chatClose" type="button" data-chat-close aria-label="Закрыть">✕</button>
         </div>
 
-        <div class="chatBody" id="chatBody">
-          <div class="bubble bot">Привет! 👋 Чем помочь?</div>
-        </div>
-
-        <div class="emojiRow">
-          <button class="emojiBtn" type="button" data-emoji="😊">😊</button>
-          <button class="emojiBtn" type="button" data-emoji="👍">👍</button>
-          <button class="emojiBtn" type="button" data-emoji="🙏">🙏</button>
-          <button class="emojiBtn" type="button" data-emoji="✅">✅</button>
-          <button class="emojiBtn" type="button" data-emoji="📦">📦</button>
-        </div>
+        <div class="chatBody" id="chatBody"></div>
 
         <form class="chatForm" id="chatForm">
           <input class="chatInput" id="chatInput" placeholder="Напишите сообщение…" autocomplete="off" />
@@ -231,12 +234,107 @@
       </div>
     </section>
 
-    <!-- ORDER MODAL -->
+    <!-- ORDER MODAL (center) -->
     <section class="modal" id="orderModal" aria-hidden="true">
       <div class="modalBackdrop" data-close></div>
-      <div class="modalCard glass">
+      <div class="modalCard">
         <button class="modalClose" type="button" data-close aria-label="Закрыть">✕</button>
         <div id="modalContent"></div>
+      </div>
+    </section>
+
+    <!-- PHONE MODAL -->
+    <section class="modal" id="phoneModal" aria-hidden="true">
+      <div class="modalBackdrop" data-phone-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-phone-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Номер телефона</div>
+        <p class="modalP">Добавьте номер — чтобы видеть полные детали своих заказов.</p>
+
+        <div class="modalGrid">
+          <div class="modalRowCol">
+            <span>Ввести вручную</span>
+            <div class="phoneRow">
+              <input id="phoneInput" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
+              <button id="phoneSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <button id="phoneRequestBtn" class="smallBtn" type="button">
+            Взять из Telegram
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- COURIER SHEET -->
+    <section class="sheet" id="courierSheet" aria-hidden="true">
+      <div class="sheetBackdrop" data-courier-close></div>
+      <div class="sheetCard">
+        <div class="sheetHead">
+          <div>
+            <div class="sheetTitle">Вызвать курьера</div>
+            <div class="sheetSub">Укажите адрес и комментарий</div>
+          </div>
+          <button class="sheetClose" type="button" data-courier-close aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="sheetBody">
+          <label class="field">
+            <div class="fieldLabel">Адрес</div>
+            <input id="courierAddress" class="fieldInput" placeholder="Город, улица, дом, подъезд" />
+          </label>
+
+          <label class="field">
+            <div class="fieldLabel">Комментарий</div>
+            <input id="courierComment" class="fieldInput" placeholder="Удобное время, ориентиры" />
+          </label>
+
+          <button id="courierSendBtn" class="cta primary sheetBtn" type="button">
+            Отправить заявку
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTIMATE SHEET -->
+    <section class="sheet" id="estimateSheet" aria-hidden="true">
+      <div class="sheetBackdrop" data-estimate-close></div>
+      <div class="sheetCard">
+        <div class="sheetHead">
+          <div>
+            <div class="sheetTitle">Оценка по фото</div>
+            <div class="sheetSub">Заполните пару строк — и отправьте фото в бота</div>
+          </div>
+          <button class="sheetClose" type="button" data-estimate-close aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="sheetBody">
+          <label class="field">
+            <div class="fieldLabel">Категория</div>
+            <select id="estimateCategory" class="fieldSelect">
+              <option value="Обувь">Обувь</option>
+              <option value="Сумка">Сумка</option>
+              <option value="Одежда/кожа">Одежда/кожа</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <div class="fieldLabel">Комментарий</div>
+            <input id="estimateComment" class="fieldInput" placeholder="Что нужно сделать? Есть ли пятна/повреждения?" />
+          </label>
+
+          <button id="estimateSendBtn" class="cta primary sheetBtn" type="button">
+            Отправить заявку
+          </button>
+
+          <button id="estimateGoPhotosBtn" class="cta sheetBtn" type="button">
+            Перейти к отправке фото
+          </button>
+        </div>
       </div>
     </section>
 
