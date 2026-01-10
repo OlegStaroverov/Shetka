@@ -517,18 +517,30 @@ body {
   padding: 16px 12px 10px;
 }
 
-.appLogo{
-  height: 52px;        /* лого крупное */
-  width: auto;
-  max-width: 82vw;
-  object-fit: contain;
-  display:block;
-  justify-self: center; /* строго по центру */
+/* контейнер для лого "не влияет на поток" */
+.brandSlot{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  /* резервируем маленькую “логическую” зону */
+  width: min(92vw, 520px);
+  height: 34px; /* это важно: контент не будет отталкиваться */
+
+  pointer-events: none;
 }
 
-.topActions{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  justify-self: end;   /* кнопка темы справа */
+/* логотип масштабируем ВНУТРИ, не меняя высоту слота */
+.appLogo{
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  display: block;
+
+  /* визуальный размер — адаптивный */
+  transform: scale(clamp(1.1, 1.6vw, 1.55));
+  transform-origin: center;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.06));
 }
