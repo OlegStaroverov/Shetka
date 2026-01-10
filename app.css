@@ -540,7 +540,7 @@ body {
   display: block;
 
   /* визуальный размер — адаптивный */
-  transform: scale(clamp(1.1, 1.6vw, 1.55));
+  transform: scale(5);
   transform-origin: center;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.06));
 }
