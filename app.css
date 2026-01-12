@@ -102,7 +102,7 @@ button{ border:0; background:none; cursor:pointer; }
   left: 0;
   right: 0;
   top: 0;
-  z-index: 50;
+  z-index: 0;
 
   height: calc(var(--headerH) + var(--safeTop));
   padding-top: var(--safeTop);
@@ -111,7 +111,7 @@ button{ border:0; background:none; cursor:pointer; }
   justify-content:center;
 
   background: transparent;
-  pointer-events:none; /* чтобы не мешал кликам */
+  pointer-events:none;
 }
 
 .brandSlot{
@@ -131,6 +131,15 @@ button{ border:0; background:none; cursor:pointer; }
   transform: scale(5);
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
+
+  /* плавная прозрачность при прокрутке */
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+/* когда логотип “заходит под блоки” — делаем чуть прозрачнее */
+body.logoBehind .appLogo{
+  opacity: .55;
 }
 
 /* STAGE */
