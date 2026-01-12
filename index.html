@@ -312,6 +312,13 @@
         </div>
 
         <div class="sheetBody">
+          <div class="sheetNote glass" id="estimateNote">
+            <div class="sheetNoteTitle">Важно</div>
+            <div class="sheetNoteText">
+              Для завершения процесса нужно будет перейти в бота и <b>в ответ на сообщение</b> отправить фото или видео обуви.
+            </div>
+          </div>
+        
           <label class="field">
             <div class="fieldLabel">Категория</div>
             <select id="estimateCategory" class="fieldSelect">
@@ -321,16 +328,19 @@
               <option value="Другое">Другое</option>
             </select>
           </label>
-
+        
           <label class="field">
-            <div class="fieldLabel">Комментарий</div>
-            <input id="estimateComment" class="fieldInput" placeholder="Что нужно сделать? Есть ли пятна/повреждения?" />
+            <div class="fieldLabel">Описание</div>
+            <div class="fieldHint">Что нужно сделать? Есть ли пятна/повреждения?</div>
+            <input id="estimateComment" class="fieldInput" />
           </label>
-
-          <button id="estimateSendBtn" class="cta primary sheetBtn" type="button">
-            Отправить заявку
-          </button>
-
+        
+          <div class="estimatePreview glass" id="estimatePreview">
+            <div class="estimatePreviewTitle">Предпросмотр</div>
+            <div class="estimatePreviewRow"><span class="muted">Категория:</span> <span id="estimatePrevCategory">—</span></div>
+            <div class="estimatePreviewRow"><span class="muted">Описание:</span> <span id="estimatePrevComment">—</span></div>
+          </div>
+        
           <button id="estimateGoPhotosBtn" class="cta sheetBtn" type="button">
             Перейти к отправке фото
           </button>
