@@ -700,6 +700,15 @@
     haptic("light");
   });
 
+  // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
+  const headerLogoFade = () => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.classList.toggle("logoBehind", y > 12); // порог можно менять (12..30)
+  };
+
+  window.addEventListener("scroll", headerLogoFade, { passive: true });
+  headerLogoFade(); // сразу применяем состояние при загрузке
+  
   // ---------------- INIT ----------------
   setTabActive("home");
   hydrateProfile();
