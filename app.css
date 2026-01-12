@@ -709,6 +709,44 @@ html[data-theme="dark"] .sheetClose{ background: rgba(255,255,255,.06); }
 }
 
 .fieldLabel{ font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.fieldHint{
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .9;
+  margin: -2px 0 8px;
+  line-height: 1.25;
+}
+
+/* заметка в шторке (оценка по фото) */
+.sheetNote{
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.sheetNoteTitle{
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.sheetNoteText{
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+/* предпросмотр заявки */
+.estimatePreview{
+  padding: 12px;
+  margin: 12px 0;
+}
+.estimatePreviewTitle{
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.estimatePreviewRow{
+  font-size: 13px;
+  line-height: 1.25;
+  margin: 4px 0;
+}
 .fieldInput, .fieldSelect{
   width: 100%;
   padding: 12px;
