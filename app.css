@@ -764,3 +764,44 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; animation:none !important; }
 }
+
+/* ====== ESTIMATE FLOW ====== */
+.cta[disabled]{ opacity:.45; pointer-events:none; transform:none !important; }
+
+.reveal{
+  max-height:0;
+  opacity:0;
+  transform: translateY(-6px);
+  overflow:hidden;
+  transition: max-height .24s ease, opacity .24s ease, transform .24s ease;
+}
+.reveal.show{
+  max-height:140px;
+  opacity:1;
+  transform: translateY(0);
+}
+
+.estimateAbout{ padding:12px; }
+.estimateAboutTitle{ font-weight:900; font-size:13px; margin-bottom:6px; }
+.estimateAboutText{ font-size:13px; line-height:1.25; }
+
+.globalLoading{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items:center;
+  justify-content:center;
+  z-index: 9999;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(4px);
+}
+.globalLoading.show{ display:flex; }
+.globalLoadingCard{ padding:14px 16px; border-radius:18px; display:flex; gap:12px; align-items:center; }
+.spinner{
+  width:22px; height:22px; border-radius:50%;
+  border:3px solid rgba(255,255,255,.35);
+  border-top-color: rgba(255,255,255,.95);
+  animation: spin .85s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg);} }
+.globalLoadingText{ font-size:13px; font-weight:800; }
