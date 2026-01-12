@@ -643,6 +643,10 @@
   const estimateSendBtn = $("#estimateSendBtn");
   const estimateGoPhotosBtn = $("#estimateGoPhotosBtn");
 
+  // предпросмотр в форме "Оценка по фото"
+  const estimatePrevCategory = $("#estimatePrevCategory");
+  const estimatePrevComment = $("#estimatePrevComment");
+
   const openSheet = (el) => {
     if (!el) return;
     el.classList.add("show");
@@ -693,11 +697,35 @@
     addBubble("✅ Заявка принята. Пришлите фото в бота — и мы посчитаем стоимость.", "bot");
   });
 
+  const syncEstimatePreview = () => {
+    const category = (estimateCategory?.value || "").trim();
+    const comment = (estimateComment?.value || "").trim();
+  
+    if (estimatePrevCategory) estimatePrevCategory.textContent = category || "—";
+    if (estimatePrevComment) estimatePrevComment.textContent = comment || "—";
+  };
+  
+  estimateCategory?.addEventListener("change", syncEstimatePreview);
+  estimateComment?.addEventListener("input", syncEstimatePreview);
+  syncEstimatePreview();
+  
   estimateGoPhotosBtn?.addEventListener("click", () => {
-    // запускаем штатный сценарий бота для медиа
+    const category = (estimateCategory?.value || "").trim();
+    const comment = (estimateComment?.value || "").trim();
+  
+    // 1) сохраняем заявку (категория + описание) — бот потом подтянет и сформирует сообщение
+    sendToBot("estimate_request", { category, comment });
+  
+    // 2) запускаем сценарий бота, который ждёт фото/видео (в ответ на его сообщение)
     sendToBot("estimate_start");
+  
     closeSheet(estimateSheet);
     haptic("light");
+  
+    // маленькое подтверждение в чате поддержки (не ломаем текущий UX)
+    openChat(true);
+    addBubble(`📸 Оценка по фото: ${category}${comment ? " • " + comment : ""}`, "me");
+    addBubble("✅ Заявка сохранена. Теперь перейдите в бота и отправьте фото/видео в ответ на его сообщение.", "bot");
   });
 
   // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
