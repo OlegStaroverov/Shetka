@@ -306,47 +306,104 @@
         <div class="sheetHead">
           <div>
             <div class="sheetTitle">Оценка по фото</div>
-            <div class="sheetSub">Заполните пару строк — и отправьте фото в бота</div>
+            <div class="sheetSub">Заполните заявку — потом в боте отправите фото/видео</div>
           </div>
           <button class="sheetClose" type="button" data-estimate-close aria-label="Закрыть">✕</button>
         </div>
-
+    
         <div class="sheetBody">
-          <div class="sheetNote glass" id="estimateNote">
-            <div class="sheetNoteTitle">Важно</div>
-            <div class="sheetNoteText">
-              Для завершения процесса нужно будет перейти в бота и <b>в ответ на сообщение</b> отправить фото или видео обуви.
+    
+          <!-- STEP 1 -->
+          <div class="estimateStep" id="estimateStep1">
+            <div class="estimateAbout glass">
+              <div class="estimateAboutTitle">Что это такое?</div>
+              <div class="estimateAboutText">
+                Это быстрый расчёт стоимости по вашему описанию.
+                После сохранения заявки бот пришлёт вам сообщение и будет ждать <b>фото/видео</b> изделия
+                (лучше отправлять <b>альбомом</b>).
+              </div>
             </div>
+    
+            <label class="field">
+              <div class="fieldLabel">Категория</div>
+              <select id="estimateCategory" class="fieldSelect">
+                <option value="Обувь">Обувь</option>
+                <option value="Сумка">Сумка</option>
+                <option value="Одежда/кожа">Одежда/кожа</option>
+                <option value="Другое">Другое</option>
+              </select>
+            </label>
+    
+            <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
+              <label class="field">
+                <div class="fieldLabel">Что за вещь?</div>
+                <input id="estimateOtherItem" class="fieldInput" />
+              </label>
+            </div>
+    
+            <label class="field">
+              <div class="fieldLabel">Описание</div>
+              <div class="fieldHint">Опишите, какие проблемы с вещью, что необходимо сделать?</div>
+              <input id="estimateProblem" class="fieldInput" />
+            </label>
+    
+            <button id="estimateNextBtn" class="cta primary sheetBtn" type="button" disabled>
+              Далее
+            </button>
           </div>
-        
-          <label class="field">
-            <div class="fieldLabel">Категория</div>
-            <select id="estimateCategory" class="fieldSelect">
-              <option value="Обувь">Обувь</option>
-              <option value="Сумка">Сумка</option>
-              <option value="Одежда/кожа">Одежда/кожа</option>
-              <option value="Другое">Другое</option>
-            </select>
-          </label>
-        
-          <label class="field">
-            <div class="fieldLabel">Описание</div>
-            <div class="fieldHint">Что нужно сделать? Есть ли пятна/повреждения?</div>
-            <input id="estimateComment" class="fieldInput" />
-          </label>
-        
-          <div class="estimatePreview glass" id="estimatePreview">
-            <div class="estimatePreviewTitle">Предпросмотр</div>
-            <div class="estimatePreviewRow"><span class="muted">Категория:</span> <span id="estimatePrevCategory">—</span></div>
-            <div class="estimatePreviewRow"><span class="muted">Описание:</span> <span id="estimatePrevComment">—</span></div>
+    
+          <!-- STEP 2 -->
+          <div class="estimateStep" id="estimateStep2" hidden>
+            <div class="estimatePreview glass">
+              <div class="estimatePreviewTitle">Предпросмотр</div>
+              <div class="estimatePreviewRow"><span class="muted">Категория:</span> <span id="prevCategory">—</span></div>
+              <div class="estimatePreviewRow" id="prevOtherRow" hidden><span class="muted">Вещь:</span> <span id="prevOther">—</span></div>
+              <div class="estimatePreviewRow"><span class="muted">Описание:</span> <span id="prevProblem">—</span></div>
+            </div>
+    
+            <div class="sheetNote glass">
+              <div class="sheetNoteTitle">Важно</div>
+              <div class="sheetNoteText">
+                Для завершения нужно будет перейти в бота и <b>в ответ на сообщение</b> отправить фото или видео изделия.
+              </div>
+            </div>
+    
+            <button id="estimateSubmitBtn" class="cta primary sheetBtn" type="button">
+              Перейти к отправке фото
+            </button>
+    
+            <button id="estimateBackBtn" class="cta sheetBtn" type="button">
+              Назад
+            </button>
           </div>
-        
-          <button id="estimateGoPhotosBtn" class="cta sheetBtn" type="button">
-            Перейти к отправке фото
-          </button>
+    
         </div>
       </div>
     </section>
+    
+    <!-- CONFIRM MODAL: leave estimate -->
+    <section class="modal" id="leaveEstimateModal" aria-hidden="true">
+      <div class="modalBackdrop" data-leave-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-leave-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Выйти из заполнения?</div>
+        <p class="modalP">
+          Вы уже начали заполнять заявку. Если выйти сейчас — введённые данные не сохранятся.
+        </p>
+        <div class="modalGrid">
+          <button id="leaveStayBtn" class="smallBtn primary" type="button">Остаться</button>
+          <button id="leaveExitBtn" class="smallBtn" type="button">Выйти</button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- LOADING OVERLAY -->
+    <div class="globalLoading" id="globalLoading" aria-hidden="true">
+      <div class="globalLoadingCard glass">
+        <div class="spinner"></div>
+        <div class="globalLoadingText">Записываем вашу заявку<span id="dots">...</span></div>
+      </div>
+    </div>
 
   </div>
 
