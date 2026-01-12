@@ -638,95 +638,195 @@
   const courierComment = $("#courierComment");
   const courierSendBtn = $("#courierSendBtn");
 
+  // --- ESTIMATE 2-STEP ---
+  const estimateStep1 = $("#estimateStep1");
+  const estimateStep2 = $("#estimateStep2");
+  
   const estimateCategory = $("#estimateCategory");
-  const estimateComment = $("#estimateComment");
-  const estimateSendBtn = $("#estimateSendBtn");
-  const estimateGoPhotosBtn = $("#estimateGoPhotosBtn");
-
-  // предпросмотр в форме "Оценка по фото"
-  const estimatePrevCategory = $("#estimatePrevCategory");
-  const estimatePrevComment = $("#estimatePrevComment");
-
-  const openSheet = (el) => {
+  const estimateOtherWrap = $("#estimateOtherWrap");
+  const estimateOtherItem = $("#estimateOtherItem");
+  const estimateProblem = $("#estimateProblem");
+  
+  const estimateNextBtn = $("#estimateNextBtn");
+  const estimateBackBtn = $("#estimateBackBtn");
+  const estimateSubmitBtn = $("#estimateSubmitBtn");
+  
+  const prevCategory = $("#prevCategory");
+  const prevOtherRow = $("#prevOtherRow");
+  const prevOther = $("#prevOther");
+  const prevProblem = $("#prevProblem");
+  
+  // leave confirm
+  const leaveEstimateModal = $("#leaveEstimateModal");
+  const leaveStayBtn = $("#leaveStayBtn");
+  const leaveExitBtn = $("#leaveExitBtn");
+  
+  // loading
+  const globalLoading = $("#globalLoading");
+  const dots = $("#dots");
+  let dotsTimer = null;
+  
+  const showLoading = () => {
+    globalLoading?.classList.add("show");
+    globalLoading?.setAttribute("aria-hidden", "false");
+    let n = 0;
+    dotsTimer = setInterval(() => {
+      n = (n + 1) % 4;
+      if (dots) dots.textContent = ".".repeat(n || 1);
+    }, 320);
+  };
+  const hideLoading = () => {
+    globalLoading?.classList.remove("show");
+    globalLoading?.setAttribute("aria-hidden", "true");
+    if (dotsTimer) clearInterval(dotsTimer);
+    dotsTimer = null;
+  };
+  
+  let estimateDirty = false;
+  let leaveAction = null;
+  
+  const openModal = (el) => {
     if (!el) return;
     el.classList.add("show");
     el.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
   };
-  const closeSheet = (el) => {
+  const closeModal = (el) => {
     if (!el) return;
     el.classList.remove("show");
     el.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
   };
-
-  openCourierSheetBtn?.addEventListener("click", () => { openSheet(courierSheet); haptic("light"); });
-  openEstimateSheetBtn?.addEventListener("click", () => { openSheet(estimateSheet); haptic("light"); });
-
-  $$("[data-courier-close]").forEach(el => el.addEventListener("click", () => closeSheet(courierSheet)));
-  $$("[data-estimate-close]").forEach(el => el.addEventListener("click", () => closeSheet(estimateSheet)));
-
-  courierSendBtn?.addEventListener("click", () => {
-    const address = (courierAddress?.value || "").trim();
-    const comment = (courierComment?.value || "").trim();
-
-    if (!address) {
-      haptic("light");
-      return;
+  
+  $$("[data-leave-close]").forEach(el => el.addEventListener("click", () => closeModal(leaveEstimateModal)));
+  
+  leaveStayBtn?.addEventListener("click", () => {
+    closeModal(leaveEstimateModal);
+    leaveAction = null;
+    haptic("light");
+  });
+  leaveExitBtn?.addEventListener("click", () => {
+    closeModal(leaveEstimateModal);
+    const fn = leaveAction;
+    leaveAction = null;
+    if (typeof fn === "function") fn();
+    haptic("light");
+  });
+  
+  const resetEstimate = () => {
+    estimateDirty = false;
+    if (estimateCategory) estimateCategory.value = "Обувь";
+    if (estimateOtherItem) estimateOtherItem.value = "";
+    if (estimateProblem) estimateProblem.value = "";
+  
+    estimateOtherWrap?.classList.remove("show");
+    estimateOtherWrap?.setAttribute("aria-hidden", "true");
+  
+    if (estimateStep1) estimateStep1.hidden = false;
+    if (estimateStep2) estimateStep2.hidden = true;
+  
+    syncEstimate();
+  };
+  
+  const getEstimate = () => {
+    const category = (estimateCategory?.value || "").trim();
+    const item = (estimateOtherItem?.value || "").trim();
+    const problem = (estimateProblem?.value || "").trim();
+    return { category, item, problem };
+  };
+  
+  const isValid = () => {
+    const { category, item, problem } = getEstimate();
+    if (!category) return false;
+    if (category === "Другое" && !item) return false;
+    if (!problem) return false;
+    return true;
+  };
+  
+  const syncEstimate = () => {
+    const { category, item, problem } = getEstimate();
+  
+    const needOther = category === "Другое";
+    if (estimateOtherWrap) {
+      estimateOtherWrap.classList.toggle("show", needOther);
+      estimateOtherWrap.setAttribute("aria-hidden", needOther ? "false" : "true");
     }
-
-    sendToBot("courier_request", { address, comment });
-    closeSheet(courierSheet);
-
-    // чтобы было ощущение подтверждения:
-    openChat(true);
-    addBubble(`🚚 Заявка на курьера: ${address}${comment ? " • " + comment : ""}`, "me");
-    addBubble("✅ Заявка принята. Администратор скоро свяжется.", "bot");
-  });
-
-  estimateSendBtn?.addEventListener("click", () => {
-    const category = (estimateCategory?.value || "").trim();
-    const comment = (estimateComment?.value || "").trim();
-
-    sendToBot("estimate_request", { category, comment });
-    haptic("light");
-
-    closeSheet(estimateSheet);
-    openChat(true);
-    addBubble(`📸 Оценка по фото: ${category}${comment ? " • " + comment : ""}`, "me");
-    addBubble("✅ Заявка принята. Пришлите фото в бота — и мы посчитаем стоимость.", "bot");
-  });
-
-  const syncEstimatePreview = () => {
-    const category = (estimateCategory?.value || "").trim();
-    const comment = (estimateComment?.value || "").trim();
   
-    if (estimatePrevCategory) estimatePrevCategory.textContent = category || "—";
-    if (estimatePrevComment) estimatePrevComment.textContent = comment || "—";
+    if (estimateNextBtn) estimateNextBtn.disabled = !isValid();
+  
+    if (prevCategory) prevCategory.textContent = category || "—";
+    if (prevProblem) prevProblem.textContent = problem || "—";
+  
+    if (prevOtherRow) prevOtherRow.hidden = !needOther;
+    if (prevOther) prevOther.textContent = item || "—";
   };
   
-  estimateCategory?.addEventListener("change", syncEstimatePreview);
-  estimateComment?.addEventListener("input", syncEstimatePreview);
-  syncEstimatePreview();
+  const markDirty = () => {
+    const { category, item, problem } = getEstimate();
+    estimateDirty = !!(category || item || problem);
+  };
   
-  estimateGoPhotosBtn?.addEventListener("click", () => {
-    const category = (estimateCategory?.value || "").trim();
-    const comment = (estimateComment?.value || "").trim();
+  estimateCategory?.addEventListener("change", () => { markDirty(); syncEstimate(); });
+  estimateOtherItem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
+  estimateProblem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
   
-    // 1) сохраняем заявку (категория + описание) — бот потом подтянет и сформирует сообщение
-    sendToBot("estimate_request", { category, comment });
+  // Открытие шторки оценки
+  openEstimateSheetBtn?.addEventListener("click", () => {
+    resetEstimate();
+    openSheet(estimateSheet);
+    haptic("light");
+  });
   
-    // 2) запускаем сценарий бота, который ждёт фото/видео (в ответ на его сообщение)
-    sendToBot("estimate_start");
+  // Закрытие шторки оценки — с подтверждением
+  const closeEstimateSafely = () => {
+    const doClose = () => { closeSheet(estimateSheet); resetEstimate(); };
+    if (estimateDirty) {
+      leaveAction = doClose;
+      openModal(leaveEstimateModal);
+    } else {
+      doClose();
+    }
+  };
   
-    closeSheet(estimateSheet);
+  $$("[data-estimate-close]").forEach(el => el.addEventListener("click", closeEstimateSafely));
+  
+  // Далее / Назад
+  estimateNextBtn?.addEventListener("click", () => {
+    if (!isValid()) return;
+    if (estimateStep1) estimateStep1.hidden = true;
+    if (estimateStep2) estimateStep2.hidden = false;
+    syncEstimate();
+    haptic("light");
+  });
+  estimateBackBtn?.addEventListener("click", () => {
+    if (estimateStep1) estimateStep1.hidden = false;
+    if (estimateStep2) estimateStep2.hidden = true;
+    haptic("light");
+  });
+  
+  // Финал: отправка в бота
+  estimateSubmitBtn?.addEventListener("click", () => {
+    if (!isValid()) return;
+  
+    const { category, item, problem } = getEstimate();
+  
+    showLoading();
     haptic("light");
   
-    // маленькое подтверждение в чате поддержки (не ломаем текущий UX)
-    openChat(true);
-    addBubble(`📸 Оценка по фото: ${category}${comment ? " • " + comment : ""}`, "me");
-    addBubble("✅ Заявка сохранена. Теперь перейдите в бота и отправьте фото/видео в ответ на его сообщение.", "bot");
+    sendToBot("estimate_submit", {
+      category,
+      item: category === "Другое" ? item : "",
+      problem
+    });
+  
+    // маленькая задержка "ощущение сохранения", затем закрываем mini app
+    setTimeout(() => {
+      hideLoading();
+      try { tg?.close(); } catch (_) {}
+      closeSheet(estimateSheet);
+      resetEstimate();
+    }, 1100);
   });
+  
+  syncEstimate();
 
   // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
   const headerLogoFade = () => {
