@@ -183,16 +183,15 @@
 
       <section class="page" data-page="estimate" hidden>
         <div class="pageHead">
-          <div class="pageTitle">Оценка по фото</div>
-          <button id="estimateCloseBtn" class="iconBtn" type="button" aria-label="Закрыть">✕</button>
-        </div>
-      
-        <div class="pageSub">
-          Быстрый расчет стоимости услуги по фотографии и описанию
+          <button class="backBtn" id="estimateBackBtn" type="button" aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Оценка по фото</div>
+            <div class="pageSub">Быстрый расчет стоимости услуги по фотографии и описанию</div>
+          </div>
         </div>
       
         <div class="pageBody">
-          <div class="estimateCard glass">  
+          <div class="estimateCard glass">
             <label class="field">
               <div class="fieldLabel">Категория</div>
               <select id="estimateCategory" class="fieldSelect">
@@ -203,20 +202,26 @@
                 <option value="Другое">Другое</option>
               </select>
             </label>
-        
-            <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
+      
+            <div class="reveal" id="estimateOtherWrap" aria-hidden="true" style="margin-top:12px;">
               <label class="field">
                 <div class="fieldLabel">Что за вещь?</div>
                 <input id="estimateOtherItem" class="fieldInput" />
               </label>
             </div>
-        
-            <label class="field">
+      
+            <label class="field" style="margin-top:12px;">
               <div class="fieldHint">Опишите вещь, проблему и что необходимо сделать?</div>
               <input id="estimateProblem" class="fieldInput" />
             </label>
-        
-            <button id="estimateNextBtn" class="cta primary" type="button" disabled>Далее</button>
+      
+            <div style="height:14px"></div>
+      
+            <div style="display:flex; justify-content:center;">
+              <button id="estimateNextBtn" class="cta primary" type="button" disabled style="max-width:340px; width:100%;">
+                Далее
+              </button>
+            </div>
           </div>
         </div>
       </section>
