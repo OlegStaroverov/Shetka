@@ -835,6 +835,7 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   try {
     const res = await fetch(SUPABASE_FUNCTION_URL, {
       method: "POST",
+      mode: "cors",
       headers: {
         "content-type": "application/json",
         "apikey": SUPABASE_ANON_KEY,
