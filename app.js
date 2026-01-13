@@ -109,6 +109,8 @@
     currentPage = page;
     if (push) pageStack.push(page);
     setTabActive(page);
+    
+    document.body.classList.toggle("page-estimate", page === "estimate");
 
     if (page === "orders") renderOrders();
     if (page === "price") renderPrice();
