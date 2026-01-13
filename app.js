@@ -627,6 +627,20 @@
     }, 450);
   });
 
+  const openSheet = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  
+  const closeSheet = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
   // ---------------- SHEETS: courier / estimate ----------------
   const courierSheet = $("#courierSheet");
   const estimateSheet = $("#estimateSheet");
@@ -685,26 +699,26 @@
   let estimateDirty = false;
   let leaveAction = null;
   
-  const openModal = (el) => {
+  const openLeaveEstimateModal = (el) => {
     if (!el) return;
     el.classList.add("show");
     el.setAttribute("aria-hidden", "false");
   };
-  const closeModal = (el) => {
+  const closeLeaveEstimateModal = (el) => {
     if (!el) return;
     el.classList.remove("show");
     el.setAttribute("aria-hidden", "true");
   };
   
-  $$("[data-leave-close]").forEach(el => el.addEventListener("click", () => closeModal(leaveEstimateModal)));
+  $$("[data-leave-close]").forEach(el => el.addEventListener("click", () => closeLeaveEstimateModal(leaveEstimateModal)));
   
   leaveStayBtn?.addEventListener("click", () => {
-    closeModal(leaveEstimateModal);
+    closeLeaveEstimateModal(leaveEstimateModal);
     leaveAction = null;
     haptic("light");
   });
   leaveExitBtn?.addEventListener("click", () => {
-    closeModal(leaveEstimateModal);
+    closeLeaveEstimateModal(leaveEstimateModal);
     const fn = leaveAction;
     leaveAction = null;
     if (typeof fn === "function") fn();
@@ -760,8 +774,10 @@
   };
   
   const markDirty = () => {
-    const { category, item, problem } = getEstimate();
-    estimateDirty = !!(category || item || problem);
+    const { item, problem } = getEstimate();
+    const cat = (estimateCategory?.value || "").trim();
+    // считаем "грязным", если юзер реально что-то заполнял:
+    estimateDirty = !!(problem || (cat === "Другое" && item));
   };
   
   estimateCategory?.addEventListener("change", () => { markDirty(); syncEstimate(); });
@@ -780,7 +796,7 @@
     const doClose = () => { closeSheet(estimateSheet); resetEstimate(); };
     if (estimateDirty) {
       leaveAction = doClose;
-      openModal(leaveEstimateModal);
+      openLeaveEstimateModal(leaveEstimateModal);
     } else {
       doClose();
     }
