@@ -649,6 +649,26 @@
   const openEstimateSheetBtn = $("#openEstimateSheet");
   const estimateCloseBtn = $("#estimateCloseBtn");
 
+  const estimateSendModal = $("#estimateSendModal");
+  const estimateSubmitBtn = $("#estimateSubmitBtn");
+
+  const openAnyModal = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  const closeAnyModal = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  $$("[data-est-send-close]").forEach(el =>
+    el.addEventListener("click", () => closeAnyModal(estimateSendModal))
+  );
+  
   const courierAddress = $("#courierAddress");
   const courierComment = $("#courierComment");
   const courierSendBtn = $("#courierSendBtn");
@@ -801,17 +821,32 @@
       doClose();
     }
   };
+
+  estimateCloseBtn?.addEventListener("click", () => {
+    const doExit = () => {
+      // закрываем модалки если открыты
+      closeAnyModal(estimateSendModal);
+      resetEstimate();
+      goBack(); // вернуться назад (на home)
+    };
+  
+    if (estimateDirty) {
+      leaveAction = doExit;
+      openLeaveEstimateModal(leaveEstimateModal);
+    } else {
+      doExit();
+    }
+  });
   
   $$("[data-estimate-close]").forEach(el => el.addEventListener("click", closeEstimateSafely));
   
   // Далее / Назад
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
-    if (estimateStep1) estimateStep1.hidden = true;
-    if (estimateStep2) estimateStep2.hidden = false;
-    syncEstimate();
+    openAnyModal(estimateSendModal);
     haptic("light");
   });
+  
   estimateBackBtn?.addEventListener("click", () => {
     if (estimateStep1) estimateStep1.hidden = false;
     if (estimateStep2) estimateStep2.hidden = true;
