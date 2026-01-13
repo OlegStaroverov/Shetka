@@ -650,7 +650,7 @@
   const courierSheet = $("#courierSheet");
 
   const openCourierSheetBtn = $("#openCourierSheet");
-  const estimateCloseBtn = $("#estimateCloseBtn");
+  const estimateBackBtn = $("#estimateBackBtn");
 
   const openEstimateSheetBtn = $("#openEstimateSheet");
   
@@ -799,12 +799,11 @@
   estimateOtherItem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
   estimateProblem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
 
-  estimateCloseBtn?.addEventListener("click", () => {
+  estimateBackBtn?.addEventListener("click", () => {
     const doExit = () => {
-      // закрываем модалки если открыты
       closeAnyModal(estimateSendModal);
       resetEstimate();
-      goBack(); // вернуться назад (на home)
+      goBack();
     };
   
     if (estimateDirty) {
