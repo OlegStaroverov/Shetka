@@ -175,6 +175,16 @@
           </div>
         </div>
 
+        <button class="tile glass" id="photoEstimatesTile" type="button" hidden>
+          <div class="tileIco">📸</div>
+          <div class="tileTxt">
+            <div class="tileTitle">Запросы на оценку по фото</div>
+            <div class="tileSub"><span id="photoEstimatesCount">0</span> активных</div>
+          </div>
+          <div class="pulseDot" id="photoEstimatesPulse" aria-hidden="true"></div>
+          <div class="tileChevron">›</div>
+        </button>
+        
         <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
           💬 Написать в поддержку
         </button>
@@ -223,6 +233,27 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- PHOTO ESTIMATES PAGE -->
+      <section class="page" data-page="photo_estimates" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Оценка по фото</div>
+            <div class="pageSub">Активные заявки и архив</div>
+          </div>
+        </div>
+      
+        <div class="glass" id="peSummary" style="padding:14px; display:none;">
+          <div class="sectionTitle" style="margin:0;">Активных: <span id="peActiveCount">0</span></div>
+        </div>
+      
+        <div class="sectionTitle" id="peActiveTitle" style="display:none;">Активные</div>
+        <div id="peActiveList" class="orders"></div>
+      
+        <div class="sectionTitle" id="peArchivedTitle" style="display:none;">Архив</div>
+        <div id="peArchivedList" class="orders"></div>
       </section>
       
     </main>
@@ -287,6 +318,15 @@
       </div>
     </section>
 
+    <!-- PHOTO ESTIMATE CARD MODAL -->
+    <section class="modal" id="peCardModal" aria-hidden="true">
+      <div class="modalBackdrop" data-pec-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-pec-close aria-label="Закрыть">✕</button>
+        <div id="peCardContent"></div>
+      </div>
+    </section>
+    
     <!-- OCENKA PO PHOTO MODAL -->
 
     <section class="modal" id="estimateSendModal" aria-hidden="true">
