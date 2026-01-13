@@ -852,6 +852,14 @@ estimateSubmitBtn?.addEventListener("click", async () => {
       }),
     });
 
+    const text = await res.text();
+    let data = {};
+    try { data = JSON.parse(text); } catch (_) {}
+    
+    if (!res.ok || !data.ok) {
+      throw new Error((data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0,120)}`);
+    }
+
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok || !data.ok) {
@@ -865,7 +873,8 @@ estimateSubmitBtn?.addEventListener("click", async () => {
     try { tg?.close(); } catch (_) {}
   } catch (e) {
     hideLoading();
-    try { tg?.showAlert?.("Не удалось записать заявку. Попробуйте ещё раз."); } catch (_) {}
+    const msg = String(e?.message || e);
+    try { tg?.showAlert?.("Ошибка записи: " + msg); } catch (_) {}
     console.error(e);
   }
 });
