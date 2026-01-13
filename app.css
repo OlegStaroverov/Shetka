@@ -809,43 +809,32 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
   width: min(320px, 100%);  /* не во всю ширину, но адаптивно */
 }
 
-/* ===== Estimate page beauty ===== */
+/* ===== Estimate page: STANDARD like other pages ===== */
 .page[data-page="estimate"] .pageHead{
-  position: relative;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.page[data-page="estimate"] .pageSub{
-  text-align:center;
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0 0 14px;
-  line-height: 1.25;
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+  justify-content:flex-start;
+  margin-bottom: 0;
 }
 
 .page[data-page="estimate"] .pageTitle{
-  width: 100%;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: .2px;
+  font-weight: 950;
+  font-size: 18px;        /* как у других страниц */
+  letter-spacing:-.2px;
+  text-align: left;
 }
 
-.page[data-page="estimate"] .iconBtn{
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.10);
-  border: 1px solid rgba(255,255,255,.10);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size: 20px;
-  line-height: 1;
+.page[data-page="estimate"] .pageSub{
+  margin-top:2px;
+  font-size: 12px;        /* как у других страниц */
+  color: var(--muted);
+  text-align: left;
+}
+
+.page[data-page="estimate"] .estimateCard{
+  padding: 14px;
+  border-radius: 22px;
 }
 
 #estimateOtherWrap{
