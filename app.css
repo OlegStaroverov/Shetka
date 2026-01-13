@@ -873,3 +873,54 @@ body.page-estimate #chatFab{
 }
 #leaveEstimateModal .modalH{ margin-top: 6px; }
 
+.pulseDot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#34c759;
+  box-shadow: 0 0 0 0 rgba(52,199,89,.45);
+  animation: pulseGreen 1.2s ease-in-out infinite;
+  margin-right: 6px;
+}
+@keyframes pulseGreen{
+  0%{ box-shadow: 0 0 0 0 rgba(52,199,89,.45); transform: scale(1); }
+  70%{ box-shadow: 0 0 0 10px rgba(52,199,89,0); transform: scale(1.05); }
+  100%{ box-shadow: 0 0 0 0 rgba(52,199,89,0); transform: scale(1); }
+}
+
+/* карточка заявки в списке */
+.peItem{
+  padding: 14px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+.peTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+}
+.peTitle{ font-weight: 950; letter-spacing:-.2px; }
+.peMeta{ margin-top:3px; font-size: 12px; color: var(--muted); }
+
+.peStatus{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border:1px solid var(--hair);
+  background: rgba(255,255,255,.30);
+  font-size: 12px;
+  font-weight: 900;
+}
+html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
+
+.peDot{ width:8px; height:8px; border-radius:999px; background:#ff9f0a; }
+.peDot.waiting_media{ background:#ff9f0a; }
+.peDot.waiting_admin{ background:#ff9f0a; }
+.peDot.answered{ background:#34c759; }
+.peDot.archived{ background: rgba(255,255,255,.55); }
+
+.peBody{ font-size: 13px; color: var(--muted); line-height:1.25; }
