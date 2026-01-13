@@ -67,13 +67,16 @@ html::after{
   pointer-events:none;
 
   background-repeat: repeat;
-  background-size: 280px 280px;
   opacity: 0;
-  transition: opacity .22s ease, background-image .22s ease;
+  transition: opacity .22s ease, background-image .22s ease, background-size .22s ease;
 }
+
+/* включение паттерна */
 html.pattern-on::after{ opacity: var(--patternOpacity); }
-html[data-theme="light"]::after{ background-image: url("pattern-light.png"); }
-html[data-theme="dark"]::after { background-image: url("pattern-dark.png"); }
+
+/* разные изображения */
+html[data-theme="light"]::after{ background-image: url("pattern-light.png"); background-size: 300px 300px; }
+html[data-theme="dark"]::after { background-image: url("pattern-dark.png");  background-size: 300px 300px; }
 
 button,input,select{ font:inherit; color:inherit; }
 button{ border:0; background:none; cursor:pointer; }
