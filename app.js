@@ -647,10 +647,18 @@
   };
 
   // ---------------- SHEETS: courier / estimate ----------------
-  const courierSheet = $("#courierSheet");ё
+  const courierSheet = $("#courierSheet");
 
   const openCourierSheetBtn = $("#openCourierSheet");
   const estimateCloseBtn = $("#estimateCloseBtn");
+
+  const openEstimateSheetBtn = $("#openEstimateSheet");
+  
+  openEstimateSheetBtn?.addEventListener("click", () => {
+    resetEstimate();
+    showPage("estimate");
+    haptic("light");
+  });
 
   const estimateSendModal = $("#estimateSendModal");
   const estimateSubmitBtn = $("#estimateSubmitBtn");
@@ -778,12 +786,6 @@
     }
   
     if (estimateNextBtn) estimateNextBtn.disabled = !isValid();
-  
-    if (prevCategory) prevCategory.textContent = category || "—";
-    if (prevProblem) prevProblem.textContent = problem || "—";
-  
-    if (prevOtherRow) prevOtherRow.hidden = !needOther;
-    if (prevOther) prevOther.textContent = item || "—";
   };
   
   const markDirty = () => {
@@ -817,12 +819,6 @@
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
     openAnyModal(estimateSendModal);
-    haptic("light");
-  });
-  
-  estimateBackBtn?.addEventListener("click", () => {
-    if (estimateStep1) estimateStep1.hidden = false;
-    if (estimateStep2) estimateStep2.hidden = true;
     haptic("light");
   });
   
