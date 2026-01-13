@@ -812,3 +812,31 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
   margin: 18px auto 0;      /* отступ сверху + центр */
   width: min(320px, 100%);  /* не во всю ширину, но адаптивно */
 }
+
+.pageHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pageTitle{
+  font-weight: 900;
+  font-size: 16px;
+}
+.iconBtn{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: rgba(255,255,255,.08);
+  color: inherit;
+  font-size: 18px;
+}
+.pageSub{
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  line-height: 1.25;
+}
+.pageBody{ padding-bottom: 24px; }
