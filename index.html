@@ -181,6 +181,44 @@
         </button>
       </section>
 
+      <section class="page" data-page="estimate" hidden>
+        <div class="pageHead">
+          <div class="pageTitle">Оценка по фото</div>
+          <button id="estimateCloseBtn" class="iconBtn" type="button" aria-label="Закрыть">✕</button>
+        </div>
+      
+        <div class="pageSub">
+          Быстрый расчет стоимости услуги по фотографии и описанию
+        </div>
+      
+        <div class="pageBody">
+          <label class="field">
+            <div class="fieldLabel">Категория</div>
+            <select id="estimateCategory" class="fieldSelect">
+              <option value="Обувь">Обувь</option>
+              <option value="Сумка">Сумка</option>
+              <option value="Верхняя одежда">Верхняя одежда</option>
+              <option value="Аксессуар">Аксессуар</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </label>
+      
+          <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
+            <label class="field">
+              <div class="fieldLabel">Что за вещь?</div>
+              <input id="estimateOtherItem" class="fieldInput" />
+            </label>
+          </div>
+      
+          <label class="field">=
+            <div class="fieldHint">Опишите вещь, проблему и что необходимо сделать?</div>
+            <input id="estimateProblem" class="fieldInput" />
+          </label>
+      
+          <button id="estimateNextBtn" class="cta primary" type="button" disabled>Далее</button>
+        </div>
+      </section>
+      
     </main>
 
     <!-- TABBAR -->
@@ -295,78 +333,6 @@
           <button id="courierSendBtn" class="cta primary sheetBtn" type="button">
             Отправить заявку
           </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ESTIMATE SHEET -->
-    <section class="sheet" id="estimateSheet" aria-hidden="true">
-      <div class="sheetBackdrop" data-estimate-close></div>
-      <div class="sheetCard">
-        <div class="sheetHead">
-          <div>
-            <div class="sheetTitle">Оценка по фото</div>
-            <div class="sheetSub">Расчет стоимости услуги по фотографии и описанию</div>
-          </div>
-          <button class="sheetClose" type="button" data-estimate-close aria-label="Закрыть">✕</button>
-        </div>
-    
-        <div class="sheetBody">
-    
-          <!-- STEP 1 -->
-          <div class="estimateStep" id="estimateStep1">
-            <label class="field">
-              <div class="fieldLabel">Категория</div>
-              <select id="estimateCategory" class="fieldSelect">
-                <option value="Обувь">Обувь</option>
-                <option value="Сумка">Сумка</option>
-                <option value="Одежда/кожа">Одежда/кожа</option>
-                <option value="Другое">Другое</option>
-              </select>
-            </label>
-    
-            <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
-              <label class="field">
-                <div class="fieldLabel">Что за вещь?</div>
-                <input id="estimateOtherItem" class="fieldInput" />
-              </label>
-            </div>
-    
-            <label class="field">
-              <div class="fieldHint">Опишите вещь, какие с ней проблемы и что необходимо сделать?</div>
-              <input id="estimateProblem" class="fieldInput" />
-            </label>
-    
-            <button id="estimateNextBtn" class="cta primary sheetBtn" type="button" disabled>
-              Далее
-            </button>
-          </div>
-    
-          <!-- STEP 2 -->
-          <div class="estimateStep" id="estimateStep2" hidden>
-            <div class="estimatePreview glass">
-              <div class="estimatePreviewTitle">Предпросмотр</div>
-              <div class="estimatePreviewRow"><span class="muted">Категория:</span> <span id="prevCategory">—</span></div>
-              <div class="estimatePreviewRow" id="prevOtherRow" hidden><span class="muted">Вещь:</span> <span id="prevOther">—</span></div>
-              <div class="estimatePreviewRow"><span class="muted">Описание:</span> <span id="prevProblem">—</span></div>
-            </div>
-    
-            <div class="sheetNote glass">
-              <div class="sheetNoteTitle">Важно</div>
-              <div class="sheetNoteText">
-                Для завершения нужно будет перейти в бота и <b>в ответ на сообщение</b> отправить фото или видео изделия.
-              </div>
-            </div>
-    
-            <button id="estimateSubmitBtn" class="cta primary sheetBtn" type="button">
-              Перейти к отправке фото
-            </button>
-    
-            <button id="estimateBackBtn" class="cta sheetBtn" type="button">
-              Назад
-            </button>
-          </div>
-    
         </div>
       </div>
     </section>
