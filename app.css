@@ -813,39 +813,19 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
   width: min(320px, 100%);  /* не во всю ширину, но адаптивно */
 }
 
-.pageHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.pageTitle{
-  font-weight: 900;
-  font-size: 16px;
-}
-.iconBtn{
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 0;
-  background: rgba(255,255,255,.08);
-  color: inherit;
-  font-size: 18px;
-}
-.pageSub{
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 14px;
-  line-height: 1.25;
-}
-.pageBody{ padding-bottom: 24px; }
-
 /* ===== Estimate page beauty ===== */
 .page[data-page="estimate"] .pageHead{
   position: relative;
   justify-content: center;
   margin-bottom: 12px;
+}
+
+.page[data-page="estimate"] .pageSub{
+  text-align:center;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.25;
 }
 
 .page[data-page="estimate"] .pageTitle{
@@ -891,3 +871,20 @@ body.page-estimate #chatFab{
 #estimateSendModal .modalH{
   margin-top: 6px;
 }
+
+.page[data-page="estimate"] .estimateCard{
+  padding: 14px;
+  border-radius: 22px;
+}
+
+/* отступ между появляющимся полем и следующим полем */
+#estimateOtherWrap.show{
+  margin-bottom: 12px;
+}
+
+#leaveEstimateModal .modalCard{
+  width: min(440px, calc(100vw - 28px));
+  padding-top: 22px; /* чтобы крестик не касался текста */
+}
+#leaveEstimateModal .modalH{ margin-top: 6px; }
+
