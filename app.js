@@ -1,7 +1,4 @@
 (() => {
-  window.onerror = function (msg, url, line, col) {
-    alert("JS ошибка: " + msg + "\n" + (line || "") + ":" + (col || ""));
-  };
   const tg = window.Telegram?.WebApp;
 
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
