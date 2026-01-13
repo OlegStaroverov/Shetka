@@ -192,30 +192,32 @@
         </div>
       
         <div class="pageBody">
-          <label class="field">
-            <div class="fieldLabel">Категория</div>
-            <select id="estimateCategory" class="fieldSelect">
-              <option value="Обувь">Обувь</option>
-              <option value="Сумка">Сумка</option>
-              <option value="Верхняя одежда">Верхняя одежда</option>
-              <option value="Аксессуар">Аксессуар</option>
-              <option value="Другое">Другое</option>
-            </select>
-          </label>
-      
-          <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
+          <div class="estimateCard glass">  
             <label class="field">
-              <div class="fieldLabel">Что за вещь?</div>
-              <input id="estimateOtherItem" class="fieldInput" />
+              <div class="fieldLabel">Категория</div>
+              <select id="estimateCategory" class="fieldSelect">
+                <option value="Обувь">Обувь</option>
+                <option value="Сумка">Сумка</option>
+                <option value="Верхняя одежда">Верхняя одежда</option>
+                <option value="Аксессуар">Аксессуар</option>
+                <option value="Другое">Другое</option>
+              </select>
             </label>
+        
+            <div class="reveal" id="estimateOtherWrap" aria-hidden="true">
+              <label class="field">
+                <div class="fieldLabel">Что за вещь?</div>
+                <input id="estimateOtherItem" class="fieldInput" />
+              </label>
+            </div>
+        
+            <label class="field">
+              <div class="fieldHint">Опишите вещь, проблему и что необходимо сделать?</div>
+              <input id="estimateProblem" class="fieldInput" />
+            </label>
+        
+            <button id="estimateNextBtn" class="cta primary" type="button" disabled>Далее</button>
           </div>
-      
-          <label class="field">
-            <div class="fieldHint">Опишите вещь, проблему и что необходимо сделать?</div>
-            <input id="estimateProblem" class="fieldInput" />
-          </label>
-      
-          <button id="estimateNextBtn" class="cta primary" type="button" disabled>Далее</button>
         </div>
       </section>
       
