@@ -3,7 +3,8 @@
 
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
-
+  const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
+  
   // telegram init
   if (tg) {
     tg.ready();
@@ -118,6 +119,10 @@
     if (page === "orders") renderOrders();
     if (page === "price") renderPrice();
     if (page === "profile") hydrateProfile();
+    if (page === "photo_estimates") {
+      // при заходе обновляем и рисуем
+      peRefreshAll(true).catch(() => {});
+    }
   };
 
   const goBack = () => {
@@ -484,6 +489,11 @@
         fbEl.textContent = (user?.first_name?.[0] || "Щ").toUpperCase();
       }
     }
+
+    // обновляем блок заявок по фото в профиле
+    peRefreshAll(false).catch(() => {
+      if (peTile) peTile.hidden = true;
+    });
   };
 
   // Phone modal
@@ -610,6 +620,278 @@
 
   $$("[data-chat-close]").forEach(el => el.addEventListener("click", closeChat));
 
+  // =====================
+  // PHOTO ESTIMATES (page + modal)
+  // =====================
+  const peTile = $("#photoEstimatesTile");
+  const peCount = $("#photoEstimatesCount");
+  const pePulse = $("#photoEstimatesPulse");
+  
+  const peActiveCount = $("#peActiveCount");
+  const peSummary = $("#peSummary");
+  const peActiveTitle = $("#peActiveTitle");
+  const peArchivedTitle = $("#peArchivedTitle");
+  const peActiveList = $("#peActiveList");
+  const peArchivedList = $("#peArchivedList");
+  
+  const peCardModal = $("#peCardModal");
+  const peCardContent = $("#peCardContent");
+  
+  let PE_CACHE = { active: [], archived: [] };
+  
+  const fmtDt = (iso) => {
+    try{
+      const d = new Date(iso);
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const mo = String(d.getMonth()+1).padStart(2,"0");
+      const yy = d.getFullYear();
+      return `${hh}:${mm} ${dd}.${mo}.${yy}`;
+    }catch{ return "—"; }
+  };
+  
+  const statusLabel = (s) => {
+    if (s === "waiting_media") return "Ждём фото/видео в боте";
+    if (s === "waiting_admin") return "На оценке у мастера";
+    if (s === "answered") return "Есть ответ";
+    if (s === "archived") return "В архиве";
+    return s || "—";
+  };
+  
+  async function peFetchList() {
+    const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+    if (!tg_id) return { active: [], archived: [] };
+  
+    const res = await fetch(SUPABASE_ESTIMATES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ action: "list_for_user", tg_id }),
+    });
+  
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  
+    return { active: data.active || [], archived: data.archived || [] };
+  }
+  
+  function peUpdateProfileTile(active, archived) {
+    const activeCount = active.length;
+    const hasAny = active.length || archived.length;
+  
+    if (peTile) peTile.hidden = !hasAny;
+    if (!hasAny) return;
+  
+    if (peCount) peCount.textContent = String(activeCount);
+    if (pePulse) pePulse.style.display = activeCount ? "block" : "none";
+  }
+  
+  function peOpenCardModal(html) {
+    if (!peCardModal || !peCardContent) return;
+    peCardContent.innerHTML = html;
+    peCardModal.classList.add("show");
+    peCardModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+  
+  function peCloseCardModal() {
+    if (!peCardModal) return;
+    peCardModal.classList.remove("show");
+    peCardModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+  
+  $$("[data-pec-close]").forEach(el => el.addEventListener("click", peCloseCardModal));
+  
+  async function peArchive(id) {
+    await fetch(SUPABASE_ESTIMATES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ action: "archive", id }),
+    });
+  }
+  
+  async function peRate(id) {
+    const val = prompt("Оценка 1–5:");
+    const rating = Number(val || 0);
+    if (!(rating >= 1 && rating <= 5)) return;
+  
+    const comment = prompt("Комментарий (необязательно):") || "";
+  
+    await fetch(SUPABASE_ESTIMATES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ action: "rate", id, rating, rating_comment: comment }),
+    });
+  }
+  
+  function peBuildCard(x) {
+    const payload = x.payload_json || {};
+    const title = `Оценка по фото №${x.id}`;
+    const dt = fmtDt(x.created_at);
+    const st = x.status || "";
+    const reply = x.admin_reply ? String(x.admin_reply) : "";
+  
+    const html = `
+      <div class="modalH">${title}</div>
+      <p class="modalP">${dt} • ${statusLabel(st)}</p>
+  
+      <div class="modalGrid">
+        <div class="modalRow"><span>Категория</span><b>${payload.category || "—"}</b></div>
+        <div class="modalRow"><span>Вещь</span><b>${payload.item || "—"}</b></div>
+        <div class="modalRow"><span>Описание</span><b>${payload.problem || "—"}</b></div>
+      </div>
+  
+      ${reply ? `
+        <div style="height:12px"></div>
+        <div class="modalH">Ответ мастера</div>
+        <p class="modalP" style="white-space:pre-wrap">${reply}</p>
+      ` : ""}
+  
+      ${st !== "archived" ? `
+        <div style="height:10px"></div>
+        ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
+        <button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>
+        <button class="smallBtn" type="button" id="peArchiveBtn">В архив</button>
+      ` : `
+        <div style="height:10px"></div>
+        <div class="modalP">Заявка в архиве. Достать из архива нельзя.</div>
+      `}
+    `;
+  
+    return { html, title, id: x.id, hasReply: !!reply, status: st };
+  }
+  
+  function peRenderPage(active, archived) {
+    // summary
+    if (peSummary) peSummary.style.display = (active.length || archived.length) ? "block" : "none";
+    if (peActiveCount) peActiveCount.textContent = String(active.length);
+  
+    // active list
+    if (peActiveTitle) peActiveTitle.style.display = active.length ? "block" : "none";
+    if (peActiveList) peActiveList.innerHTML = "";
+    active.forEach(x => {
+      const payload = x.payload_json || {};
+      const title = `Оценка по фото №${x.id}`;
+      const dt = fmtDt(x.created_at);
+      const st = x.status || "";
+  
+      const el = document.createElement("div");
+      el.className = "order glass peItem";
+      el.innerHTML = `
+        <div class="peTop">
+          <div>
+            <div class="peTitle">${title}</div>
+            <div class="peMeta">${dt}</div>
+          </div>
+          <div class="peStatus"><span class="peDot ${st}"></span>${statusLabel(st)}</div>
+        </div>
+        <div class="peBody">
+          Категория: ${payload.category || "—"}<br/>
+          Вещь: ${payload.item || "—"}<br/>
+          Описание: ${payload.problem || "—"}
+          ${x.admin_reply ? `<div style="height:8px"></div><b style="color:var(--txt)">Есть ответ</b>` : ""}
+        </div>
+      `;
+      el.addEventListener("click", () => {
+        const card = peBuildCard(x);
+        peOpenCardModal(card.html);
+  
+        // кнопки в модалке
+        $("#peReplyBtn")?.addEventListener("click", () => {
+          peCloseCardModal();
+          openChat(true);
+          const inp = $("#chatInput");
+          if (inp) inp.value = `По заявке ${title}: `;
+        });
+  
+        $("#peArchiveBtn")?.addEventListener("click", async () => {
+          if (!confirm("Архивировать? Достать из архива нельзя.")) return;
+          await peArchive(card.id);
+          await peRefreshAll(true);
+          peCloseCardModal();
+        });
+  
+        $("#peRateBtn")?.addEventListener("click", async () => {
+          await peRate(card.id);
+          await peRefreshAll(true);
+          peCloseCardModal();
+        });
+      });
+  
+      peActiveList?.appendChild(el);
+    });
+  
+    // archived list
+    if (peArchivedTitle) peArchivedTitle.style.display = archived.length ? "block" : "none";
+    if (peArchivedList) peArchivedList.innerHTML = "";
+    archived.forEach(x => {
+      const payload = x.payload_json || {};
+      const title = `Оценка по фото №${x.id}`;
+      const dt = fmtDt(x.created_at);
+  
+      const el = document.createElement("div");
+      el.className = "order glass peItem";
+      el.innerHTML = `
+        <div class="peTop">
+          <div>
+            <div class="peTitle">${title}</div>
+            <div class="peMeta">${dt}</div>
+          </div>
+          <div class="peStatus"><span class="peDot archived"></span>В архиве</div>
+        </div>
+        <div class="peBody">
+          Категория: ${payload.category || "—"}<br/>
+          Вещь: ${payload.item || "—"}<br/>
+          Описание: ${payload.problem || "—"}
+          ${x.admin_reply ? `<div style="height:8px"></div><b style="color:var(--txt)">Ответ сохранён</b>` : ""}
+        </div>
+      `;
+  
+      el.addEventListener("click", () => {
+        const card = peBuildCard(x);
+        peOpenCardModal(card.html);
+      });
+  
+      peArchivedList?.appendChild(el);
+    });
+  }
+  
+  async function peRefreshAll(refreshPageIfOpened=false) {
+    const { active, archived } = await peFetchList();
+    PE_CACHE = { active, archived };
+  
+    peUpdateProfileTile(active, archived);
+  
+    // если юзер сейчас на странице photo_estimates — обновим список
+    if (refreshPageIfOpened && currentPage === "photo_estimates") {
+      peRenderPage(active, archived);
+    }
+  }
+  
+  // переход из профиля на страницу
+  peTile?.addEventListener("click", async () => {
+    try{
+      await peRefreshAll(true);
+    }catch{}
+    showPage("photo_estimates");
+    // рендер страницы
+    peRenderPage(PE_CACHE.active, PE_CACHE.archived);
+    haptic("light");
+  });
+  
   const addBubble = (text, who = "me") => {
     chatMessages.push({ who, text });
     saveChat(chatMessages);
