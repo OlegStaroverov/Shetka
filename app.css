@@ -805,3 +805,10 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
 }
 @keyframes spin{ to{ transform: rotate(360deg);} }
 .globalLoadingText{ font-size:13px; font-weight:800; }
+
+/* Оценка по фото — отступ перед кнопкой и центр кнопки */
+#estimateNextBtn{
+  display: block;
+  margin: 18px auto 0;      /* отступ сверху + центр */
+  width: min(320px, 100%);  /* не во всю ширину, но адаптивно */
+}
