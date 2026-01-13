@@ -1,6 +1,9 @@
 (() => {
   const tg = window.Telegram?.WebApp;
 
+  const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
+
   // telegram init
   if (tg) {
     tg.ready();
@@ -644,11 +647,9 @@
   };
 
   // ---------------- SHEETS: courier / estimate ----------------
-  const courierSheet = $("#courierSheet");
-  const estimateSheet = $("#estimateSheet");
+  const courierSheet = $("#courierSheet");ё
 
   const openCourierSheetBtn = $("#openCourierSheet");
-  const openEstimateSheetBtn = $("#openEstimateSheet");
   const estimateCloseBtn = $("#estimateCloseBtn");
 
   const estimateSendModal = $("#estimateSendModal");
@@ -676,9 +677,7 @@
   const courierSendBtn = $("#courierSendBtn");
 
   // --- ESTIMATE 2-STEP ---
-  const estimateStep1 = $("#estimateStep1");
-  const estimateStep2 = $("#estimateStep2");
-  
+
   const estimateCategory = $("#estimateCategory");
   const estimateOtherWrap = $("#estimateOtherWrap");
   const estimateOtherItem = $("#estimateOtherItem");
@@ -686,11 +685,6 @@
   
   const estimateNextBtn = $("#estimateNextBtn");
   const estimateBackBtn = $("#estimateBackBtn");
-  
-  const prevCategory = $("#prevCategory");
-  const prevOtherRow = $("#prevOtherRow");
-  const prevOther = $("#prevOther");
-  const prevProblem = $("#prevProblem");
   
   // leave confirm
   const leaveEstimateModal = $("#leaveEstimateModal");
@@ -756,9 +750,6 @@
     estimateOtherWrap?.classList.remove("show");
     estimateOtherWrap?.setAttribute("aria-hidden", "true");
   
-    if (estimateStep1) estimateStep1.hidden = false;
-    if (estimateStep2) estimateStep2.hidden = true;
-  
     syncEstimate();
   };
   
@@ -805,23 +796,6 @@
   estimateCategory?.addEventListener("change", () => { markDirty(); syncEstimate(); });
   estimateOtherItem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
   estimateProblem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
-  
-  openEstimateSheetBtn?.addEventListener("click", () => {
-    resetEstimate();
-    showPage("estimate");
-    haptic("light");
-  });
-  
-  // Закрытие шторки оценки — с подтверждением
-  const closeEstimateSafely = () => {
-    const doClose = () => { closeSheet(estimateSheet); resetEstimate(); };
-    if (estimateDirty) {
-      leaveAction = doClose;
-      openLeaveEstimateModal(leaveEstimateModal);
-    } else {
-      doClose();
-    }
-  };
 
   estimateCloseBtn?.addEventListener("click", () => {
     const doExit = () => {
@@ -839,8 +813,6 @@
     }
   });
   
-  $$("[data-estimate-close]").forEach(el => el.addEventListener("click", closeEstimateSafely));
-  
   // Далее / Назад
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
@@ -855,28 +827,52 @@
   });
   
   // Финал: отправка в бота
-  estimateSubmitBtn?.addEventListener("click", () => {
-    if (!isValid()) return;
-  
-    const { category, item, problem } = getEstimate();
-  
-    showLoading();
-    haptic("light");
-  
-    sendToBot("estimate_submit", {
-      category,
-      item: category === "Другое" ? item : "",
-      problem
+estimateSubmitBtn?.addEventListener("click", async () => {
+  if (!isValid()) return;
+
+  const { category, item, problem } = getEstimate();
+  const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+
+  showLoading();
+  haptic("light");
+
+  try {
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        // Supabase Functions обычно требуют apikey/Authorization
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "estimate_photo",
+        tg_id,
+        payload_json: {
+          category,
+          item: category === "Другое" ? item : "",
+          problem
+        }
+      }),
     });
-  
-    // маленькая задержка "ощущение сохранения", затем закрываем mini app
-    setTimeout(() => {
-      hideLoading();
-      try { tg?.close(); } catch (_) {}
-      closeSheet(estimateSheet);
-      resetEstimate();
-    }, 1100);
-  });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    // ВАЖНО: теперь можно закрывать лоадер и закрывать мини-апп
+    // Бот через poller подхватит запись и пришлёт сообщение.
+    hideLoading();
+
+    try { tg?.close(); } catch (_) {}
+  } catch (e) {
+    hideLoading();
+    try { tg?.showAlert?.("Не удалось записать заявку. Попробуйте ещё раз."); } catch (_) {}
+    console.error(e);
+  }
+});
   
   syncEstimate();
 
