@@ -647,6 +647,7 @@
 
   const openCourierSheetBtn = $("#openCourierSheet");
   const openEstimateSheetBtn = $("#openEstimateSheet");
+  const estimateCloseBtn = $("#estimateCloseBtn");
 
   const courierAddress = $("#courierAddress");
   const courierComment = $("#courierComment");
@@ -784,10 +785,9 @@
   estimateOtherItem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
   estimateProblem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
   
-  // Открытие шторки оценки
   openEstimateSheetBtn?.addEventListener("click", () => {
     resetEstimate();
-    openSheet(estimateSheet);
+    showPage("estimate");
     haptic("light");
   });
   
