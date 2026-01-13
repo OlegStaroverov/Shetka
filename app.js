@@ -684,7 +684,6 @@
   
   const estimateNextBtn = $("#estimateNextBtn");
   const estimateBackBtn = $("#estimateBackBtn");
-  const estimateSubmitBtn = $("#estimateSubmitBtn");
   
   const prevCategory = $("#prevCategory");
   const prevOtherRow = $("#prevOtherRow");
