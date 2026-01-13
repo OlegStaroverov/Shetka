@@ -157,14 +157,7 @@ body.logoBehind .appLogo{
 /* HERO */
 .hero{ padding:18px; position:relative; overflow:hidden; }
 .heroGlow{
-  position:absolute;
-  inset:-60px -30px auto -30px;
-  height:220px;
-  background:
-    radial-gradient(closest-side at 22% 45%, rgba(215,255,0,.46), transparent 60%),
-    radial-gradient(closest-side at 78% 34%, rgba(0,122,255,.18), transparent 62%);
-  filter: blur(18px);
-  pointer-events:none;
+  display:none;
 }
 .heroTop{ position:relative; text-align:center; }
 .kickerCenter{
