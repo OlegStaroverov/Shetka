@@ -692,7 +692,6 @@
   const estimateProblem = $("#estimateProblem");
   
   const estimateNextBtn = $("#estimateNextBtn");
-  const estimateBackBtn = $("#estimateBackBtn");
   
   // leave confirm
   const leaveEstimateModal = $("#leaveEstimateModal");
