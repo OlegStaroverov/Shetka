@@ -1,4 +1,7 @@
 (() => {
+  window.onerror = function (msg, url, line, col) {
+    alert("JS ошибка: " + msg + "\n" + (line || "") + ":" + (col || ""));
+  };
   const tg = window.Telegram?.WebApp;
 
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
@@ -837,7 +840,6 @@ estimateSubmitBtn?.addEventListener("click", async () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        // Supabase Functions обычно требуют apikey/Authorization
         "apikey": SUPABASE_ANON_KEY,
         "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
       },
@@ -847,29 +849,21 @@ estimateSubmitBtn?.addEventListener("click", async () => {
         payload_json: {
           category,
           item: category === "Другое" ? item : "",
-          problem
-        }
+          problem,
+        },
       }),
     });
 
     const text = await res.text();
-    let data = {};
+    let data = null;
     try { data = JSON.parse(text); } catch (_) {}
-    
-    if (!res.ok || !data.ok) {
-      throw new Error((data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0,120)}`);
+
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
     }
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok || !data.ok) {
-      throw new Error(data.error || `HTTP ${res.status}`);
-    }
-
-    // ВАЖНО: теперь можно закрывать лоадер и закрывать мини-апп
-    // Бот через poller подхватит запись и пришлёт сообщение.
     hideLoading();
-
     try { tg?.close(); } catch (_) {}
   } catch (e) {
     hideLoading();
