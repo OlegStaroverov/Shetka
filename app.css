@@ -658,6 +658,34 @@ html[data-theme="dark"] .smallBtn{ background: rgba(255,255,255,.06); }
 }
 .smallBtn:active{ transform: scale(.98); }
 
+.smallBtn.danger{
+  border-color: rgba(255,59,48,.42);
+  background: linear-gradient(180deg, rgba(255,80,80,.18), rgba(255,80,80,.08));
+}
+
+.rateStars{
+  display:flex;
+  gap: 10px;
+  justify-content:center;
+  margin-top: 8px;
+}
+.rateStar{
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border:1px solid var(--hair);
+  background: rgba(255,255,255,.22);
+  font-size: 20px;
+  line-height: 1;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity: .65;
+}
+html[data-theme="dark"] .rateStar{ background: rgba(255,255,255,.06); }
+.rateStar.on{ opacity: 1; }
+
 /* SHEETS */
 .sheet{ position: fixed; inset:0; display:none; z-index: 110; }
 .sheet.show{ display:block; }
