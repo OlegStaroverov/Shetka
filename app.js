@@ -113,6 +113,10 @@
     currentPage = page;
     if (push) pageStack.push(page);
     setTabActive(page);
+
+    // при переключении страницы сбрасываем скролл, чтобы логотип "уходил под блоки" корректно везде
+    try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+    document.body.classList.remove("logoBehind");
     
     document.body.classList.toggle("page-estimate", page === "estimate");
 
@@ -630,14 +634,12 @@
   const peActiveCount = $("#peActiveCount");
   const peSummary = $("#peSummary");
   const peActiveTitle = $("#peActiveTitle");
-  const peArchivedTitle = $("#peArchivedTitle");
   const peActiveList = $("#peActiveList");
-  const peArchivedList = $("#peArchivedList");
   
   const peCardModal = $("#peCardModal");
   const peCardContent = $("#peCardContent");
   
-  let PE_CACHE = { active: [], archived: [] };
+  let PE_CACHE = { active: [] };
   
   const fmtDt = (iso) => {
     try{
@@ -655,13 +657,12 @@
     if (s === "waiting_media") return "Ждём фото/видео в боте";
     if (s === "waiting_admin") return "На оценке у мастера";
     if (s === "answered") return "Есть ответ";
-    if (s === "archived") return "В архиве";
     return s || "—";
   };
   
   async function peFetchList() {
     const tg_id = tg?.initDataUnsafe?.user?.id || 0;
-    if (!tg_id) return { active: [], archived: [] };
+    if (!tg_id) return { active: [] };
   
     const res = await fetch(SUPABASE_ESTIMATES_URL, {
       method: "POST",
@@ -676,12 +677,12 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
   
-    return { active: data.active || [], archived: data.archived || [] };
+    return { active: data.active || [] };
   }
   
-  function peUpdateProfileTile(active, archived) {
+  function peUpdateProfileTile(active) {
     const activeCount = active.length;
-    const hasAny = active.length || archived.length;
+    const hasAny = active.length;
   
     if (peTile) peTile.hidden = !hasAny;
     if (!hasAny) return;
@@ -707,7 +708,8 @@
   
   $$("[data-pec-close]").forEach(el => el.addEventListener("click", peCloseCardModal));
   
-  async function peArchive(id) {
+  async function peDelete(id) {
+    // 1) пробуем удалить через supabase-функцию
     await fetch(SUPABASE_ESTIMATES_URL, {
       method: "POST",
       headers: {
@@ -715,17 +717,15 @@
         "apikey": SUPABASE_ANON_KEY,
         "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ action: "archive", id }),
+      body: JSON.stringify({ action: "delete", id }),
     });
+
+    // 2) дублируем в бота — чтобы гарантированно удалилось из Supabase и пропало у пользователя
+    sendToBot("estimate_delete", { estimate_id: id });
   }
   
-  async function peRate(id) {
-    const val = prompt("Оценка 1–5:");
-    const rating = Number(val || 0);
-    if (!(rating >= 1 && rating <= 5)) return;
-  
-    const comment = prompt("Комментарий (необязательно):") || "";
-  
+  async function peRateAndDelete(id, rating, comment) {
+    // 1) отправляем оценку в Supabase (если функция поддерживает)
     await fetch(SUPABASE_ESTIMATES_URL, {
       method: "POST",
       headers: {
@@ -733,8 +733,11 @@
         "apikey": SUPABASE_ANON_KEY,
         "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ action: "rate", id, rating, rating_comment: comment }),
+      body: JSON.stringify({ action: "rate", id, rating, rating_comment: comment || "" }),
     });
+
+    // 2) отправляем инфу админам через бота (и параллельно бот удалит заявку из Supabase)
+    sendToBot("estimate_rate", { estimate_id: id, rating, comment: comment || "" });
   }
   
   function peBuildCard(x) {
@@ -744,13 +747,16 @@
     const st = x.status || "";
     const reply = x.admin_reply ? String(x.admin_reply) : "";
   
+    const itemVal = (payload.item || "").trim();
+    const itemRow = itemVal ? `<div class="modalRow"><span>Вещь</span><b>${itemVal}</b></div>` : ``;
+
     const html = `
       <div class="modalH">${title}</div>
       <p class="modalP">${dt} • ${statusLabel(st)}</p>
   
       <div class="modalGrid">
         <div class="modalRow"><span>Категория</span><b>${payload.category || "—"}</b></div>
-        <div class="modalRow"><span>Вещь</span><b>${payload.item || "—"}</b></div>
+        ${itemRow}
         <div class="modalRow"><span>Описание</span><b>${payload.problem || "—"}</b></div>
       </div>
   
@@ -760,23 +766,18 @@
         <p class="modalP" style="white-space:pre-wrap">${reply}</p>
       ` : ""}
   
-      ${st !== "archived" ? `
-        <div style="height:10px"></div>
-        ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
-        <button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>
-        <button class="smallBtn" type="button" id="peArchiveBtn">В архив</button>
-      ` : `
-        <div style="height:10px"></div>
-        <div class="modalP">Заявка в архиве. Достать из архива нельзя.</div>
-      `}
+      <div style="height:10px"></div>
+      ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
+      <button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>
+      <button class="smallBtn danger" type="button" id="peDeleteBtn">Удалить</button>
     `;
   
     return { html, title, id: x.id, hasReply: !!reply, status: st };
   }
   
-  function peRenderPage(active, archived) {
+  function peRenderPage(active) {
     // summary
-    if (peSummary) peSummary.style.display = (active.length || archived.length) ? "block" : "none";
+    if (peSummary) peSummary.style.display = (active.length) ? "block" : "none";
     if (peActiveCount) peActiveCount.textContent = String(active.length);
   
     // active list
@@ -790,6 +791,9 @@
   
       const el = document.createElement("div");
       el.className = "order glass peItem";
+      const itemVal = (payload.item || "").trim();
+      const itemLine = itemVal ? `Вещь: ${itemVal}<br/>` : ``;
+
       el.innerHTML = `
         <div class="peTop">
           <div>
@@ -800,84 +804,103 @@
         </div>
         <div class="peBody">
           Категория: ${payload.category || "—"}<br/>
-          Вещь: ${payload.item || "—"}<br/>
+          ${itemLine}
           Описание: ${payload.problem || "—"}
           ${x.admin_reply ? `<div style="height:8px"></div><b style="color:var(--txt)">Есть ответ</b>` : ""}
         </div>
       `;
       el.addEventListener("click", () => {
         const card = peBuildCard(x);
+        const bindCardButtons = () => {
+          // Ответить
+          $("#peReplyBtn")?.addEventListener("click", () => {
+            peCloseCardModal();
+            openChat(true);
+            const inp = $("#chatInput");
+            if (inp) inp.value = `По заявке ${title}: `;
+          });
+
+          // Удалить
+          $("#peDeleteBtn")?.addEventListener("click", async () => {
+            if (!confirm("Удалить заявку?")) return;
+            await peDelete(card.id);
+            await peRefreshAll(true);
+            peCloseCardModal();
+          });
+
+          // Оценить ответ
+          $("#peRateBtn")?.addEventListener("click", () => {
+            const formHtml = `
+              <div class="modalH">Оценить ответ</div>
+              <p class="modalP">Выберите оценку и добавьте комментарий (по желанию).</p>
+
+              <div class="rateStars" id="rateStars">
+                ${[1,2,3,4,5].map(n => `<button type="button" class="rateStar" data-star="${n}">★</button>`).join("")}
+              </div>
+
+              <label class="field" style="margin-top:12px;">
+                <div class="fieldLabel">Комментарий (необязательно)</div>
+                <input id="rateComment" class="fieldInput" placeholder="Например: всё понятно" />
+              </label>
+
+              <div style="height:12px"></div>
+              <button class="cta primary" type="button" id="rateSendBtn" disabled>Отправить оценку</button>
+              <div style="height:10px"></div>
+              <button class="smallBtn" type="button" id="rateBackBtn">Назад</button>
+            `;
+
+            peOpenCardModal(formHtml);
+
+            let picked = 0;
+            const syncStars = () => {
+              $$(".rateStar").forEach(btn => {
+                const n = Number(btn.dataset.star || 0);
+                btn.classList.toggle("on", n <= picked);
+              });
+              $("#rateSendBtn")?.toggleAttribute("disabled", !(picked >= 1 && picked <= 5));
+            };
+
+            $$(".rateStar").forEach(btn => btn.addEventListener("click", () => {
+              picked = Number(btn.dataset.star || 0);
+              syncStars();
+              haptic("light");
+            }));
+            syncStars();
+
+            $("#rateBackBtn")?.addEventListener("click", () => {
+              peOpenCardModal(card.html);
+              bindCardButtons();
+            });
+
+            $("#rateSendBtn")?.addEventListener("click", async () => {
+              if (!(picked >= 1 && picked <= 5)) return;
+              const comment = ($("#rateComment")?.value || "").trim();
+              await peRateAndDelete(card.id, picked, comment);
+              await peRefreshAll(true);
+              peCloseCardModal();
+              try { tg?.showAlert?.("Спасибо! Оценка отправлена."); } catch(_){ }
+            });
+          });
+        };
+
         peOpenCardModal(card.html);
-  
-        // кнопки в модалке
-        $("#peReplyBtn")?.addEventListener("click", () => {
-          peCloseCardModal();
-          openChat(true);
-          const inp = $("#chatInput");
-          if (inp) inp.value = `По заявке ${title}: `;
-        });
-  
-        $("#peArchiveBtn")?.addEventListener("click", async () => {
-          if (!confirm("Архивировать? Достать из архива нельзя.")) return;
-          await peArchive(card.id);
-          await peRefreshAll(true);
-          peCloseCardModal();
-        });
-  
-        $("#peRateBtn")?.addEventListener("click", async () => {
-          await peRate(card.id);
-          await peRefreshAll(true);
-          peCloseCardModal();
-        });
+        bindCardButtons();
       });
   
       peActiveList?.appendChild(el);
     });
   
-    // archived list
-    if (peArchivedTitle) peArchivedTitle.style.display = archived.length ? "block" : "none";
-    if (peArchivedList) peArchivedList.innerHTML = "";
-    archived.forEach(x => {
-      const payload = x.payload_json || {};
-      const title = `Оценка по фото №${x.id}`;
-      const dt = fmtDt(x.created_at);
-  
-      const el = document.createElement("div");
-      el.className = "order glass peItem";
-      el.innerHTML = `
-        <div class="peTop">
-          <div>
-            <div class="peTitle">${title}</div>
-            <div class="peMeta">${dt}</div>
-          </div>
-          <div class="peStatus"><span class="peDot archived"></span>В архиве</div>
-        </div>
-        <div class="peBody">
-          Категория: ${payload.category || "—"}<br/>
-          Вещь: ${payload.item || "—"}<br/>
-          Описание: ${payload.problem || "—"}
-          ${x.admin_reply ? `<div style="height:8px"></div><b style="color:var(--txt)">Ответ сохранён</b>` : ""}
-        </div>
-      `;
-  
-      el.addEventListener("click", () => {
-        const card = peBuildCard(x);
-        peOpenCardModal(card.html);
-      });
-  
-      peArchivedList?.appendChild(el);
-    });
   }
   
   async function peRefreshAll(refreshPageIfOpened=false) {
-    const { active, archived } = await peFetchList();
-    PE_CACHE = { active, archived };
-  
-    peUpdateProfileTile(active, archived);
-  
+    const { active } = await peFetchList();
+    PE_CACHE = { active };
+
+    peUpdateProfileTile(active);
+
     // если юзер сейчас на странице photo_estimates — обновим список
     if (refreshPageIfOpened && currentPage === "photo_estimates") {
-      peRenderPage(active, archived);
+      peRenderPage(active);
     }
   }
   
@@ -888,7 +911,7 @@
     }catch{}
     showPage("photo_estimates");
     // рендер страницы
-    peRenderPage(PE_CACHE.active, PE_CACHE.archived);
+    peRenderPage(PE_CACHE.active);
     haptic("light");
   });
   
