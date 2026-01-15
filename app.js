@@ -15,6 +15,51 @@
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
   const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
+  const SUPABASE_RESERVE_PROMO_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/reserve_promo";
+  const SUPABASE_GET_PROFILE_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/get_profile";
+
+  async function reservePromoCode() {
+    const res = await fetch(SUPABASE_RESERVE_PROMO_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({}),
+    });
+  
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+  
+    if (!res.ok || !data?.ok || !data?.code) {
+      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
+    }
+  
+    return String(data.code);
+  }
+  
+  async function getRemoteProfile(tg_id) {
+    const res = await fetch(SUPABASE_GET_PROFILE_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ tg_id }),
+    });
+  
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+  
+    if (!res.ok || !data?.ok) return null;
+    return data.profile || null;
+  }
   
   // telegram init
   if (tg) {
@@ -658,6 +703,77 @@
   let selectedAvatarKind = "preset_1";
   let uploadedAvatarDataUrl = ""; // хранится локально, в бот не шлём
 
+  function clearRegErrors() {
+    regFirstName?.classList.remove("inputError");
+    regLastName?.classList.remove("inputError");
+    regPhone?.classList.remove("inputError");
+    $$("#regCitySeg .segBtn").forEach(b => b.classList.remove("segError"));
+  }
+  
+  function markCityErrorIfNeeded(selectedCity) {
+    if (selectedCity) return;
+    $$("#regCitySeg .segBtn").forEach(b => b.classList.add("segError"));
+  }
+  
+  function markInputError(el) {
+    el?.classList.add("inputError");
+  }
+    
+  function applyPhoneAutoprefix(inputEl) {
+    if (!inputEl) return;
+  
+    inputEl.addEventListener("input", () => {
+      let v = inputEl.value || "";
+      if (!v) return;
+  
+      // если первым символом пользователь ввёл '+' — не мешаем, он вводит полностью
+      if (v[0] === "+") return;
+  
+      // только цифры в начале проверяем по первому символу
+      const first = v[0];
+  
+      // если первый символ не цифра — ничего не делаем
+      if (first < "0" || first > "9") return;
+  
+      if (first === "7") {
+        // 7 -> +7...
+        inputEl.value = "+" + v;
+        return;
+      }
+  
+      if (first === "8") {
+        // 8 -> ничего не вставляем
+        return;
+      }
+  
+      // любая другая цифра -> +7<digit>...
+      inputEl.value = "+7" + v;
+    });
+  }
+  
+  function isValidRuPhone(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return false;
+  
+    // оставляем только цифры и плюс
+    const cleaned = s.replace(/[^\d+]/g, "");
+  
+    // варианты:
+    // +7XXXXXXXXXX (12 символов с +)
+    if (/^\+7\d{10}$/.test(cleaned)) return true;
+  
+    // 8XXXXXXXXXX (11 цифр)
+    if (/^8\d{10}$/.test(cleaned)) return true;
+  
+    // 7XXXXXXXXXX (11 цифр) — бывает когда без плюса
+    if (/^7\d{10}$/.test(cleaned)) return true;
+  
+    return false;
+  }
+
+  applyPhoneAutoprefix(regPhone);
+  applyPhoneAutoprefix(profPhone);
+    
   // --- reset через URL: ?reset=1
   try {
     if (new URLSearchParams(location.search).get("reset") === "1") {
@@ -674,36 +790,6 @@
     selectedCity = btn.dataset.city || "";
     $$("#regCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
     haptic("light");
-  });
-
-  // --- аватар пресеты (регистрация)
-  regAvatarGrid?.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("[data-avatar]");
-    if (!btn) return;
-    selectedAvatarKind = btn.getAttribute("data-avatar") || "preset_1";
-    uploadedAvatarDataUrl = "";
-    $$("#regAvatarGrid [data-avatar]").forEach(x => x.classList.toggle("active", x === btn));
-    haptic("light");
-  });
-
-  // --- загрузка аватара (регистрация) — сохраняем локально, лимит 1MB
-  regAvatarFile?.addEventListener("change", async () => {
-    const f = regAvatarFile.files?.[0];
-    if (!f) return;
-    if (f.size > 1024 * 1024) {
-      setFormError("Файл слишком большой. Максимум 1 МБ.");
-      regAvatarFile.value = "";
-      return;
-    }
-    setFormError("");
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      uploadedAvatarDataUrl = String(reader.result || "");
-      selectedAvatarKind = "upload";
-      // визуально подсветим “загрузку” как активную (если у тебя есть такая плитка — если нет, не важно)
-    };
-    reader.readAsDataURL(f);
   });
 
   // --- подарок модалка: закрытие
@@ -772,63 +858,76 @@
   });
 
   // --- регистрация: submit
+  const GIFT_PERCENT = 20;
+  
   regSubmitBtn?.addEventListener("click", async () => {
     try {
+      clearRegErrors();
       setFormError("");
-
+  
       const city = selectedCity;
       const first = (regFirstName?.value || "").trim();
       const last = (regLastName?.value || "").trim();
-      const phone = normalizePhone(regPhone?.value || "");
-
-      if (!city) return setFormError("Выберите город.");
-      if (!first) return setFormError("Введите имя.");
-      if (!phone) return setFormError("Введите номер телефона.");
-
-      const gift_code = makeGiftCode();
-
-      // 1) кладём в Supabase очередь (бот заберёт и удалит)
+      const phone = (regPhone?.value || "").trim();
+  
+      if (!city) {
+        markCityErrorIfNeeded(city);
+        return setFormError("Выберите город.");
+      }
+      if (!first) {
+        markInputError(regFirstName);
+        return setFormError("Введите имя.");
+      }
+      if (!phone) {
+        markInputError(regPhone);
+        return setFormError("Введите номер телефона.");
+      }
+      if (!isValidRuPhone(phone)) {
+        markInputError(regPhone);
+        return setFormError("Введите корректный номер телефона.");
+      }
+  
+      // 1) берём уникальный промокод из Supabase
+      const promo_code = await reservePromoCode();
+  
+      // 2) кладём регистрацию в очередь Supabase -> бот заберёт
       await supaEnqueue("register", {
         city,
         first_name: first,
         last_name: last || null,
         phone,
-        avatar_kind: selectedAvatarKind,
-        gift_percent: GIFT_PERCENT,
-        gift_code,
+        promo_percent: GIFT_PERCENT,
+        promo_code,
       });
-
-      // 2) сохраняем локально (для мини-аппа)
-      const profile = {
+  
+      // 3) сохраняем локально и закрываем модалку
+      saveProfile({
         city,
         first_name: first,
         last_name: last || "",
         phone,
-        avatar_kind: selectedAvatarKind,
-        avatar_data_url: uploadedAvatarDataUrl || "",
-        gift_percent: GIFT_PERCENT,
-        gift_code,
-      };
-      saveProfile(profile);
+        promo_code,
+        promo_percent: GIFT_PERCENT,
+        promo_used: false,
+      });
       localStorage.setItem(LS_REGISTERED, "1");
-
-      // 3) закрываем регистрацию и показываем подарок
+  
       closeModalEl(registerModal);
-
+  
+      // 4) подарок
       if (giftText) {
         giftText.textContent =
           `Вам доступна единоразовая скидка ${GIFT_PERCENT}%.\n` +
-          `Покажите администратору в мастерской или в пункте приёма — скидку применят и отметят как использованную.`;
+          `Покажите этот код администратору в мастерской или в пункте приёма — он будет применён один раз.`;
       }
-      if (giftCodeBox) giftCodeBox.textContent = gift_code;
-
+      if (giftCodeBox) giftCodeBox.textContent = promo_code;
+  
       openModalEl(giftModal);
+  
+      hydrateProfile?.();
       haptic("light");
-
-      // 4) обновим видимые поля профиля (если у тебя есть tgName/tgCityLine — можно дописать сюда)
-      // Тут ничего не ломаем, просто оставляем как есть.
     } catch (e) {
-      setFormError(`Ошибка регистрации: ${e.message || e}`);
+      setFormError("Ошибка регистрации: " + (e?.message || e));
     }
   });
 
@@ -853,7 +952,6 @@
         first_name: first,
         last_name: last || null,
         phone,
-        avatar_kind: p.avatar_kind || "preset_1",
       });
 
       saveProfile({ ...p, city, first_name: first, last_name: last, phone });
