@@ -1010,3 +1010,48 @@ html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
 .peDot.archived{ background: rgba(255,255,255,.55); }
 
 .peBody{ font-size: 13px; color: var(--muted); line-height:1.25; }
+
+/* --- Registration title --- */
+.modalTitleReg{
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* --- TG icon button (phone) --- */
+.tgIconBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+.tgIconBtn svg{ opacity:.9; }
+
+/* --- City active brand green --- */
+#regCitySeg .segBtn.active,
+#profCitySeg .segBtn.active{
+  background: rgba(140, 255, 120, .22);
+  border-color: rgba(140, 255, 120, .55);
+}
+
+/* --- Field errors --- */
+.inputError{
+  border-color: rgba(255,59,48,.85) !important;
+  box-shadow: 0 0 0 2px rgba(255,59,48,.25);
+}
+.segError{
+  border-color: rgba(255,59,48,.85) !important;
+  box-shadow: 0 0 0 2px rgba(255,59,48,.25);
+}
+
+/* --- Hint under phone --- */
+.phoneHint{
+  margin-top:6px;
+  font-size:12px;
+  opacity:.75;
+  line-height:1.25;
+}
