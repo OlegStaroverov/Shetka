@@ -141,11 +141,14 @@
             <div class="profileMeta">
               <div id="tgName" class="profileName">—</div>
               <div class="profileHint" id="tgPhoneLine">Телефон: <span id="tgPhoneValue">—</span></div>
+              <div class="profileHint" id="tgCityLine">Город: <span id="tgCityValue">—</span></div>
+              <div class="profileHint" id="giftLine" hidden>Подарок: <span id="giftValue">—</span></div>
             </div>
           </div>
 
           <div class="profileActions">
             <button class="profileBtn" id="addPhoneBtn" type="button" hidden>Добавить номер</button>
+            <button class="profileBtn" id="editProfileBtn" type="button">Настройки профиля</button>
           </div>
         </div>
 
@@ -322,6 +325,105 @@
       <div class="modalCard">
         <button class="modalClose" type="button" data-pec-close aria-label="Закрыть">✕</button>
         <div id="peCardContent"></div>
+      </div>
+    </section>
+
+    <!-- REGISTRATION (LOCK) -->
+    <section class="modal modalLock" id="registerModal" aria-hidden="true">
+      <div class="modalBackdrop" aria-hidden="true"></div>
+      <div class="modalCard">
+        <div class="modalH">Регистрация</div>
+        <p class="modalP">Заполните профиль один раз — и сможете пользоваться мини‑приложением и ботом.</p>
+
+        <div class="modalGrid">
+          <div class="modalRowCol">
+            <span>Город</span>
+            <div class="seg" id="regCitySeg">
+              <button class="segBtn" type="button" data-city="Севастополь">Севастополь</button>
+              <button class="segBtn" type="button" data-city="Симферополь">Симферополь</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
+            <span>Имя</span>
+            <input id="regFirstName" class="fieldInput" placeholder="Имя" />
+          </div>
+
+          <div class="modalRowCol">
+            <span>Фамилия (опционально)</span>
+            <input id="regLastName" class="fieldInput" placeholder="Фамилия" />
+          </div>
+
+          <div class="modalRowCol">
+            <span>Номер телефона</span>
+            <div class="phoneRow">
+              <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
+              <button id="regPhoneFromTg" class="smallBtn" type="button">Из TG</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
+            <span>Аватар</span>
+            <div class="avatarPick" id="regAvatarGrid"></div>
+            <div class="avatarUploadRow">
+              <label class="smallBtn" for="regAvatarFile">Загрузить</label>
+              <input id="regAvatarFile" type="file" accept="image/*" hidden />
+              <div class="avatarHint">до 1 МБ (будет уменьшено)</div>
+            </div>
+          </div>
+
+          <button id="regSubmitBtn" class="smallBtn primary" type="button">Завершить регистрацию</button>
+          <div class="formError" id="regError" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GIFT AFTER REGISTRATION -->
+    <section class="modal" id="giftModal" aria-hidden="true">
+      <div class="modalBackdrop" data-gift-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-gift-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Подарок за регистрацию 🎁</div>
+        <p class="modalP" id="giftText">—</p>
+        <div class="modalGrid">
+          <div class="giftCode" id="giftCodeBox">—</div>
+          <button class="smallBtn primary" type="button" data-gift-close>Понятно</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE EDIT MODAL -->
+    <section class="modal" id="profileEditModal" aria-hidden="true">
+      <div class="modalBackdrop" data-prof-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-prof-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Настройки профиля</div>
+        <p class="modalP">Можно изменить данные — они обновятся и в боте.</p>
+        <div class="modalGrid">
+          <div class="modalRowCol">
+            <span>Город</span>
+            <div class="seg" id="profCitySeg">
+              <button class="segBtn" type="button" data-city="Севастополь">Севастополь</button>
+              <button class="segBtn" type="button" data-city="Симферополь">Симферополь</button>
+            </div>
+          </div>
+          <div class="modalRowCol">
+            <span>Имя</span>
+            <input id="profFirstName" class="fieldInput" placeholder="Имя" />
+          </div>
+          <div class="modalRowCol">
+            <span>Фамилия</span>
+            <input id="profLastName" class="fieldInput" placeholder="Фамилия" />
+          </div>
+          <div class="modalRowCol">
+            <span>Номер телефона</span>
+            <div class="phoneRow">
+              <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
+              <button id="profPhoneFromTg" class="smallBtn" type="button">Из TG</button>
+            </div>
+          </div>
+          <button id="profSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
+        </div>
       </div>
     </section>
     
