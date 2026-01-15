@@ -332,8 +332,7 @@
     <section class="modal modalLock" id="registerModal" aria-hidden="true">
       <div class="modalBackdrop" aria-hidden="true"></div>
       <div class="modalCard">
-        <div class="modalH">Регистрация</div>
-        <p class="modalP">Заполните профиль один раз — и сможете пользоваться мини‑приложением и ботом.</p>
+        <div class="modalTitle modalTitleReg">Регистрация</div>
 
         <div class="modalGrid">
           <div class="modalRowCol">
@@ -346,29 +345,23 @@
 
           <div class="modalRowCol">
             <span>Имя</span>
-            <input id="regFirstName" class="fieldInput" placeholder="Имя" />
+            <input id="regFirstName" class="fieldInput" />
           </div>
 
           <div class="modalRowCol">
             <span>Фамилия (опционально)</span>
-            <input id="regLastName" class="fieldInput" placeholder="Фамилия" />
+            <input id="regLastName" class="fieldInput" />
           </div>
 
           <div class="modalRowCol">
             <span>Номер телефона</span>
             <div class="phoneRow">
               <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
-              <button id="regPhoneFromTg" class="smallBtn" type="button">Из TG</button>
-            </div>
-          </div>
-
-          <div class="modalRowCol">
-            <span>Аватар</span>
-            <div class="avatarPick" id="regAvatarGrid"></div>
-            <div class="avatarUploadRow">
-              <label class="smallBtn" for="regAvatarFile">Загрузить</label>
-              <input id="regAvatarFile" type="file" accept="image/*" hidden />
-              <div class="avatarHint">до 1 МБ (будет уменьшено)</div>
+              <button id="regPhoneFromTg" type="button" class="tgIconBtn" aria-label="Взять из Telegram">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M9.99 15.47 9.6 20.0c.56 0 .8-.24 1.09-.53l2.62-2.5 5.43 3.97c1 .55 1.71.26 1.96-.92L23.9 3.8c.32-1.48-.53-2.06-1.5-1.7L1.6 10.0c-1.42.55-1.4 1.33-.25 1.68l5.32 1.66L19.0 6.0c.6-.4 1.15-.18.7.22"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -419,7 +412,11 @@
             <span>Номер телефона</span>
             <div class="phoneRow">
               <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
-              <button id="profPhoneFromTg" class="smallBtn" type="button">Из TG</button>
+              <button id="regPhoneFromTg" type="button" class="tgIconBtn" aria-label="Взять из Telegram">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M9.99 15.47 9.6 20.0c.56 0 .8-.24 1.09-.53l2.62-2.5 5.43 3.97c1 .55 1.71.26 1.96-.92L23.9 3.8c.32-1.48-.53-2.06-1.5-1.7L1.6 10.0c-1.42.55-1.4 1.33-.25 1.68l5.32 1.66L19.0 6.0c.6-.4 1.15-.18.7.22"/>
+                </svg>
+              </button>
             </div>
           </div>
           <button id="profSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
