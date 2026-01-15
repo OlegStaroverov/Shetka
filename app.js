@@ -1,6 +1,17 @@
 (() => {
   const tg = window.Telegram?.WebApp;
 
+  // Диагностика: ловим ошибки JS и показываем алерт в Telegram
+  const _showFatal = (err) => {
+    try { console.error(err); } catch (_) {}
+    const msg = (err && (err.message || err.reason)) ? String(err.message || err.reason) : String(err);
+    try { tg?.showAlert?.('Ошибка в мини‑аппе: ' + msg.slice(0, 220)); } catch (_) {}
+  };
+  window.addEventListener('error', (ev) => _showFatal(ev?.error || ev?.message || ev));
+  window.addEventListener('unhandledrejection', (ev) => _showFatal(ev?.reason || ev));
+
+  try {
+
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
   const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
@@ -22,39 +33,6 @@
     const data = JSON.stringify({ cmd, ...payload, ts: Date.now() });
     if (tg) tg.sendData(data);
     else console.log("sendData:", data);
-  };
-
-  // ---------------- PROFILE STORAGE (REGISTRATION) ----------------
-  const PROFILE_KEY = "shetka_profile_v1";
-  const getProfile = () => {
-    try {
-      const raw = localStorage.getItem(PROFILE_KEY);
-      if (!raw) return null;
-      const p = JSON.parse(raw);
-      return (p && typeof p === "object") ? p : null;
-    } catch {
-      return null;
-    }
-  };
-  const setProfile = (p) => {
-    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p || {})); } catch {}
-  };
-  const isRegistered = () => {
-    const p = getProfile();
-    return !!(p && p.registered);
-  };
-
-  const GIFT_PERCENT = 10; // единоразовая скидка за регистрацию
-
-  const randCode = (len = 6) => {
-    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    try {
-      const bytes = new Uint8Array(len);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes).map(b => alphabet[b % alphabet.length]).join("");
-    } catch {
-      return Array.from({ length: len }).map(() => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
-    }
   };
 
   const haptic = (kind = "light") => {
@@ -503,47 +481,27 @@
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
 
-    const prof = getProfile() || {};
-
     const nameEl = $("#tgName");
     const imgEl = $("#tgAvatar");
     const fbEl = $("#avatarFallback");
 
-    const fullName = [prof.first_name || user?.first_name, prof.last_name || user?.last_name]
-      .filter(Boolean).join(" ").trim();
+    const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
     if (nameEl) nameEl.textContent = fullName || "Пользователь";
 
-    const phone = prof.phone || getStoredPhone();
+    const phone = getStoredPhone();
     if (phoneValue) phoneValue.textContent = phone ? phone : "—";
     if (addPhoneBtn) addPhoneBtn.hidden = !!phone;
 
-    const cityValue = $("#tgCityValue");
-    if (cityValue) cityValue.textContent = prof.city ? prof.city : "—";
-
-    const giftLine = $("#giftLine");
-    const giftValue = $("#giftValue");
-    if (giftLine && giftValue) {
-      if (prof.gift_code && prof.gift_percent && !prof.gift_used) {
-        giftValue.textContent = `${prof.gift_percent}% · ${prof.gift_code}`;
-        giftLine.hidden = false;
-      } else {
-        giftLine.hidden = true;
-      }
-    }
-
     const photo = user?.photo_url;
-    const customAvatar = prof.avatar_data;
-    const preset = prof.avatar_preset;
-    const src = customAvatar || preset || photo;
-    if (src && imgEl) {
-      imgEl.src = src;
+    if (photo && imgEl) {
+      imgEl.src = photo;
       imgEl.hidden = false;
       if (fbEl) fbEl.hidden = true;
     } else {
       if (imgEl) imgEl.hidden = true;
       if (fbEl) {
         fbEl.hidden = false;
-        fbEl.textContent = ((prof.first_name || user?.first_name)?.[0] || "Щ").toUpperCase();
+        fbEl.textContent = (user?.first_name?.[0] || "Щ").toUpperCase();
       }
     }
 
@@ -592,273 +550,6 @@
     sendToBot("request_phone");
     // бот должен отправить запрос контакта
     closePhoneModal();
-    haptic("light");
-  });
-
-  // ---------------- REGISTRATION (LOCK) ----------------
-  const registerModal = $("#registerModal");
-  const regCitySeg = $("#regCitySeg");
-  const regFirstName = $("#regFirstName");
-  const regLastName = $("#regLastName");
-  const regPhone = $("#regPhone");
-  const regPhoneFromTg = $("#regPhoneFromTg");
-  const regAvatarGrid = $("#regAvatarGrid");
-  const regAvatarFile = $("#regAvatarFile");
-  const regSubmitBtn = $("#regSubmitBtn");
-  const regError = $("#regError");
-
-  const giftModal = $("#giftModal");
-  const giftText = $("#giftText");
-  const giftCodeBox = $("#giftCodeBox");
-
-  const profileEditModal = $("#profileEditModal");
-  const editProfileBtn = $("#editProfileBtn");
-  const profCitySeg = $("#profCitySeg");
-  const profFirstName = $("#profFirstName");
-  const profLastName = $("#profLastName");
-  const profPhone = $("#profPhone");
-  const profPhoneFromTg = $("#profPhoneFromTg");
-  const profSaveBtn = $("#profSaveBtn");
-
-  const openModal = (el) => {
-    if (!el) return;
-    el.classList.add("show");
-    el.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  };
-  const closeModal = (el) => {
-    if (!el) return;
-    el.classList.remove("show");
-    el.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  };
-
-  const setSegActive = (root, city) => {
-    if (!root) return;
-    $$(".segBtn", root).forEach(b => b.classList.toggle("active", b.dataset.city === city));
-  };
-
-  const PRESET_AVATARS = (() => {
-    // простые SVG-заглушки (лёгкие, без внешних файлов)
-    const mk = (label) => {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".20"/><stop offset="1" stop-color="#000000" stop-opacity=".10"/></linearGradient></defs><rect width="256" height="256" rx="64" fill="url(#g)"/><text x="50%" y="54%" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,Roboto" font-size="120" font-weight="900" fill="rgba(255,255,255,.85)">${label}</text></svg>`;
-      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-    };
-    return [mk("Щ"), mk("S"), mk("★"), mk("☺"), mk("✦"), mk("⚡")];
-  })();
-
-  let regSelectedCity = "";
-  let regSelectedPreset = "";
-  let regCustomAvatarData = "";
-
-  const renderAvatarGrid = () => {
-    if (!regAvatarGrid) return;
-    regAvatarGrid.innerHTML = "";
-    PRESET_AVATARS.forEach((src, idx) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "avatarOpt" + (regSelectedPreset === String(idx) ? " active" : "");
-      b.innerHTML = `<img alt="" src="${src}">`;
-      b.addEventListener("click", () => {
-        regSelectedPreset = String(idx);
-        regCustomAvatarData = "";
-        renderAvatarGrid();
-        haptic("light");
-      });
-      regAvatarGrid.appendChild(b);
-    });
-  };
-
-  const resizeImageToDataUrl = (file, maxSide = 256, quality = 0.82) => new Promise((resolve, reject) => {
-    const img = new Image();
-    const r = new FileReader();
-    r.onload = () => {
-      img.onload = () => {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
-        const scale = Math.min(1, maxSide / Math.max(w, h));
-        const cw = Math.round(w * scale);
-        const ch = Math.round(h * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = cw;
-        canvas.height = ch;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, cw, ch);
-        try {
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        } catch (e) {
-          reject(e);
-        }
-      };
-      img.onerror = reject;
-      img.src = String(r.result);
-    };
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-
-  const showRegError = (text) => {
-    if (!regError) return;
-    regError.textContent = text;
-    regError.hidden = !text;
-  };
-
-  const openRegisterLock = () => {
-    if (isRegistered()) return;
-    renderAvatarGrid();
-    openModal(registerModal);
-    showRegError("");
-  };
-
-  // city select
-  $$(".segBtn", regCitySeg).forEach(b => b.addEventListener("click", () => {
-    regSelectedCity = b.dataset.city || "";
-    setSegActive(regCitySeg, regSelectedCity);
-    haptic("light");
-  }));
-
-  // phone from TG -> бот покажет кнопку контакта
-  regPhoneFromTg?.addEventListener("click", () => {
-    sendToBot("request_phone");
-    haptic("light");
-  });
-
-  // avatar upload
-  regAvatarFile?.addEventListener("change", async () => {
-    const f = regAvatarFile.files && regAvatarFile.files[0];
-    if (!f) return;
-    if (f.size > 1024 * 1024) {
-      showRegError("Файл слишком большой. Выберите фото до 1 МБ.");
-      regAvatarFile.value = "";
-      return;
-    }
-    try {
-      const dataUrl = await resizeImageToDataUrl(f);
-      regCustomAvatarData = dataUrl;
-      regSelectedPreset = "";
-      renderAvatarGrid();
-      showRegError("");
-    } catch {
-      showRegError("Не получилось обработать фото. Попробуйте другое изображение.");
-    }
-    haptic("light");
-  });
-
-  // gift
-  const openGift = (prof) => {
-    if (!giftModal || !giftText || !giftCodeBox) return;
-    giftText.textContent = `Единоразовая скидка ${prof.gift_percent}% — покажите этот код администратору в мастерской или в пункте приёма. После применения скидка будет использована.`;
-    giftCodeBox.textContent = prof.gift_code;
-    openModal(giftModal);
-  };
-  $$('[data-gift-close]').forEach(el => el.addEventListener('click', () => { closeModal(giftModal); haptic('light'); }));
-
-  // submit registration
-  regSubmitBtn?.addEventListener("click", () => {
-    const first = (regFirstName?.value || "").trim();
-    const last = (regLastName?.value || "").trim();
-    const phone = (regPhone?.value || "").trim();
-
-    if (!regSelectedCity) return showRegError("Выберите город.");
-    if (!first) return showRegError("Введите имя.");
-    if (!phone) return showRegError("Введите номер телефона.");
-
-    const user = tg?.initDataUnsafe?.user;
-    const gift_code = `SH-${String(user?.id || "0").slice(-4)}-${randCode(4)}`;
-
-    const prof = {
-      registered: true,
-      first_name: first,
-      last_name: last,
-      phone,
-      city: regSelectedCity,
-      avatar_preset: regSelectedPreset ? PRESET_AVATARS[Number(regSelectedPreset)] : "",
-      avatar_data: regCustomAvatarData,
-      avatar_kind: regCustomAvatarData ? "custom" : (regSelectedPreset ? `preset:${regSelectedPreset}` : "tg"),
-      gift_code,
-      gift_percent: GIFT_PERCENT,
-      gift_used: false,
-    };
-
-    setProfile(prof);
-    // совместимость со старой логикой сохранения номера
-    setStoredPhone(phone);
-
-    sendToBot("register", {
-      first_name: first,
-      last_name: last,
-      phone,
-      city: regSelectedCity,
-      avatar_kind: prof.avatar_kind,
-      gift_code,
-      gift_percent: GIFT_PERCENT,
-    });
-
-    closeModal(registerModal);
-    hydrateProfile();
-    showPage(currentPage, { push: false });
-    openGift(prof);
-    haptic("light");
-  });
-
-  // ---------------- PROFILE EDIT ----------------
-  const openProfileEdit = () => {
-    const prof = getProfile();
-    if (!prof) return;
-    if (profFirstName) profFirstName.value = prof.first_name || "";
-    if (profLastName) profLastName.value = prof.last_name || "";
-    if (profPhone) profPhone.value = prof.phone || getStoredPhone() || "";
-    regSelectedCity = prof.city || "";
-    setSegActive(profCitySeg, regSelectedCity);
-    openModal(profileEditModal);
-  };
-
-  editProfileBtn?.addEventListener("click", () => { openProfileEdit(); haptic("light"); });
-  $$('[data-prof-close]').forEach(el => el.addEventListener('click', () => { closeModal(profileEditModal); haptic('light'); }));
-
-  $$(".segBtn", profCitySeg).forEach(b => b.addEventListener("click", () => {
-    regSelectedCity = b.dataset.city || "";
-    setSegActive(profCitySeg, regSelectedCity);
-    haptic("light");
-  }));
-
-  profPhoneFromTg?.addEventListener("click", () => {
-    sendToBot("request_phone");
-    haptic("light");
-  });
-
-  profSaveBtn?.addEventListener("click", () => {
-    const prof = getProfile() || {};
-    const first = (profFirstName?.value || "").trim();
-    const last = (profLastName?.value || "").trim();
-    const phone = (profPhone?.value || "").trim();
-    const city = regSelectedCity || prof.city || "";
-
-    if (!city) return;
-    if (!first) return;
-    if (!phone) return;
-
-    const next = {
-      ...prof,
-      registered: true,
-      first_name: first,
-      last_name: last,
-      phone,
-      city,
-    };
-    setProfile(next);
-    setStoredPhone(phone);
-
-    sendToBot("profile_update", {
-      first_name: first,
-      last_name: last,
-      phone,
-      city,
-      avatar_kind: next.avatar_kind || "tg",
-    });
-
-    closeModal(profileEditModal);
-    hydrateProfile();
     haptic("light");
   });
 
@@ -1508,6 +1199,9 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   // ---------------- INIT ----------------
   setTabActive("home");
   hydrateProfile();
-  openRegisterLock();
   renderChat();
+  } catch (e) {
+    _showFatal(e);
+  }
+
 })();
