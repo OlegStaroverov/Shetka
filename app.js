@@ -40,7 +40,34 @@
   
     return String(data.code);
   }
+
+  function updatePhotoRequestsButton(requests){
+    const btn = document.getElementById('photoRequestsBtn');
+    if (!btn) return;
   
+    if (!requests || requests.length === 0){
+      btn.style.display = 'none';
+      return;
+    }
+  
+    btn.style.display = 'flex';
+  
+    const unread = requests.filter(r => r.has_admin_reply && !r.read).length;
+  
+    btn.classList.remove('green','blue','blink');
+    btn.querySelector('.badge')?.remove();
+  
+    if (unread > 0){
+      btn.classList.add('blue');
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = unread;
+      btn.appendChild(badge);
+    } else {
+      btn.classList.add('green','blink');
+    }
+  }
+    
   async function getRemoteProfile(tg_id) {
     const res = await fetch(SUPABASE_GET_PROFILE_URL, {
       method: "POST",
