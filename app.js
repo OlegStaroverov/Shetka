@@ -559,25 +559,25 @@
   };
 
   // ---------------- PROFILE ----------------
-  const addPhoneBtn = $("#addPhoneBtn");
   const phoneValue = $("#tgPhoneValue");
+  const cityValue = $("#tgCityValue");
 
-  const getStoredPhone = () => localStorage.getItem("shetka_phone") || "";
-  const setStoredPhone = (v) => localStorage.setItem("shetka_phone", v);
-
+  // Профиль всегда показываем из нашей регистрации (localStorage),
+  // а Telegram-имя/аватар — только как оформление.
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
+    const p = loadProfile() || {};
 
     const nameEl = $("#tgName");
     const imgEl = $("#tgAvatar");
     const fbEl = $("#avatarFallback");
 
-    const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
-    if (nameEl) nameEl.textContent = fullName || "Пользователь";
+    const shownName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
+    const tgName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+    if (nameEl) nameEl.textContent = shownName || tgName || "Пользователь";
 
-    const phone = getStoredPhone();
-    if (phoneValue) phoneValue.textContent = phone ? phone : "—";
-    if (addPhoneBtn) addPhoneBtn.hidden = !!phone;
+    if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
+    if (cityValue) cityValue.textContent = (p.city || "").trim() || "—";
 
     const photo = user?.photo_url;
     if (photo && imgEl) {
@@ -598,48 +598,6 @@
     });
   };
 
-  // Phone modal
-  const phoneModal = $("#phoneModal");
-  const phoneInput = $("#phoneInput");
-  const phoneSaveBtn = $("#phoneSaveBtn");
-  const phoneRequestBtn = $("#phoneRequestBtn");
-
-  const openPhoneModal = () => {
-    if (!phoneModal) return;
-    phoneModal.classList.add("show");
-    phoneModal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-    if (phoneInput) phoneInput.value = getStoredPhone();
-    setTimeout(() => phoneInput?.focus(), 60);
-  };
-
-  const closePhoneModal = () => {
-    if (!phoneModal) return;
-    phoneModal.classList.remove("show");
-    phoneModal.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  };
-
-  addPhoneBtn?.addEventListener("click", () => { openPhoneModal(); haptic("light"); });
-  $$("[data-phone-close]").forEach(el => el.addEventListener("click", closePhoneModal));
-
-  phoneSaveBtn?.addEventListener("click", () => {
-    const v = (phoneInput?.value || "").trim();
-    if (!v) return;
-    setStoredPhone(v);
-    sendToBot("set_phone", { phone: v });
-    closePhoneModal();
-    hydrateProfile();
-    haptic("light");
-  });
-
-  phoneRequestBtn?.addEventListener("click", () => {
-    sendToBot("request_phone");
-    // бот должен отправить запрос контакта
-    closePhoneModal();
-    haptic("light");
-  });
-
   // ---------------- REGISTRATION / PROFILE via SUPABASE ----------------
   const LS_REGISTERED = "shetka_registered_v1";
   const LS_PROFILE = "shetka_profile_v1";
@@ -652,7 +610,6 @@
   const regFirstName = $("#regFirstName");
   const regLastName = $("#regLastName");
   const regPhone = $("#regPhone");
-  const regPhoneFromTg = $("#regPhoneFromTg");
   const regAvatarGrid = $("#regAvatarGrid");
   const regAvatarFile = $("#regAvatarFile");
   const regSubmitBtn = $("#regSubmitBtn");
@@ -666,23 +623,22 @@
   const profFirstName = $("#profFirstName");
   const profLastName = $("#profLastName");
   const profPhone = $("#profPhone");
-  const profPhoneFromTg = $("#profPhoneFromTg");
   const profSaveBtn = $("#profSaveBtn");
 
   // Размер подарка за регистрацию (скидка %)
 
-  const loadProfile = () => {
+  function loadProfile() {
     try {
       const raw = localStorage.getItem(LS_PROFILE);
       return raw ? JSON.parse(raw) : null;
     } catch (_) {
       return null;
     }
-  };
+  }
 
-  const saveProfile = (p) => {
+  function saveProfile(p) {
     localStorage.setItem(LS_PROFILE, JSON.stringify(p));
-  };
+  }
 
   const setFormError = (msg) => {
     if (!regError) return;
@@ -773,22 +729,6 @@
     if (regError) regError.hidden = true;
   }
 
-  async function pullPhoneFromSupabaseInto(inputEl) {
-    const tg_id = getTgId();
-    if (!tg_id || !inputEl) return;
-
-    // короткий пул — чтобы человек не ждал "вечно". Если не успели — просто молчим.
-    for (let i = 0; i < 20; i++) {
-      const p = await getRemoteProfile(tg_id);
-      const phone = (p?.phone || "").trim();
-      if (phone) {
-        inputEl.value = phone;
-        syncRegSubmitState();
-        return;
-      }
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }
 
   applyPhoneAutoprefix(regPhone);
   applyPhoneAutoprefix(profPhone);
@@ -818,36 +758,13 @@
   // --- подарок модалка: закрытие
   $$("[data-gift-close]").forEach(el => el.addEventListener("click", () => closeModalEl(giftModal)));
 
-  // --- регистрация: телефон из TG
-  regPhoneFromTg?.addEventListener("click", async () => {
-    try {
-      haptic("light");
-      await supaEnqueue("request_phone", {});
-      // Дальше пользователь делится контактом в боте.
-      // После этого подтягиваем номер из Supabase и автозаполняем поле.
-      pullPhoneFromSupabaseInto(regPhone);
-    } catch (e) {
-      // По ТЗ не показываем красные ошибки — просто логируем
-      console.log("request_phone error:", e);
-    }
-  });
-
-  // --- профиль: телефон из TG
-  profPhoneFromTg?.addEventListener("click", async () => {
-    try {
-      haptic("light");
-      await supaEnqueue("request_phone", {});
-      pullPhoneFromSupabaseInto(profPhone);
-    } catch (e) {
-      // без алертов, просто тихо
-      console.log("request_phone error:", e);
-    }
-  });
 
   // --- показать модалку регистрации если не зарегистрирован
   const ensureRegistration = async () => {
+    const p = loadProfile() || {};
     const isReg = localStorage.getItem(LS_REGISTERED) === "1";
-    if (isReg) return;
+    const hasRequired = !!(p.city && p.first_name && p.phone && isValidRuPhone(p.phone));
+    if (isReg && hasRequired) return;
 
     // 1) Если пользователь уже регистрировался на другом устройстве — подтягиваем профиль из Supabase
     try {
