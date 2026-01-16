@@ -633,64 +633,6 @@ html[data-theme="dark"] .modalClose{ background: rgba(255,255,255,.06); }
 .modalRow span{ color: var(--muted); }
 
 .modalRowCol span{ color: var(--muted); display:block; margin-bottom:8px; }
-
-/* ---------------- REGISTRATION / PROFILE EDIT ---------------- */
-.modalLock .modalBackdrop{ pointer-events:none; }
-
-.seg{ display:flex; gap:8px; }
-.segBtn{
-  flex:1;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border-radius: 14px;
-  padding: 10px 12px;
-  font-weight: 800;
-  font-size: 13px;
-}
-html[data-theme="light"] .segBtn{ border-color: rgba(0,0,0,.08); background: rgba(0,0,0,.03); }
-.segBtn.active{ outline: 2px solid rgba(255,255,255,.24); }
-html[data-theme="light"] .segBtn.active{ outline: 2px solid rgba(0,0,0,.12); }
-
-.avatarPick{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.avatarOpt{
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 16px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-}
-html[data-theme="light"] .avatarOpt{ border-color: rgba(0,0,0,.08); background: rgba(0,0,0,.03); }
-.avatarOpt img{ width:100%; height:100%; object-fit:cover; display:block; }
-.avatarOpt.active{ outline: 2px solid rgba(255,255,255,.24); }
-html[data-theme="light"] .avatarOpt.active{ outline: 2px solid rgba(0,0,0,.12); }
-
-.avatarUploadRow{ display:flex; align-items:center; gap: 10px; }
-.avatarHint{ font-size: 12px; color: var(--muted); }
-
-.formError{
-  font-size: 13px;
-  color: #ff8c8c;
-  background: rgba(255, 80, 80, .10);
-  border: 1px solid rgba(255, 80, 80, .25);
-  padding: 10px 12px;
-  border-radius: 14px;
-}
-
-.giftCode{
-  font-weight: 950;
-  letter-spacing: .6px;
-  text-transform: uppercase;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px dashed rgba(255,255,255,.22);
-  text-align:center;
-}
-html[data-theme="light"] .giftCode{ border-color: rgba(0,0,0,.18); }
 .phoneRow{ display:flex; gap:10px; align-items:center; }
 .phoneInput{
   flex:1;
@@ -1011,47 +953,80 @@ html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
 
 .peBody{ font-size: 13px; color: var(--muted); line-height:1.25; }
 
-/* --- Registration title --- */
+/* =============================
+   REGISTRATION / PROFILE (added)
+   ============================= */
+
 .modalTitleReg{
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
   text-align: center;
 }
 
-/* --- TG icon button (phone) --- */
 .tgIconBtn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:40px;
-  height:40px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
 }
-.tgIconBtn svg{ opacity:.9; }
 
-/* --- City active brand green --- */
+.tgIconBtn svg{ opacity: .95; }
+
+.rowInline{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.phoneHint{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: .75;
+  line-height: 1.25;
+}
+
+/* brand green for city active */
 #regCitySeg .segBtn.active,
 #profCitySeg .segBtn.active{
   background: rgba(140, 255, 120, .22);
   border-color: rgba(140, 255, 120, .55);
 }
 
-/* --- Field errors --- */
+/* field errors */
 .inputError{
   border-color: rgba(255,59,48,.85) !important;
   box-shadow: 0 0 0 2px rgba(255,59,48,.25);
 }
+
 .segError{
   border-color: rgba(255,59,48,.85) !important;
   box-shadow: 0 0 0 2px rgba(255,59,48,.25);
 }
 
-/* --- Hint under phone --- */
-.phoneHint{
-  margin-top:6px;
-  font-size:12px;
-  opacity:.75;
-  line-height:1.25;
+.formError{
+  color: rgba(255,59,48,.95);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.codeBox{
+  user-select: text;
+  font-weight: 800;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: .08em;
+  padding: 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  margin: 10px 0 14px;
+}
+
+.regBackdrop{
+  /* нельзя закрыть регистрацию кликом по подложке */
+  pointer-events: none;
 }
