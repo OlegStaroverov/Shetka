@@ -134,8 +134,7 @@
         <div class="profile glass">
           <div class="profileRow">
             <div class="avatarWrap">
-              <img id="tgAvatar" class="avatarImg" alt="" hidden />
-              <div id="avatarFallback" class="avatarFallback">Щ</div>
+              <img id="tgAvatar" class="avatarImg" alt="" />
             </div>
 
             <div class="profileMeta">
@@ -184,7 +183,10 @@
           <div class="tileIco">📸</div>
           <div class="tileTxt">
             <div class="tileTitle">Запросы на оценку по фото</div>
-            <div class="tileSub"><span id="photoEstimatesCount">0</span> активных</div>
+            <div class="tileSub" id="photoEstimatesSub">
+              <span id="photoEstimatesCount">0</span>
+              <span id="photoEstimatesSubText">активных</span>
+            </div>
           </div>
         
           <!-- зелёная “мигалка” -->
@@ -256,11 +258,6 @@
           </div>
         </div>
       
-        <div class="glass" id="peSummary" style="padding:14px; display:none;">
-          <div class="sectionTitle" style="margin:0;">Активных: <span id="peActiveCount">0</span></div>
-        </div>
-      
-        <div class="sectionTitle" id="peActiveTitle" style="display:none;">Активные</div>
         <div id="peActiveList" class="orders"></div>
       
       </section>
