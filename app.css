@@ -159,22 +159,6 @@ body.logoBehind .appLogo{
   gap: 14px;
 }
 
-/* Лого-водяной знак на всех страницах (как на главной):
-   чуть прозрачный и "заходит" под заголовки/карточки */
-.page::before{
-  content:"";
-  position:absolute;
-  left: 50%;
-  top: -26px;
-  transform: translateX(-50%);
-  width: min(92vw, 560px);
-  height: 220px;
-  background: url('logo.png') center / contain no-repeat;
-  opacity: .10;
-  pointer-events:none;
-  z-index: 0;
-}
-.page > *{ position: relative; z-index: 1; }
 .page[hidden]{ display:none; }
 
 /* HERO */
@@ -277,6 +261,21 @@ html[data-theme="dark"] .backBtn{ background: rgba(255,255,255,.06); }
 .backBtn:active{ transform: scale(.96); }
 .pageTitle{ font-weight: 950; font-size: 18px; letter-spacing:-.2px; }
 .pageSub{ margin-top:2px; font-size: 12px; color: var(--muted); }
+
+/* чтобы заголовки не терялись на фоне логотипа */
+.pageTitle,
+.pageSub{
+  text-shadow:
+    0 1px 2px rgba(0,0,0,.28),
+    0 0 10px rgba(255,255,255,.14);
+}
+
+html[data-theme="dark"] .pageTitle,
+html[data-theme="dark"] .pageSub{
+  text-shadow:
+    0 1px 2px rgba(0,0,0,.55),
+    0 0 10px rgba(0,0,0,.20);
+}
 
 .sectionTitle{
   margin-top: 6px;
