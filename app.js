@@ -936,6 +936,8 @@
 
       saveProfile({ ...p, city, first_name: first, last_name: last, phone });
 
+      hydrateProfile();
+      
       closeModalEl(profileEditModal);
       haptic("light");
     } catch (e) {
@@ -1279,24 +1281,14 @@
         if (x.admin_reply) peMarkRead(x.id);
       
         const bindCardButtons = () => {
-          ...
-        };
-      
-        peOpenCardModal(card.html);
-        bindCardButtons();
-      
-        // обновляем плитку в профиле (синий/зелёный режим)
-        peUpdateProfileTile(PE_CACHE.active || []);
-      });
-        const bindCardButtons = () => {
           // Ответить
           $("#peReplyBtn")?.addEventListener("click", () => {
             peCloseCardModal();
             openChat(true);
             const inp = $("#chatInput");
-            if (inp) inp.value = `По заявке ${title}: `;
+            if (inp) inp.value = `По заявке ${card.title}: `;
           });
-
+      
           // Удалить
           $("#peDeleteBtn")?.addEventListener("click", async () => {
             if (!confirm("Удалить заявку?")) return;
@@ -1304,31 +1296,32 @@
             await peRefreshAll(true);
             peCloseCardModal();
           });
-
+      
           // Оценить ответ
           $("#peRateBtn")?.addEventListener("click", () => {
             const formHtml = `
               <div class="modalH">Оценить ответ</div>
               <p class="modalP">Выберите оценку и добавьте комментарий (по желанию).</p>
-
+      
               <div class="rateStars" id="rateStars">
                 ${[1,2,3,4,5].map(n => `<button type="button" class="rateStar" data-star="${n}">★</button>`).join("")}
               </div>
-
+      
               <label class="field" style="margin-top:12px;">
                 <div class="fieldLabel">Комментарий (необязательно)</div>
                 <input id="rateComment" class="fieldInput" placeholder="Например: всё понятно" />
               </label>
-
+      
               <div style="height:12px"></div>
               <button class="cta primary" type="button" id="rateSendBtn" disabled>Отправить оценку</button>
               <div style="height:10px"></div>
               <button class="smallBtn" type="button" id="rateBackBtn">Назад</button>
             `;
-
+      
             peOpenCardModal(formHtml);
-
+      
             let picked = 0;
+      
             const syncStars = () => {
               $$(".rateStar").forEach(btn => {
                 const n = Number(btn.dataset.star || 0);
@@ -1336,19 +1329,20 @@
               });
               $("#rateSendBtn")?.toggleAttribute("disabled", !(picked >= 1 && picked <= 5));
             };
-
+      
             $$(".rateStar").forEach(btn => btn.addEventListener("click", () => {
               picked = Number(btn.dataset.star || 0);
               syncStars();
               haptic("light");
             }));
+      
             syncStars();
-
+      
             $("#rateBackBtn")?.addEventListener("click", () => {
               peOpenCardModal(card.html);
               bindCardButtons();
             });
-
+      
             $("#rateSendBtn")?.addEventListener("click", async () => {
               if (!(picked >= 1 && picked <= 5)) return;
               const comment = ($("#rateComment")?.value || "").trim();
@@ -1359,9 +1353,12 @@
             });
           });
         };
-
+      
         peOpenCardModal(card.html);
         bindCardButtons();
+      
+        // обновляем плитку в профиле (синий/зелёный режим)
+        peUpdateProfileTile(PE_CACHE.active || []);
       });
   
       peActiveList?.appendChild(el);
