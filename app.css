@@ -146,12 +146,35 @@ body.logoBehind .appLogo{
 }
 
 /* STAGE */
-.stage{ margin-top: 2px; }
+.stage{
+  margin-top: 2px;
+  /* чтобы нижняя панель вкладок никогда не прилипала к контенту */
+  padding-bottom: calc(var(--tabH) + 22px + var(--safeBot));
+}
+
 .page{
+  position: relative;
   display:flex;
   flex-direction:column;
   gap: 14px;
 }
+
+/* Лого-водяной знак на всех страницах (как на главной):
+   чуть прозрачный и "заходит" под заголовки/карточки */
+.page::before{
+  content:"";
+  position:absolute;
+  left: 50%;
+  top: -26px;
+  transform: translateX(-50%);
+  width: min(92vw, 560px);
+  height: 220px;
+  background: url('logo.png') center / contain no-repeat;
+  opacity: .10;
+  pointer-events:none;
+  z-index: 0;
+}
+.page > *{ position: relative; z-index: 1; }
 .page[hidden]{ display:none; }
 
 /* HERO */
@@ -419,6 +442,45 @@ html[data-theme="dark"] .switch{ background: rgba(255,255,255,.06); }
 }
 .switch[aria-checked="true"] .knob{ transform: translateX(18px); }
 
+/* THEME SWITCH (солнце/луна) — без подсветки "вкл" */
+.themeSwitch{
+  position: relative;
+  width: 92px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.22);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 10px;
+  overflow:hidden;
+}
+html[data-theme="dark"] .themeSwitch{ background: rgba(255,255,255,.06); }
+
+.themeSwitch .themeIcon{
+  font-size: 16px;
+  line-height: 1;
+  opacity: .9;
+  z-index: 2;
+}
+
+.themeSwitch .themeKnob{
+  position:absolute;
+  top: 3px;
+  left: 3px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.35);
+  z-index: 1;
+  transition: transform .18s ease;
+}
+html[data-theme="dark"] .themeSwitch .themeKnob{ background: rgba(255,255,255,.10); }
+
+.themeSwitch[aria-checked="true"] .themeKnob{ transform: translateX(54px); }
+
 .supportBtn{
   width: 100%;
   padding: 14px;
@@ -427,6 +489,9 @@ html[data-theme="dark"] .switch{ background: rgba(255,255,255,.06); }
   font-weight: 950;
 }
 .supportBtn:active{ transform: scale(.99); }
+
+/* Чуть воздуха над нижними вкладками на странице профиля */
+.page[data-page="profile"] .supportBtn{ margin-bottom: 10px; }
 
 /* TABBAR */
 .tabbar{
