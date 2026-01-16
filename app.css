@@ -20,6 +20,8 @@
   --safeBot: env(safe-area-inset-bottom, 0px);
 
   --patternOpacity: .18;
+  --patternSize: 340px;
+  --patternImg: url("pattern-light.png");
 }
 
 html[data-theme="dark"]{
@@ -33,6 +35,7 @@ html[data-theme="dark"]{
   --shadow: 0 18px 42px rgba(0,0,0,.55);
 
   --patternOpacity: .14;
+  --patternImg: url("pattern-dark.png");
 }
 
 *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -74,9 +77,27 @@ html::after{
 /* включение паттерна */
 html.pattern-on::after{ opacity: var(--patternOpacity); }
 
-/* разные изображения */
-html[data-theme="light"]::after{ background-image: url("pattern-light.png"); background-size: 340px 340px; }
-html[data-theme="dark"]::after { background-image: url("pattern-dark.png");  background-size: 340px 340px; }
+/* разные изображения + единый размер */
+html::after{ background-image: var(--patternImg); background-size: var(--patternSize) var(--patternSize); }
+
+/* Дополнительные 2 слоя паттерна (для более яркого эффекта, как 3 слоя) */
+body::before,
+body::after{
+  content:"";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events:none;
+  background-image: var(--patternImg);
+  background-repeat: repeat;
+  background-size: var(--patternSize) var(--patternSize);
+  opacity: 0;
+  transition: opacity .22s ease, background-image .22s ease, background-size .22s ease;
+}
+
+/* включение паттерна = включаем сразу все 3 слоя */
+html.pattern-on body::before{ opacity: calc(var(--patternOpacity) * 0.55); background-position: 40px 20px; }
+html.pattern-on body::after { opacity: calc(var(--patternOpacity) * 0.45); background-position: -30px 60px; }
 
 button,input,select{ font:inherit; color:inherit; }
 button{ border:0; background:none; cursor:pointer; }
