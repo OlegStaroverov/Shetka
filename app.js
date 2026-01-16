@@ -87,6 +87,63 @@
     if (!res.ok || !data?.ok) return null;
     return data.profile || null;
   }
+
+  // ---------------- PROFILE SYNC (Supabase -> mini-app) ----------------
+  // Нужно, чтобы изменения профиля на одном устройстве подтягивались на другом.
+  const REMOTE_STAMP_KEY = "_remote_updated_at";
+
+  function _stampOfProfile(p){
+    const s = (p && (p[REMOTE_STAMP_KEY] || p.updated_at)) ? String(p[REMOTE_STAMP_KEY] || p.updated_at) : "";
+    return s;
+  }
+
+  async function syncRemoteProfileIfNewer({ force = false } = {}) {
+    try {
+      const tg_id = getTgId();
+      if (!tg_id) return false;
+
+      const rp = await getRemoteProfile(tg_id);
+      if (!rp) return false;
+
+      // Берём только то, что нужно мини-аппу.
+      const remote = {
+        city: rp.city || "",
+        first_name: rp.first_name || "",
+        last_name: rp.last_name || "",
+        phone: rp.phone || "",
+        promo_code: rp.promo_code ?? null,
+        promo_percent: rp.promo_percent ?? null,
+        promo_used: !!rp.promo_used,
+      };
+
+      // Если профиль в Supabase пустой — не трогаем локальный
+      if (!(remote.city && remote.first_name && remote.phone)) return false;
+
+      const local = loadProfile() || {};
+      const localStamp = _stampOfProfile(local);
+      const remoteStamp = String(rp.updated_at || "");
+
+      const differs =
+        String(local.city || "") !== String(remote.city || "") ||
+        String(local.first_name || "") !== String(remote.first_name || "") ||
+        String(local.last_name || "") !== String(remote.last_name || "") ||
+        String(local.phone || "") !== String(remote.phone || "");
+
+      const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
+      if (!shouldUpdate) return false;
+
+      saveProfile({
+        ...local,
+        ...remote,
+        [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
+      });
+      localStorage.setItem("shetka_registered_v1", "1");
+      return true;
+    } catch (e) {
+      console.log("syncRemoteProfileIfNewer error:", e);
+      return false;
+    }
+  }
   
   // telegram init
   if (tg) {
@@ -247,7 +304,14 @@
 
     if (page === "orders") renderOrders();
     if (page === "price") renderPrice();
-    if (page === "profile") hydrateProfile();
+    if (page === "profile") {
+      // 1) показываем то, что уже есть локально
+      hydrateProfile();
+      // 2) подтягиваем свежий профиль из Supabase (для второго устройства)
+      syncRemoteProfileIfNewer({ force: true }).then((changed) => {
+        if (changed) hydrateProfile();
+      });
+    }
     if (page === "photo_estimates") {
       // при заходе обновляем и рисуем
       peRefreshAll(true).catch(() => {});
@@ -946,7 +1010,12 @@
   });
 
   // запуск проверки регистрации
-  ensureRegistration();
+  // + дотягиваем свежий профиль из Supabase (важно для 2-го устройства)
+  ensureRegistration().then(() => {
+    syncRemoteProfileIfNewer({ force: false }).then((changed) => {
+      if (changed) hydrateProfile();
+    });
+  });
     
   // ---------------- CHAT (persist) ----------------
   const chat = $("#chat");
