@@ -1118,7 +1118,7 @@ body.page-estimate #chatFab{
   box-shadow: 0 10px 24px rgba(47,128,237,.25);
 
   /* пульсация для непрочитанных */
-  animation: pulseBlue 1.2s ease-in-out infinite;
+  animation: pePulse 1.4s infinite;
 }
 
 @keyframes pulseBlue{
