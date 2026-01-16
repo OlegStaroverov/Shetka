@@ -75,8 +75,8 @@ html::after{
 html.pattern-on::after{ opacity: var(--patternOpacity); }
 
 /* разные изображения */
-html[data-theme="light"]::after{ background-image: url("pattern-light.png"); background-size: 300px 300px; }
-html[data-theme="dark"]::after { background-image: url("pattern-dark.png");  background-size: 300px 300px; }
+html[data-theme="light"]::after{ background-image: url("pattern-light.png"); background-size: 340px 340px; }
+html[data-theme="dark"]::after { background-image: url("pattern-dark.png");  background-size: 340px 340px; }
 
 button,input,select{ font:inherit; color:inherit; }
 button{ border:0; background:none; cursor:pointer; }
@@ -142,7 +142,7 @@ button{ border:0; background:none; cursor:pointer; }
 
 /* когда логотип “заходит под блоки” — делаем чуть прозрачнее */
 body.logoBehind .appLogo{
-  opacity: .55;
+  opacity: .10;
 }
 
 /* STAGE */
