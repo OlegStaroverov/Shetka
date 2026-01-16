@@ -18,8 +18,8 @@
 
   /* Логотип в хедере */
   --logoSlotH: 44px;
-  /* Отступ сверху над логотипом: 1/4 от его размера */
-  --logoTopPad: calc(var(--logoSlotH) * 0.25);
+  /* Отступ сверху над логотипом: увеличили, чтобы весь экран чуть “опустился” */
+  --logoTopPad: calc(var(--logoSlotH) * 0.50);
 
   --safeTop: env(safe-area-inset-top, 0px);
   --safeBot: env(safe-area-inset-bottom, 0px);
@@ -405,20 +405,13 @@ html[data-theme="dark"] .priceTab{ background: rgba(255,255,255,.06); }
   height: 56px;
   border-radius: 18px;
   overflow:hidden;
-  border: 1px solid var(--hair);
-  background: linear-gradient(180deg, rgba(215,255,0,.35), rgba(215,255,0,.10));
-  display:flex; align-items:center; justify-content:center;
-}
-.avatarImg{ width:100%; height:100%; object-fit: cover; }
-.avatarFallback{
-  font-weight: 950;
-  color:#0f1115;
-  width:100%;
-  height:100%;
+  border: 0;
+  background: transparent;
   display:flex;
   align-items:center;
   justify-content:center;
 }
+.avatarImg{ width:100%; height:100%; object-fit: cover; }
 .profileMeta{ min-width:0; }
 .profileName{ font-weight: 950; }
 .profileHint{ font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -1123,16 +1116,21 @@ body.page-estimate #chatFab{
   color: #fff;
 
   box-shadow: 0 10px 24px rgba(47,128,237,.25);
+
+  /* пульсация для непрочитанных */
+  animation: pulseBlue 1.2s ease-in-out infinite;
 }
 
-/* когда есть непрочитанные — плитка “синяя” (лёгкий акцент) */
-#photoEstimatesTile.peBlue{
-  border-color: rgba(47,128,237,.45);
+@keyframes pulseBlue{
+  0%{ box-shadow: 0 0 0 0 rgba(47,128,237,.45); transform: scale(1); }
+  70%{ box-shadow: 0 0 0 10px rgba(47,128,237,0); transform: scale(1.05); }
+  100%{ box-shadow: 0 0 0 0 rgba(47,128,237,0); transform: scale(1); }
 }
 
-/* когда просто есть активные — плитка “зелёная” (лёгкий акцент) */
+/* УБРАЛИ цветную обводку плитки (по ТЗ) */
+#photoEstimatesTile.peBlue,
 #photoEstimatesTile.peGreen{
-  border-color: rgba(52,199,89,.45);
+  border-color: var(--hair);
 }
 
 /* карточка заявки в списке */
@@ -1172,6 +1170,33 @@ html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
 
 .peBody{ font-size: 13px; color: var(--muted); line-height:1.25; }
 
+/* --- PHOTO ESTIMATES CARD (modal) --- */
+.peInfo .peInfoRow{
+  font-size: 15px;
+}
+.peInfo .peInfoRow span{ font-size: 13px; }
+.peInfo .peInfoRow b{ font-weight: 950; }
+
+.peReplyBox{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.22);
+  text-align: center;
+}
+html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
+.peReplyTitle{ font-weight: 950; margin-bottom: 8px; }
+.peReplyText{ font-size: 13px; color: var(--txt); }
+
+.peActions{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.peActions .danger{ grid-column: 1 / -1; }
+
 /* --- Registration title --- */
 .modalTitleReg{
   font-size: 22px;
@@ -1198,6 +1223,13 @@ html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
 /* --- City active: тем же цветом, что и кнопка primary (Оценка по фото) --- */
 #regCitySeg .segBtn.active,
 #profCitySeg .segBtn.active{
+  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
+  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+}
+
+/* --- Gender active: так же, как выбор города --- */
+#regGenderSeg .segBtn.active,
+#profGenderSeg .segBtn.active{
   border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
   background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
 }
