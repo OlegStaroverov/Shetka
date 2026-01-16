@@ -589,8 +589,7 @@
   const phoneValue = $("#tgPhoneValue");
   const cityValue = $("#tgCityValue");
 
-  // Профиль всегда показываем из нашей регистрации (localStorage),
-  // а Telegram-имя/аватар — только как оформление.
+  // Профиль
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
     const p = loadProfile() || {};
@@ -1085,15 +1084,74 @@
     return { active: data.active || [] };
   }
   
+  const PE_READ_KEY = "shetka_pe_read_ids_v1";
+  
+  function peLoadReadSet(){
+    try{
+      const raw = localStorage.getItem(PE_READ_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    }catch{
+      return new Set();
+    }
+  }
+  function peSaveReadSet(set){
+    try{
+      localStorage.setItem(PE_READ_KEY, JSON.stringify(Array.from(set)));
+    }catch{}
+  }
+  
+  let peReadSet = peLoadReadSet();
+  
+  function peIsUnread(x){
+    // “непрочитанное” = есть ответ админа и мы ещё не отметили как прочитанное
+    return !!(x && x.admin_reply && !peReadSet.has(Number(x.id)));
+  }
+  
+  function peMarkRead(id){
+    const n = Number(id);
+    if (!n) return;
+    if (peReadSet.has(n)) return;
+    peReadSet.add(n);
+    peSaveReadSet(peReadSet);
+  }
+  
   function peUpdateProfileTile(active) {
     const activeCount = active.length;
-    const hasAny = active.length;
   
-    if (peTile) peTile.hidden = !hasAny;
-    if (!hasAny) return;
+    // 0 = скрыто
+    if (!peTile) return;
+    peTile.hidden = !(activeCount > 0);
+    if (!(activeCount > 0)) return;
   
+    // число активных
     if (peCount) peCount.textContent = String(activeCount);
-    if (pePulse) pePulse.style.display = activeCount ? "block" : "none";
+  
+    // считаем непрочитанные ответы
+    const unreadCount = active.filter(peIsUnread).length;
+  
+    // элементы
+    const badge = $("#photoEstimatesBadge");
+  
+    // сброс классов
+    peTile.classList.remove("peGreen","peBlue");
+  
+    if (unreadCount > 0){
+      // СИНИЙ режим: показываем цифру, зелёную мигалку прячем
+      peTile.classList.add("peBlue");
+  
+      if (pePulse) pePulse.style.display = "none";
+      if (badge){
+        badge.hidden = false;
+        badge.textContent = String(unreadCount);
+      }
+    } else {
+      // ЗЕЛЁНЫЙ режим: мигаем, бейдж прячем
+      peTile.classList.add("peGreen");
+  
+      if (pePulse) pePulse.style.display = "block";
+      if (badge) badge.hidden = true;
+    }
   }
   
   function peOpenCardModal(html) {
@@ -1216,6 +1274,20 @@
       `;
       el.addEventListener("click", () => {
         const card = peBuildCard(x);
+      
+        // если есть ответ — считаем прочитанным в момент открытия карточки
+        if (x.admin_reply) peMarkRead(x.id);
+      
+        const bindCardButtons = () => {
+          ...
+        };
+      
+        peOpenCardModal(card.html);
+        bindCardButtons();
+      
+        // обновляем плитку в профиле (синий/зелёный режим)
+        peUpdateProfileTile(PE_CACHE.active || []);
+      });
         const bindCardButtons = () => {
           // Ответить
           $("#peReplyBtn")?.addEventListener("click", () => {
