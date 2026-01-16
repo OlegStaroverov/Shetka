@@ -449,23 +449,15 @@ html[data-theme="dark"] .switch{ background: rgba(255,255,255,.06); }
   height: 38px;
   border-radius: 999px;
   border: 1px solid var(--hair);
-  background: rgba(255,255,255,.22);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 0 10px;
-  overflow:hidden;
+  background: rgba(255,255,255,.18);
+  overflow: hidden;
 }
-html[data-theme="dark"] .themeSwitch{ background: rgba(255,255,255,.06); }
-
-.themeSwitch .themeIcon{
-  font-size: 16px;
-  line-height: 1;
-  opacity: .9;
-  z-index: 2;
+html[data-theme="dark"] .themeSwitch{
+  background: rgba(255,255,255,.06);
 }
 
-.themeSwitch .themeKnob{
+/* Ползунок (круг) */
+.themeKnob{
   position:absolute;
   top: 3px;
   left: 3px;
@@ -474,20 +466,40 @@ html[data-theme="dark"] .themeSwitch{ background: rgba(255,255,255,.06); }
   border-radius: 999px;
   border: 1px solid var(--hair);
   background: rgba(255,255,255,.35);
-  z-index: 1;
+
+  display: grid;
+  place-items: center;
+
   transition: transform .18s ease;
 }
-html[data-theme="dark"] .themeSwitch .themeKnob{ background: rgba(255,255,255,.10); }
-
-.themeSwitch[aria-checked="true"] .themeKnob{ transform: translateX(54px); }
-
-.supportBtn{
-  width: 100%;
-  padding: 14px;
-  border-radius: 22px;
-  text-align:center;
-  font-weight: 950;
+html[data-theme="dark"] .themeKnob{
+  background: rgba(255,255,255,.12);
 }
+
+/* Сдвиг ползунка вправо (тёмная тема = aria-checked="true") */
+.themeSwitch[aria-checked="true"] .themeKnob{
+  transform: translateX(54px);
+}
+
+/* Иконки живут ВНУТРИ ползунка */
+.themeKnob .themeIcon{
+  position: absolute;
+  font-size: 14px;  /* меньше */
+  line-height: 1;
+  opacity: 0;       /* по умолчанию невидимы */
+  transition: opacity .12s ease;
+}
+
+/* В светлой теме показываем солнце */
+html[data-theme="light"] .themeKnob .sun{
+  opacity: 1;
+}
+
+/* В тёмной теме показываем луну */
+html[data-theme="dark"] .themeKnob .moon{
+  opacity: 1;
+}
+
 .supportBtn:active{ transform: scale(.99); }
 
 /* Чуть воздуха над нижними вкладками на странице профиля */
