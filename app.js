@@ -660,7 +660,6 @@
 
     const nameEl = $("#tgName");
     const imgEl = $("#tgAvatar");
-    const fbEl = $("#avatarFallback");
 
     const shownName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
     const tgName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
@@ -669,21 +668,10 @@
     if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
     if (cityValue) cityValue.textContent = (p.city || "").trim() || "—";
 
-    // Аватар: сначала наш (по полу), потом Telegram photo_url, потом fallback
-    const localAvatar = (p.avatar_url || "").trim();
-    const tgAvatar = (user?.photo_url || "").trim();
-    const avatar = localAvatar || tgAvatar;
-    if (avatar && imgEl) {
-      imgEl.src = avatar;
-      imgEl.hidden = false;
-      if (fbEl) fbEl.hidden = true;
-    } else {
-      if (imgEl) imgEl.hidden = true;
-      if (fbEl) {
-        fbEl.hidden = false;
-        fbEl.textContent = (user?.first_name?.[0] || "Щ").toUpperCase();
-      }
-    }
+    // Аватар: ТОЛЬКО PNG (по полу). Никаких рамок/букв/фоллбеков.
+    const g = (p.gender || "").toUpperCase();
+    const avatar = (p.avatar_url || "").trim() || genderToAvatar(g) || "ava_m_1.png";
+    if (imgEl) imgEl.src = avatar;
 
     // обновляем блок заявок по фото в профиле
     peRefreshAll(false).catch(() => {
@@ -1258,6 +1246,7 @@
   
     // число активных
     if (peCount) peCount.textContent = String(activeCount);
+    const subText = $("#photoEstimatesSubText");
   
     // считаем непрочитанные ответы
     const unreadCount = active.filter(peIsUnread).length;
@@ -1269,18 +1258,24 @@
     peTile.classList.remove("peGreen","peBlue");
   
     if (unreadCount > 0){
-      // СИНИЙ режим: показываем цифру, зелёную мигалку прячем
+      // СИНИЙ режим: текст = “Непрочитанное сообщение от администратора”, показываем пульсирующий синий бейдж
       peTile.classList.add("peBlue");
-  
+      if (subText){
+        if (peCount) peCount.style.display = "none";
+        subText.textContent = "Непрочитанное сообщение от администратора";
+      }
       if (pePulse) pePulse.style.display = "none";
       if (badge){
         badge.hidden = false;
         badge.textContent = String(unreadCount);
       }
     } else {
-      // ЗЕЛЁНЫЙ режим: мигаем, бейдж прячем
+      // ЗЕЛЁНЫЙ режим: текст = “N активных”, зелёная мигалка
       peTile.classList.add("peGreen");
-  
+      if (subText){
+        if (peCount) peCount.style.display = "inline";
+        subText.textContent = "активных";
+      }
       if (pePulse) pePulse.style.display = "block";
       if (badge) badge.hidden = true;
     }
@@ -1348,23 +1343,25 @@
     const html = `
       <div class="modalH">${title}</div>
       <p class="modalP">${dt} • ${statusLabel(st)}</p>
-  
-      <div class="modalGrid">
-        <div class="modalRow"><span>Категория</span><b>${payload.category || "—"}</b></div>
+
+      <div class="modalGrid peInfo">
+        <div class="modalRow peInfoRow"><span>Категория</span><b>${payload.category || "—"}</b></div>
         ${itemRow}
-        <div class="modalRow"><span>Описание</span><b>${payload.problem || "—"}</b></div>
+        <div class="modalRow peInfoRow"><span>Описание</span><b>${payload.problem || "—"}</b></div>
       </div>
-  
+
       ${reply ? `
-        <div style="height:12px"></div>
-        <div class="modalH">Ответ мастера</div>
-        <p class="modalP" style="white-space:pre-wrap">${reply}</p>
+        <div class="peReplyBox">
+          <div class="peReplyTitle">Ответ мастера</div>
+          <div class="peReplyText" style="white-space:pre-wrap">${reply}</div>
+        </div>
       ` : ""}
-  
-      <div style="height:10px"></div>
-      ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
-      <button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>
-      <button class="smallBtn danger" type="button" id="peDeleteBtn">Удалить</button>
+
+      <div class="peActions">
+        ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
+        ${reply ? `<button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>` : ``}
+        <button class="smallBtn danger" type="button" id="peDeleteBtn">Удалить</button>
+      </div>
     `;
   
     return { html, title, id: x.id, hasReply: !!reply, status: st };
