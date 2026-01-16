@@ -1,65 +1,33 @@
 (() => {
   const tg = window.Telegram?.WebApp;
-
-  // Диагностика: ловим ошибки JS и показываем алерт в Telegram
-  const _showFatal = (err) => {
-    try { console.error(err); } catch (_) {}
-    const msg = (err && (err.message || err.reason)) ? String(err.message || err.reason) : String(err);
-    try { tg?.showAlert?.('Ошибка в мини‑аппе: ' + msg.slice(0, 220)); } catch (_) {}
+  // --- DIAGNOSTICS: show JS errors inside Telegram ---
+  const showFatal = (msg) => {
+    try {
+      if (tg?.showAlert) tg.showAlert(msg);
+      else alert(msg);
+    } catch (_) {
+      try { alert(msg); } catch (__) {}
+    }
   };
-  window.addEventListener('error', (ev) => _showFatal(ev?.error || ev?.message || ev));
-  window.addEventListener('unhandledrejection', (ev) => _showFatal(ev?.reason || ev));
+  window.addEventListener("error", (e) => {
+    const m = `JS error: ${e?.message || e}`;
+    console.error(m, e);
+    showFatal(m);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    const m = `Promise error: ${e?.reason?.message || e?.reason || e}`;
+    console.error(m, e);
+    showFatal(m);
+  });
 
-  try {
 
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
   const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
+
+  // ВАЖНО: добавь эти 2 edge-function в Supabase (см. инструкцию ниже)
   const SUPABASE_RESERVE_PROMO_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/reserve_promo";
   const SUPABASE_GET_PROFILE_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/get_profile";
-
-  async function reservePromoCode() {
-    const res = await fetch(SUPABASE_RESERVE_PROMO_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({}),
-    });
-  
-    const raw = await res.text();
-    let data = null;
-    try { data = JSON.parse(raw); } catch (_) {}
-  
-    if (!res.ok || !data?.ok || !data?.code) {
-      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
-    }
-  
-    return String(data.code);
-  }
-  
-  async function getRemoteProfile(tg_id) {
-    const res = await fetch(SUPABASE_GET_PROFILE_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ tg_id }),
-    });
-  
-    const raw = await res.text();
-    let data = null;
-    try { data = JSON.parse(raw); } catch (_) {}
-  
-    if (!res.ok || !data?.ok) return null;
-    return data.profile || null;
-  }
   
   // telegram init
   if (tg) {
@@ -85,12 +53,11 @@
     try { tg.HapticFeedback.impactOccurred(kind); } catch (_) {}
   };
 
-  // ---------------- SUPABASE QUEUE (enqueue_request) ----------------
+  // ---------------- SUPABASE QUEUE HELPERS ----------------
   const getTgId = () => tg?.initDataUnsafe?.user?.id || 0;
 
   async function supaEnqueue(kind, payload_json = {}) {
     const tg_id = getTgId();
-
     const res = await fetch(SUPABASE_FUNCTION_URL, {
       method: "POST",
       mode: "cors",
@@ -101,32 +68,104 @@
       },
       body: JSON.stringify({ kind, tg_id, payload_json }),
     });
-
     const raw = await res.text();
     let data = null;
     try { data = JSON.parse(raw); } catch (_) {}
-
     if (!res.ok || !data || !data.ok) {
-      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
+      const err = (data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`;
+      throw new Error(err);
     }
     return data;
   }
 
-  // ---------------- MODALS HELPERS ----------------
+  async function reservePromoCode() {
+    const res = await fetch(SUPABASE_RESERVE_PROMO_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({}),
+    });
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+    if (!res.ok || !data?.ok || !data?.code) {
+      const err = (data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`;
+      throw new Error(err);
+    }
+    return String(data.code);
+  }
+
+  async function getRemoteProfile(tg_id) {
+    const res = await fetch(SUPABASE_GET_PROFILE_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ tg_id: Number(tg_id || 0) }),
+    });
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+    if (!res.ok || !data?.ok) return null;
+    return data.profile || null;
+  }
+
+  // ---------------- PHONE INPUT RULES ----------------
+  function applyPhoneAutoprefix(inputEl) {
+    if (!inputEl) return;
+    inputEl.addEventListener("input", () => {
+      let v = inputEl.value || "";
+      if (!v) return;
+
+      // если пользователь начал с '+', не мешаем
+      if (v[0] === "+") return;
+
+      const first = v[0];
+      if (first < "0" || first > "9") return;
+
+      if (first === "7") {
+        inputEl.value = "+" + v;
+        return;
+      }
+      if (first === "8") {
+        return;
+      }
+      // любая другая цифра
+      inputEl.value = "+7" + v;
+    });
+  }
+
+  function isValidRuPhone(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return false;
+    const cleaned = s.replace(/[\s\-()]/g, "");
+    if (/^\+7\d{10}$/.test(cleaned)) return true;
+    if (/^8\d{10}$/.test(cleaned)) return true;
+    if (/^7\d{10}$/.test(cleaned)) return true;
+    return false;
+  }
+
+  // ---------------- MODAL HELPERS ----------------
   const openModalEl = (el) => {
     if (!el) return;
     el.classList.add("show");
     el.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   };
-
   const closeModalEl = (el) => {
     if (!el) return;
     el.classList.remove("show");
     el.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
   };
-    
+
   // ---------------- THEME ----------------
   const themeBtn = $("#themeToggle");
 
@@ -561,23 +600,70 @@
   // ---------------- PROFILE ----------------
   const addPhoneBtn = $("#addPhoneBtn");
   const phoneValue = $("#tgPhoneValue");
+  const cityValue = $("#tgCityValue");
+  const promoLine = $("#promoLine");
+  const promoValue = $("#promoValue");
+  const editProfileBtn = $("#editProfileBtn");
 
-  const getStoredPhone = () => localStorage.getItem("shetka_phone") || "";
-  const setStoredPhone = (v) => localStorage.setItem("shetka_phone", v);
+  const LS_REGISTERED = "shetka_registered_v2";
+  const LS_PROFILE = "shetka_profile_v2";
+  const PROMO_PERCENT_DEFAULT = 20;
+
+  const loadProfile = () => {
+    try {
+      const raw = localStorage.getItem(LS_PROFILE);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  };
+  const saveProfile = (p) => {
+    try { localStorage.setItem(LS_PROFILE, JSON.stringify(p || null)); } catch (_) {}
+  };
+
+  const getStoredPhone = () => {
+    const p = loadProfile();
+    if (p?.phone) return String(p.phone);
+    return localStorage.getItem("shetka_phone") || "";
+  };
+  const setStoredPhone = (v) => {
+    const phone = String(v || "").trim();
+    const p = loadProfile();
+    if (p) {
+      saveProfile({ ...p, phone });
+    }
+    localStorage.setItem("shetka_phone", phone);
+  };
 
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
+    const p = loadProfile();
 
     const nameEl = $("#tgName");
     const imgEl = $("#tgAvatar");
     const fbEl = $("#avatarFallback");
 
-    const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+    const fullName = p
+      ? [p.first_name, p.last_name].filter(Boolean).join(" ").trim()
+      : [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
     if (nameEl) nameEl.textContent = fullName || "Пользователь";
 
     const phone = getStoredPhone();
     if (phoneValue) phoneValue.textContent = phone ? phone : "—";
     if (addPhoneBtn) addPhoneBtn.hidden = !!phone;
+
+    if (cityValue) cityValue.textContent = p?.city ? String(p.city) : "—";
+
+    // промокод показываем пока не использован
+    const code = p?.promo_code || p?.gift_code || "";
+    const percent = p?.promo_percent || p?.gift_percent || null;
+    const used = !!(p?.promo_used || p?.gift_used);
+    if (code && percent && !used) {
+      if (promoLine) promoLine.hidden = false;
+      if (promoValue) promoValue.textContent = `${percent}% · ${code}`;
+    } else {
+      if (promoLine) promoLine.hidden = true;
+    }
 
     const photo = user?.photo_url;
     if (photo && imgEl) {
@@ -640,311 +726,233 @@
     haptic("light");
   });
 
-  // ---------------- REGISTRATION / PROFILE via SUPABASE ----------------
-  const LS_REGISTERED = "shetka_registered_v1";
-  const LS_PROFILE = "shetka_profile_v1";
+  // применяем правила ввода телефона
+  applyPhoneAutoprefix(phoneInput);
 
+  // ---------------- REGISTRATION / PROFILE SETTINGS ----------------
   const registerModal = $("#registerModal");
   const giftModal = $("#giftModal");
-  const profileEditModal = $("#profileEditModal");
+  const giftText = $("#giftText");
+  const giftCodeBox = $("#giftCodeBox");
 
   const regCitySeg = $("#regCitySeg");
   const regFirstName = $("#regFirstName");
   const regLastName = $("#regLastName");
   const regPhone = $("#regPhone");
   const regPhoneFromTg = $("#regPhoneFromTg");
-  const regAvatarGrid = $("#regAvatarGrid");
-  const regAvatarFile = $("#regAvatarFile");
   const regSubmitBtn = $("#regSubmitBtn");
   const regError = $("#regError");
 
-  const giftText = $("#giftText");
-  const giftCodeBox = $("#giftCodeBox");
-
-  const editProfileBtn = $("#editProfileBtn");
+  const profileEditModal = $("#profileEditModal");
   const profCitySeg = $("#profCitySeg");
   const profFirstName = $("#profFirstName");
   const profLastName = $("#profLastName");
   const profPhone = $("#profPhone");
   const profPhoneFromTg = $("#profPhoneFromTg");
   const profSaveBtn = $("#profSaveBtn");
+  const profError = $("#profError");
 
-  const GIFT_PERCENT = 10;
+  applyPhoneAutoprefix(regPhone);
+  applyPhoneAutoprefix(profPhone);
 
-  const loadProfile = () => {
-    try {
-      const raw = localStorage.getItem(LS_PROFILE);
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
-    }
-  };
-
-  const saveProfile = (p) => {
-    localStorage.setItem(LS_PROFILE, JSON.stringify(p));
-  };
-
-  const setFormError = (msg) => {
+  const showRegError = (msg) => {
     if (!regError) return;
     regError.hidden = !msg;
     regError.textContent = msg || "";
   };
-
-  const normalizePhone = (v) => String(v || "").trim();
-
-  const makeGiftCode = () => {
-    // короткий читаемый код
-    const s = Math.random().toString(16).slice(2, 6).toUpperCase();
-    const t = Math.random().toString(16).slice(2, 6).toUpperCase();
-    return `SHETKA-${s}${t}`;
+  const showProfError = (msg) => {
+    if (!profError) return;
+    profError.hidden = !msg;
+    profError.textContent = msg || "";
   };
 
-  let selectedCity = "";
-  let selectedAvatarKind = "preset_1";
-  let uploadedAvatarDataUrl = ""; // хранится локально, в бот не шлём
-
-  function clearRegErrors() {
+  const clearRegErrors = () => {
+    showRegError("");
     regFirstName?.classList.remove("inputError");
     regLastName?.classList.remove("inputError");
     regPhone?.classList.remove("inputError");
     $$("#regCitySeg .segBtn").forEach(b => b.classList.remove("segError"));
-  }
-  
-  function markCityErrorIfNeeded(selectedCity) {
-    if (selectedCity) return;
-    $$("#regCitySeg .segBtn").forEach(b => b.classList.add("segError"));
-  }
-  
-  function markInputError(el) {
-    el?.classList.add("inputError");
-  }
-    
-  function applyPhoneAutoprefix(inputEl) {
-    if (!inputEl) return;
-  
-    inputEl.addEventListener("input", () => {
-      let v = inputEl.value || "";
-      if (!v) return;
-  
-      // если первым символом пользователь ввёл '+' — не мешаем, он вводит полностью
-      if (v[0] === "+") return;
-  
-      // только цифры в начале проверяем по первому символу
-      const first = v[0];
-  
-      // если первый символ не цифра — ничего не делаем
-      if (first < "0" || first > "9") return;
-  
-      if (first === "7") {
-        // 7 -> +7...
-        inputEl.value = "+" + v;
-        return;
-      }
-  
-      if (first === "8") {
-        // 8 -> ничего не вставляем
-        return;
-      }
-  
-      // любая другая цифра -> +7<digit>...
-      inputEl.value = "+7" + v;
-    });
-  }
-  
-  function isValidRuPhone(raw) {
-    const s = String(raw || "").trim();
-    if (!s) return false;
-  
-    // оставляем только цифры и плюс
-    const cleaned = s.replace(/[^\d+]/g, "");
-  
-    // варианты:
-    // +7XXXXXXXXXX (12 символов с +)
-    if (/^\+7\d{10}$/.test(cleaned)) return true;
-  
-    // 8XXXXXXXXXX (11 цифр)
-    if (/^8\d{10}$/.test(cleaned)) return true;
-  
-    // 7XXXXXXXXXX (11 цифр) — бывает когда без плюса
-    if (/^7\d{10}$/.test(cleaned)) return true;
-  
-    return false;
-  }
+  };
 
-  applyPhoneAutoprefix(regPhone);
-  applyPhoneAutoprefix(profPhone);
-    
-  // --- reset через URL: ?reset=1
-  try {
-    if (new URLSearchParams(location.search).get("reset") === "1") {
-      localStorage.removeItem(LS_REGISTERED);
-      localStorage.removeItem(LS_PROFILE);
-      // телефон/прочее оставляем как было, если хочешь — можно тоже чистить
-    }
-  } catch (_) {}
+  const setCityActive = (segEl, city) => {
+    if (!segEl) return;
+    $$(".segBtn", segEl).forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+  };
 
-  // --- город сегмент (регистрация)
+  let regCity = "";
+
   regCitySeg?.addEventListener("click", (e) => {
     const btn = e.target?.closest?.("button[data-city]");
     if (!btn) return;
-    selectedCity = btn.dataset.city || "";
-    $$("#regCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    regCity = btn.dataset.city || "";
+    setCityActive(regCitySeg, regCity);
     haptic("light");
   });
 
-  // --- подарок модалка: закрытие
-  $$("[data-gift-close]").forEach(el => el.addEventListener("click", () => closeModalEl(giftModal)));
-
-  // --- регистрация: телефон из TG
+  // телефон из TG (значок): кладём request_phone в очередь (бот попросит контакт)
   regPhoneFromTg?.addEventListener("click", async () => {
     try {
-      haptic("light");
+      showRegError("");
       await supaEnqueue("request_phone", {});
-      // тут можно оставить подсказку пользователю без изменения верстки (не делаю)
+      haptic("light");
     } catch (e) {
-      setFormError(`Не удалось запросить номер: ${e.message || e}`);
+      showRegError("Не удалось запросить номер. Попробуйте ещё раз.");
     }
   });
 
-  // --- профиль: телефон из TG
   profPhoneFromTg?.addEventListener("click", async () => {
     try {
-      haptic("light");
+      showProfError("");
       await supaEnqueue("request_phone", {});
+      haptic("light");
     } catch (e) {
-      // без алертов, просто тихо
-      console.log("request_phone error:", e);
+      showProfError("Не удалось запросить номер. Попробуйте ещё раз.");
     }
   });
 
-  // --- показать модалку регистрации если не зарегистрирован
-  const ensureRegistration = () => {
-    const isReg = localStorage.getItem(LS_REGISTERED) === "1";
-    if (isReg) return;
+  // регистрация обязательна: сначала пробуем подтянуть профиль из Supabase по tg_id
+  async function ensureRegistration() {
+    if (localStorage.getItem(LS_REGISTERED) === "1") return;
 
-    // НЕЛЬЗЯ закрыть — поэтому не вешаем close на backdrop
+    const tg_id = getTgId();
+    if (tg_id) {
+      const remote = await getRemoteProfile(tg_id);
+      if (remote && remote.phone && remote.city) {
+        saveProfile({
+          city: remote.city,
+          first_name: remote.first_name || "",
+          last_name: remote.last_name || "",
+          phone: remote.phone || "",
+          promo_code: remote.promo_code || "",
+          promo_percent: remote.promo_percent || null,
+          promo_used: !!remote.promo_used,
+        });
+        localStorage.setItem(LS_REGISTERED, "1");
+        hydrateProfile();
+        return;
+      }
+    }
+
+    // блокируем всё модалкой (без кнопок закрытия)
     openModalEl(registerModal);
-  };
+  }
 
-  // --- заполнить настройки профиля из localStorage
-  const fillProfileEdit = () => {
-    const p = loadProfile() || {};
-    // город
-    const city = p.city || "";
-    selectedCity = city; // чтобы не сбить выбор
-    $$("#profCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+  // генерация промокода строго через Supabase (чтобы не было дублей)
+  const PROMO_PERCENT = 20;
 
-    if (profFirstName) profFirstName.value = p.first_name || "";
-    if (profLastName) profLastName.value = p.last_name || "";
-    if (profPhone) profPhone.value = p.phone || "";
-  };
-
-  // --- профиль: открыть модалку настроек
-  editProfileBtn?.addEventListener("click", () => {
-    fillProfileEdit();
-    openModalEl(profileEditModal);
-    haptic("light");
-  });
-
-  $$("[data-prof-close]").forEach(el => el.addEventListener("click", () => closeModalEl(profileEditModal)));
-
-  // --- профиль: выбор города (настройки)
-  profCitySeg?.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("button[data-city]");
-    if (!btn) return;
-    const city = btn.dataset.city || "";
-    $$("#profCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
-    haptic("light");
-  });
-
-  // --- регистрация: submit
-  const GIFT_PERCENT = 20;
-  
   regSubmitBtn?.addEventListener("click", async () => {
     try {
       clearRegErrors();
-      setFormError("");
-  
-      const city = selectedCity;
+
       const first = (regFirstName?.value || "").trim();
       const last = (regLastName?.value || "").trim();
       const phone = (regPhone?.value || "").trim();
-  
-      if (!city) {
-        markCityErrorIfNeeded(city);
-        return setFormError("Выберите город.");
+
+      if (!regCity) {
+        $$("#regCitySeg .segBtn").forEach(b => b.classList.add("segError"));
+        return showRegError("Выберите город.");
       }
       if (!first) {
-        markInputError(regFirstName);
-        return setFormError("Введите имя.");
+        regFirstName?.classList.add("inputError");
+        return showRegError("Введите имя.");
       }
       if (!phone) {
-        markInputError(regPhone);
-        return setFormError("Введите номер телефона.");
+        regPhone?.classList.add("inputError");
+        return showRegError("Введите номер телефона.");
       }
       if (!isValidRuPhone(phone)) {
-        markInputError(regPhone);
-        return setFormError("Введите корректный номер телефона.");
+        regPhone?.classList.add("inputError");
+        return showRegError("Введите корректный номер телефона.");
       }
-  
-      // 1) берём уникальный промокод из Supabase
+
+      // 1) резервируем уникальный код (в Supabase проверка на дубль)
       const promo_code = await reservePromoCode();
-  
-      // 2) кладём регистрацию в очередь Supabase -> бот заберёт
+
+      // 2) кладём регистрацию в очередь (бот заберёт, сохранит, удалит из requests)
       await supaEnqueue("register", {
-        city,
+        city: regCity,
         first_name: first,
         last_name: last || null,
         phone,
-        promo_percent: GIFT_PERCENT,
         promo_code,
+        promo_percent: PROMO_PERCENT,
       });
-  
-      // 3) сохраняем локально и закрываем модалку
+
+      // 3) сохраняем локально (чтобы мини-апп работал сразу)
       saveProfile({
-        city,
+        city: regCity,
         first_name: first,
         last_name: last || "",
         phone,
         promo_code,
-        promo_percent: GIFT_PERCENT,
+        promo_percent: PROMO_PERCENT,
         promo_used: false,
       });
       localStorage.setItem(LS_REGISTERED, "1");
-  
+      setStoredPhone(phone);
+
       closeModalEl(registerModal);
-  
-      // 4) подарок
+
+      // подарок
       if (giftText) {
         giftText.textContent =
-          `Вам доступна единоразовая скидка ${GIFT_PERCENT}%.\n` +
-          `Покажите этот код администратору в мастерской или в пункте приёма — он будет применён один раз.`;
+          `Вам доступна единоразовая скидка ${PROMO_PERCENT}%.\n` +
+          "Покажите этот код администратору в мастерской или в пункте приёма — он будет применён один раз.";
       }
       if (giftCodeBox) giftCodeBox.textContent = promo_code;
-  
       openModalEl(giftModal);
-  
-      hydrateProfile?.();
+
+      hydrateProfile();
       haptic("light");
     } catch (e) {
-      setFormError("Ошибка регистрации: " + (e?.message || e));
+      showRegError("Ошибка регистрации. Попробуйте ещё раз.");
+      console.error(e);
     }
   });
 
-  // --- профиль: сохранить изменения
+  // закрытие подарка
+  $$('[data-gift-close]').forEach(el => el.addEventListener("click", () => closeModalEl(giftModal)));
+
+  // профиль: открыть настройки
+  editProfileBtn?.addEventListener("click", () => {
+    const p = loadProfile();
+    if (!p) return;
+    showProfError("");
+    setCityActive(profCitySeg, p.city || "");
+    if (profFirstName) profFirstName.value = p.first_name || "";
+    if (profLastName) profLastName.value = p.last_name || "";
+    if (profPhone) profPhone.value = p.phone || "";
+    openModalEl(profileEditModal);
+    haptic("light");
+  });
+  $$('[data-prof-close]').forEach(el => el.addEventListener("click", () => closeModalEl(profileEditModal)));
+
+  // выбор города в профиле
+  profCitySeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-city]");
+    if (!btn) return;
+    setCityActive(profCitySeg, btn.dataset.city || "");
+    haptic("light");
+  });
+
+  // сохранить профиль
   profSaveBtn?.addEventListener("click", async () => {
     try {
-      const p = loadProfile() || {};
-      const cityBtn = $("#profCitySeg .segBtn.active");
-      const city = cityBtn?.dataset?.city || p.city || "";
+      showProfError("");
+      const p = loadProfile();
+      if (!p) return;
 
+      const cityBtn = $("#profCitySeg .segBtn.active");
+      const city = cityBtn?.dataset?.city || "";
       const first = (profFirstName?.value || "").trim();
       const last = (profLastName?.value || "").trim();
-      const phone = normalizePhone(profPhone?.value || "");
+      const phone = (profPhone?.value || "").trim();
 
       if (!city || !first || !phone) {
-        // без изменения визуала — просто не даём сохранить
-        return;
+        return showProfError("Заполните все обязательные поля.");
+      }
+      if (!isValidRuPhone(phone)) {
+        return showProfError("Введите корректный номер телефона.");
       }
 
       await supaEnqueue("profile_update", {
@@ -955,17 +963,19 @@
       });
 
       saveProfile({ ...p, city, first_name: first, last_name: last, phone });
-
+      setStoredPhone(phone);
       closeModalEl(profileEditModal);
+      hydrateProfile();
       haptic("light");
     } catch (e) {
-      console.log("profile_update error:", e);
+      showProfError("Не удалось сохранить. Попробуйте ещё раз.");
+      console.error(e);
     }
   });
 
-  // запуск проверки регистрации
-  ensureRegistration();
-    
+  // запускаем обязательную регистрацию
+  ensureRegistration().catch(() => openModalEl(registerModal));
+
   // ---------------- CHAT (persist) ----------------
   const chat = $("#chat");
   const chatFab = $("#chatFab");
@@ -1613,8 +1623,4 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   setTabActive("home");
   hydrateProfile();
   renderChat();
-  } catch (e) {
-    _showFatal(e);
-  }
-
 })();
