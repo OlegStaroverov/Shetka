@@ -127,7 +127,7 @@
           <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
           <div>
             <div class="pageTitle">Профиль</div>
-            <div class="pageSub">Вид и контакты</div>
+            <div class="pageSub">Настройки и запросы</div>
           </div>
         </div>
 
@@ -141,22 +141,18 @@
             <div class="profileMeta">
               <div id="tgName" class="profileName">—</div>
               <div class="profileHint" id="tgPhoneLine">Телефон: <span id="tgPhoneValue">—</span></div>
-              <div class="phoneHint">
-                Если Вы уже наш клиент, укажите номер телефона, который ранее оставляли в мастерской или в пункте приёма.
-              </div>
               <div class="profileHint" id="tgCityLine">Город: <span id="tgCityValue">—</span></div>
               <div class="profileHint" id="giftLine" hidden>Подарок: <span id="giftValue">—</span></div>
             </div>
           </div>
 
           <div class="profileActions">
-            <button class="profileBtn" id="addPhoneBtn" type="button" hidden>Добавить номер</button>
             <button class="profileBtn" id="editProfileBtn" type="button">Настройки профиля</button>
           </div>
         </div>
 
         <div class="settings glass">
-          <div class="settingsTitle">Вид</div>
+          <div class="settingsTitle">Настройки</div>
 
           <div class="settingRow">
             <div class="settingText">
@@ -164,15 +160,17 @@
               <div class="settingDesc">Светлая или тёмная</div>
             </div>
 
-            <button id="themeToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="Тема">
-              <span class="knob"></span>
+            <!-- Переключатель темы: слева солнце, справа луна -->
+            <button id="themeToggle" class="themeSwitch" type="button" role="switch" aria-checked="false" aria-label="Тема">
+              <span class="themeIcon sun" aria-hidden="true">☀️</span>
+              <span class="themeIcon moon" aria-hidden="true">🌙</span>
+              <span class="themeKnob" aria-hidden="true"></span>
             </button>
           </div>
 
           <div class="settingRow">
             <div class="settingText">
               <div class="settingName">Фон</div>
-              <div class="settingDesc">Паттерн на фоне интерфейса</div>
             </div>
 
             <button id="patternToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Фон">
@@ -358,14 +356,7 @@
 
           <div class="modalRowCol">
             <span>Номер телефона</span>
-            <div class="phoneRow">
-              <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
-              <button id="profPhoneFromTg" type="button" class="tgIconBtn" aria-label="Взять из Telegram">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M9.99 15.47 9.6 20.0c.56 0 .8-.24 1.09-.53l2.62-2.5 5.43 3.97c1 .55 1.71.26 1.96-.92L23.9 3.8c.32-1.48-.53-2.06-1.5-1.7L1.6 10.0c-1.42.55-1.4 1.33-.25 1.68l5.32 1.66L19.0 6.0c.6-.4 1.15-.18.7.22"/>
-                </svg>
-              </button>
-            </div>
+            <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
           </div>
 
           <button id="regSubmitBtn" class="smallBtn primary" type="button">Завершить регистрацию</button>
@@ -413,14 +404,7 @@
           </div>
           <div class="modalRowCol">
             <span>Номер телефона</span>
-            <div class="phoneRow">
-              <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
-              <button id="regPhoneFromTg" type="button" class="tgIconBtn" aria-label="Взять из Telegram">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M9.99 15.47 9.6 20.0c.56 0 .8-.24 1.09-.53l2.62-2.5 5.43 3.97c1 .55 1.71.26 1.96-.92L23.9 3.8c.32-1.48-.53-2.06-1.5-1.7L1.6 10.0c-1.42.55-1.4 1.33-.25 1.68l5.32 1.66L19.0 6.0c.6-.4 1.15-.18.7.22"/>
-                </svg>
-              </button>
-            </div>
+            <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
           </div>
           <button id="profSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
         </div>
@@ -447,31 +431,7 @@
       </div>
     </section>
     
-    <!-- PHONE MODAL -->
-    <section class="modal" id="phoneModal" aria-hidden="true">
-      <div class="modalBackdrop" data-phone-close></div>
-      <div class="modalCard">
-        <button class="modalClose" type="button" data-phone-close aria-label="Закрыть">✕</button>
-        <div class="modalH">Номер телефона</div>
-        <p class="modalP">Добавьте номер — чтобы видеть полные детали своих заказов.</p>
-
-        <div class="modalGrid">
-          <div class="modalRowCol">
-            <span>Ввести вручную</span>
-            <div class="phoneRow">
-              <input id="phoneInput" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
-              <button id="phoneSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
-            </div>
-          </div>
-
-          <div style="height:10px"></div>
-
-          <button id="phoneRequestBtn" class="smallBtn" type="button">
-            Взять из Telegram
-          </button>
-        </div>
-      </div>
-    </section>
+    <!-- PHONE MODAL удалён: телефон вводится только вручную в регистрации/настройках -->
 
     <!-- COURIER SHEET -->
     <section class="sheet" id="courierSheet" aria-hidden="true">
