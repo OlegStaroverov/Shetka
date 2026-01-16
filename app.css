@@ -16,6 +16,11 @@
   --tabH: 76px;
   --headerH: 88px;
 
+  /* Логотип в хедере */
+  --logoSlotH: 44px;
+  /* Отступ сверху над логотипом: 1/4 от его размера */
+  --logoTopPad: calc(var(--logoSlotH) * 0.25);
+
   --safeTop: env(safe-area-inset-top, 0px);
   --safeBot: env(safe-area-inset-bottom, 0px);
 
@@ -116,7 +121,7 @@ button{ border:0; background:none; cursor:pointer; }
   min-height: 100vh;
 
   /* фикс: хедер фиксированный, поэтому резервируем место */
-  padding: calc(var(--headerH) + var(--safeTop) + 8px) var(--pad)
+  padding: calc(var(--headerH) + var(--safeTop) + var(--logoTopPad) + 8px) var(--pad)
            calc(var(--pad) + var(--tabH) + var(--safeBot));
 }
 
@@ -128,8 +133,8 @@ button{ border:0; background:none; cursor:pointer; }
   top: 0;
   z-index: 0;
 
-  height: calc(var(--headerH) + var(--safeTop));
-  padding-top: var(--safeTop);
+  height: calc(var(--headerH) + var(--safeTop) + var(--logoTopPad));
+  padding-top: calc(var(--safeTop) + var(--logoTopPad));
   display:flex;
   align-items:center;
   justify-content:center;
@@ -140,7 +145,7 @@ button{ border:0; background:none; cursor:pointer; }
 
 .brandSlot{
   width: min(92vw, 560px);
-  height: 44px;
+  height: var(--logoSlotH);
   pointer-events:none;
   display:flex;
   align-items:center;
@@ -428,6 +433,17 @@ html[data-theme="dark"] .priceTab{ background: rgba(255,255,255,.06); }
 }
 .profileBtn:active{ transform: scale(.98); }
 
+/* Кнопка "Написать в поддержку" — как "Настройки профиля" */
+.supportBtn{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
+  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  font-weight: 950;
+  text-align:center;
+}
+
 .settings{ padding: 14px; }
 .settingsTitle{ font-weight: 950; letter-spacing:-.2px; margin-bottom: 10px; }
 .settingRow{ display:flex; align-items:center; justify-content:space-between; gap: 12px; padding: 8px 0; }
@@ -521,6 +537,9 @@ html[data-theme="dark"] .themeKnob .moon{
 }
 
 .supportBtn:active{ transform: scale(.99); }
+
+/* Увеличенный заголовок внутри модалки (только там, где явно задан класс) */
+.modalHBig{ font-size: 22px; }
 
 /* Чуть воздуха над нижними вкладками на странице профиля */
 .page[data-page="profile"] .supportBtn{ margin-bottom: 10px; }
