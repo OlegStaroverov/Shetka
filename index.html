@@ -45,7 +45,7 @@
               </div>
             </button>
 
-            <button class="cta" type="button" id="openCourierSheet">
+            <button class="cta primary" type="button" id="openCourierSheet">
               <div class="ctaIco">🚚</div>
               <div class="ctaText">
                 <div class="ctaTitle">Вызвать курьера</div>
@@ -362,6 +362,14 @@
           </div>
 
           <div class="modalRowCol">
+            <span>Пол</span>
+            <div class="seg" id="regGenderSeg">
+              <button class="segBtn" type="button" data-gender="M">М</button>
+              <button class="segBtn" type="button" data-gender="W">Ж</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
             <span>Номер телефона</span>
             <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
           </div>
@@ -391,8 +399,7 @@
       <div class="modalBackdrop" data-prof-close></div>
       <div class="modalCard">
         <button class="modalClose" type="button" data-prof-close aria-label="Закрыть">✕</button>
-        <div class="modalH">Настройки профиля</div>
-        <p class="modalP">Можно изменить данные — они обновятся и в боте.</p>
+        <div class="modalH modalHBig">Настройки профиля</div>
         <div class="modalGrid">
           <div class="modalRowCol">
             <span>Город</span>
@@ -409,6 +416,15 @@
             <span>Фамилия</span>
             <input id="profLastName" class="fieldInput" placeholder="Фамилия" />
           </div>
+
+          <div class="modalRowCol">
+            <span>Пол</span>
+            <div class="seg" id="profGenderSeg">
+              <button class="segBtn" type="button" data-gender="M">М</button>
+              <button class="segBtn" type="button" data-gender="W">Ж</button>
+            </div>
+          </div>
+
           <div class="modalRowCol">
             <span>Номер телефона</span>
             <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
