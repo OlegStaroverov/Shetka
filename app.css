@@ -1152,3 +1152,37 @@ html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
   opacity:.75;
   line-height:1.25;
 }
+
+#photoRequestsBtn{
+  display:none;
+  position: relative;
+}
+
+#photoRequestsBtn.green{
+  background: #2ecc71;
+}
+
+#photoRequestsBtn.blue{
+  background: #3498db;
+}
+
+#photoRequestsBtn.blink{
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse{
+  0%{ box-shadow: 0 0 0 0 rgba(46,204,113,.6); }
+  100%{ box-shadow: 0 0 0 12px rgba(46,204,113,0); }
+}
+
+#photoRequestsBtn .badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:#fff;
+  color:#3498db;
+  border-radius:50%;
+  font-size:12px;
+  padding:2px 6px;
+  font-weight:600;
+}
