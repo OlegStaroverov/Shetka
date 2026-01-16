@@ -669,9 +669,12 @@
     if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
     if (cityValue) cityValue.textContent = (p.city || "").trim() || "—";
 
-    const photo = user?.photo_url;
-    if (photo && imgEl) {
-      imgEl.src = photo;
+    // Аватар: сначала наш (по полу), потом Telegram photo_url, потом fallback
+    const localAvatar = (p.avatar_url || "").trim();
+    const tgAvatar = (user?.photo_url || "").trim();
+    const avatar = localAvatar || tgAvatar;
+    if (avatar && imgEl) {
+      imgEl.src = avatar;
       imgEl.hidden = false;
       if (fbEl) fbEl.hidden = true;
     } else {
@@ -697,6 +700,7 @@
   const profileEditModal = $("#profileEditModal");
 
   const regCitySeg = $("#regCitySeg");
+  const regGenderSeg = $("#regGenderSeg");
   const regFirstName = $("#regFirstName");
   const regLastName = $("#regLastName");
   const regPhone = $("#regPhone");
@@ -710,6 +714,7 @@
 
   const editProfileBtn = $("#editProfileBtn");
   const profCitySeg = $("#profCitySeg");
+  const profGenderSeg = $("#profGenderSeg");
   const profFirstName = $("#profFirstName");
   const profLastName = $("#profLastName");
   const profPhone = $("#profPhone");
@@ -746,6 +751,14 @@
   };
 
   let selectedCity = "";
+  let selectedGender = "";
+
+  const genderToAvatar = (g) => {
+    const gg = String(g || "").toUpperCase();
+    if (gg === "M") return "ava_m_1.png";
+    if (gg === "W" || gg === "Ж") return "ava_w_1.png";
+    return "";
+  };
   let selectedAvatarKind = "preset_1";
   let uploadedAvatarDataUrl = ""; // хранится локально, в бот не шлём
 
@@ -807,9 +820,10 @@
 
   function isRegFormReady() {
     const city = selectedCity;
+    const gender = selectedGender;
     const first = (regFirstName?.value || "").trim();
     const phone = (regPhone?.value || "").trim();
-    return !!city && !!first && isValidRuPhone(phone);
+    return !!city && !!gender && !!first && isValidRuPhone(phone);
   }
 
   function syncRegSubmitState() {
@@ -842,6 +856,16 @@
     syncRegSubmitState();
   });
 
+  // --- пол сегмент (регистрация)
+  regGenderSeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-gender]");
+    if (!btn) return;
+    selectedGender = btn.dataset.gender || "";
+    $$("#regGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    haptic("light");
+    syncRegSubmitState();
+  });
+
   regFirstName?.addEventListener("input", syncRegSubmitState);
   regPhone?.addEventListener("input", syncRegSubmitState);
 
@@ -862,11 +886,14 @@
       if (tg_id) {
         const rp = await getRemoteProfile(tg_id);
         if (rp?.city && rp?.first_name && rp?.phone) {
+          const rg = (rp.gender || rp.avatar_kind || "").toString().toUpperCase();
           saveProfile({
             city: rp.city,
             first_name: rp.first_name,
             last_name: rp.last_name || "",
             phone: rp.phone,
+            gender: rg === "M" || rg === "W" ? rg : "",
+            avatar_url: genderToAvatar(rg),
             promo_code: rp.promo_code || null,
             promo_percent: rp.promo_percent || null,
             promo_used: !!rp.promo_used,
@@ -898,6 +925,11 @@
     if (profFirstName) profFirstName.value = p.first_name || "";
     if (profLastName) profLastName.value = p.last_name || "";
     if (profPhone) profPhone.value = p.phone || "";
+
+    // пол
+    const g = (p.gender || "").toUpperCase();
+    selectedGender = g;
+    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.gender || "").toUpperCase() === g));
   };
 
   // --- профиль: открыть модалку настроек
@@ -918,18 +950,28 @@
     haptic("light");
   });
 
+  // --- профиль: выбор пола
+  profGenderSeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-gender]");
+    if (!btn) return;
+    selectedGender = btn.dataset.gender || "";
+    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    haptic("light");
+  });
+
   // --- регистрация: submit
   const GIFT_PERCENT = 20;
 
   regSubmitBtn?.addEventListener("click", async () => {
     try {
       const city = selectedCity;
+      const gender = selectedGender;
       const first = (regFirstName?.value || "").trim();
       const last = (regLastName?.value || "").trim();
       const phone = (regPhone?.value || "").trim();
 
       // По ТЗ: без красных ошибок. Просто не даём отправить.
-      if (!city || !first || !isValidRuPhone(phone)) return;
+      if (!city || !gender || !first || !isValidRuPhone(phone)) return;
   
       // 1) берём уникальный промокод из Supabase
       const promo_code = await reservePromoCode();
@@ -937,9 +979,11 @@
       // 2) кладём регистрацию в очередь Supabase -> бот заберёт
       await supaEnqueue("register", {
         city,
+        gender,
         first_name: first,
         last_name: last || null,
         phone,
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
         promo_percent: GIFT_PERCENT,
         promo_code,
       });
@@ -947,9 +991,12 @@
       // 3) сохраняем локально и закрываем модалку
       saveProfile({
         city,
+        gender,
         first_name: first,
         last_name: last || "",
         phone,
+        avatar_url: genderToAvatar(gender),
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
         promo_code,
         promo_percent: GIFT_PERCENT,
         promo_used: false,
@@ -982,23 +1029,37 @@
       const cityBtn = $("#profCitySeg .segBtn.active");
       const city = cityBtn?.dataset?.city || p.city || "";
 
+      const genderBtn = $("#profGenderSeg .segBtn.active");
+      const gender = genderBtn?.dataset?.gender || p.gender || "";
+
       const first = (profFirstName?.value || "").trim();
       const last = (profLastName?.value || "").trim();
       const phone = normalizePhone(profPhone?.value || "");
 
-      if (!city || !first || !phone) {
+      if (!city || !gender || !first || !phone) {
         // без изменения визуала — просто не даём сохранить
         return;
       }
 
       await supaEnqueue("profile_update", {
         city,
+        gender,
         first_name: first,
         last_name: last || null,
         phone,
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
       });
 
-      saveProfile({ ...p, city, first_name: first, last_name: last, phone });
+      saveProfile({
+        ...p,
+        city,
+        gender,
+        avatar_url: genderToAvatar(gender),
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        first_name: first,
+        last_name: last,
+        phone,
+      });
 
       hydrateProfile();
       
