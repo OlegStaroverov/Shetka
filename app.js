@@ -1237,48 +1237,95 @@
   }
   
   function peUpdateProfileTile(active) {
-    const activeCount = active.length;
+    // защита от undefined/null
+    const list = Array.isArray(active) ? active : [];
+    const activeCount = list.length;
   
-    // 0 = скрыто
     if (!peTile) return;
-    peTile.hidden = !(activeCount > 0);
-    if (!(activeCount > 0)) return;
   
-    // число активных
-    if (peCount) peCount.textContent = String(activeCount);
     const subText = $("#photoEstimatesSubText");
+    const badge = $("#photoEstimatesBadge"); // синяя пульсирующая кнопка/бейдж
+    // pePulse — зелёная пульсирующая кнопка (как у тебя было)
+    // peCount — число N
   
-    // считаем непрочитанные ответы
-    const unreadCount = active.filter(peIsUnread).length;
+    // === 1) ЕСЛИ 0 АКТИВНЫХ — ПЛИТКИ НЕТ ВООБЩЕ ===
+    if (activeCount < 1) {
+      peTile.hidden = true;
   
-    // элементы
-    const badge = $("#photoEstimatesBadge");
+      // сброс хвостов (чтобы ничего не торчало при следующем показе)
+      if (peCount) {
+        peCount.textContent = "0";
+        peCount.style.display = "inline";
+      }
+      if (subText) subText.textContent = "активных";
   
-    // сброс классов
-    peTile.classList.remove("peGreen","peBlue");
-  
-    if (unreadCount > 0){
-      // СИНИЙ режим: текст = “Непрочитанное сообщение от администратора”, показываем пульсирующий синий бейдж
-      peTile.classList.add("peBlue");
-      if (subText){
-        if (peCount) peCount.style.display = "none";
-        subText.textContent = "Непрочитанное сообщение от администратора";
+      if (badge) {
+        badge.hidden = true;
+        badge.textContent = "";
+        badge.classList.remove("peBadgePulse");
       }
       if (pePulse) pePulse.style.display = "none";
-      if (badge){
+  
+      peTile.classList.remove("peGreen", "peBlue");
+      return;
+    }
+  
+    // === 2) ЕСТЬ ХОТЯ БЫ 1 — ПЛИТКА ВИДНА ===
+    peTile.hidden = false;
+  
+    // Всегда обновляем число активных (оно нужно для зелёного режима)
+    if (peCount) peCount.textContent = String(activeCount);
+  
+    // Считаем непрочитанные ответы
+    const unreadCount = list.filter(peIsUnread).length;
+  
+    // Сбрасываем режимы
+    peTile.classList.remove("peGreen", "peBlue");
+  
+    // === 3) РЕЖИМ "ЕСТЬ НЕПРОЧИТАННЫЕ" (СИНИЙ) ===
+    if (unreadCount > 0) {
+      peTile.classList.add("peBlue");
+  
+      // Подтекст меняем
+      if (subText) subText.textContent = "Непрочитанные ответы администраторов";
+  
+      // В синем режиме: зелёной пульсации нет
+      if (pePulse) pePulse.style.display = "none";
+  
+      // В синем режиме число "N" прячем (чтобы не мешало)
+      if (peCount) peCount.style.display = "none";
+  
+      // Синяя кнопка/бейдж показывается и пульсирует
+      if (badge) {
         badge.hidden = false;
         badge.textContent = String(unreadCount);
+  
+        // делаем пульсацию через класс (без поломки остального)
+        // если класса нет — просто добавь CSS (ниже)
+        badge.classList.add("peBadgePulse");
       }
-    } else {
-      // ЗЕЛЁНЫЙ режим: текст = “N активных”, зелёная мигалка
-      peTile.classList.add("peGreen");
-      if (subText){
-        if (peCount) peCount.style.display = "inline";
-        subText.textContent = "активных";
-      }
-      if (pePulse) pePulse.style.display = "block";
-      if (badge) badge.hidden = true;
+  
+      return;
     }
+  
+    // === 4) РЕЖИМ "НЕТ НЕПРОЧИТАННЫХ" (ЗЕЛЁНЫЙ) ===
+    peTile.classList.add("peGreen");
+  
+    // Подтекст обычный
+    if (subText) subText.textContent = "активных";
+  
+    // Синего бейджа нет
+    if (badge) {
+      badge.hidden = true;
+      badge.textContent = "";
+      badge.classList.remove("peBadgePulse");
+    }
+  
+    // Число "N" показываем
+    if (peCount) peCount.style.display = "inline";
+  
+    // Зелёная пульсация есть
+    if (pePulse) pePulse.style.display = "block";
   }
   
   function peOpenCardModal(html) {
