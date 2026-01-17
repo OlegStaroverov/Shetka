@@ -1262,32 +1262,25 @@
   let peReadSet = peLoadReadSet();
   
   function peIsUnread(x){
-    // “непрочитанное” = есть ответ админа и пользователь ещё не прочитал.
-    // 1) если бэкенд отдаёт read-статус (user_read_at/is_read/read_at) — используем его (это синхрон между устройствами)
-    // 2) иначе fallback на локальный localStorage (пока бэкенд не обновлён)
-    if (!x || !x.admin_reply) return false;
-    const isRead = !!(
-      x.user_read_at ||
-      x.read_at ||
-      x.user_read ||
-      x.is_read ||
-      x.read === true
-    );
-    if (isRead) return false;
-    return !peReadSet.has(Number(x.id));
+    // НОВОЕ (синхронизация между устройствами):
+    // если Supabase возвращает user_read_at — считаем непрочитанным, когда admin_reply есть, а user_read_at пустой.
+    // если поля ещё нет (старый бэкенд) — используем локальный fallback через localStorage.
+    const hasReply = !!(x && x.admin_reply);
+    const hasServerFlag = x && ("user_read_at" in x);
+    if (hasReply && hasServerFlag) return !x.user_read_at;
+
+    // Fallback (пока Supabase не обновлён):
+    return !!(hasReply && !peReadSet.has(Number(x.id)));
   }
   
-  function peMarkRead(id){
+  async function peMarkRead(id){
     const n = Number(id);
     if (!n) return;
-    if (peReadSet.has(n)) return;
-    peReadSet.add(n);
-    peSaveReadSet(peReadSet);
 
-    // Пытаемся синхронизировать “прочитано” на бэкенд (если добавишь action mark_read).
-    // Если на бэке нет — просто молча игнорируем.
-    (async () => {
-      try{
+    // 1) пробуем записать read в Supabase (чтобы синхронизировалось между устройствами)
+    try{
+      const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+      if (tg_id){
         await fetch(SUPABASE_ESTIMATES_URL, {
           method: "POST",
           headers: {
@@ -1295,10 +1288,15 @@
             "apikey": SUPABASE_ANON_KEY,
             "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ action: "mark_read", id: n, tg_id: getTgId() }),
-        });
-      }catch(_){ }
-    })();
+          body: JSON.stringify({ action: "mark_read", tg_id, id: n }),
+        }).catch(() => null);
+      }
+    }catch{}
+
+    // 2) локальный fallback (если бэкенд ещё не обновлён)
+    if (peReadSet.has(n)) return;
+    peReadSet.add(n);
+    peSaveReadSet(peReadSet);
   }
   
   function peUpdateProfileTile(active) {
@@ -1352,10 +1350,14 @@
     peTile.classList.remove("peBlue");
     peTile.classList.add("peGreen");
   
-    // Текст/счётчик:
-    // - если есть непрочитанные ответы — вместо "N активных" пишем "Непрочитанные ответы администрации"
-    // - число непрочитанных рисуем ТОЛЬКО внутри зелёной точки
-    if (unreadCount > 0) {
+    // зелёная точка всегда есть, когда есть активные
+    if (pePulse) pePulse.style.display = "flex";
+
+    // ТРЕБОВАНИЕ:
+    // - если есть непрочитанные ответы админов: вместо "N активных" пишем "Непрочитанные ответы администрации"
+    //   и число показываем ТОЛЬКО в зелёной кнопке.
+    // - если непрочитанных нет: показываем "N активных", а в зелёной кнопке цифры нет.
+    if (unreadCount > 0){
       if (peCount) {
         peCount.textContent = "";
         peCount.style.display = "none";
@@ -1368,9 +1370,8 @@
       }
       if (subText) subText.textContent = "активных";
     }
-    if (pePulse) pePulse.style.display = "flex";
   
-    // цифра непрочитанных рисуется ВНУТРИ зелёной точки
+    // цифра ВНУТРИ зелёной точки = ТОЛЬКО непрочитанные
     if (unreadEl) {
       if (unreadCount > 0) {
         unreadEl.hidden = false;
@@ -1555,7 +1556,8 @@
           Описание: ${payload.problem || "—"}
           ${x.admin_reply ? (() => {
               const unread = peIsUnread(x);
-              return `<div style="height:8px"></div><b style="color:var(--txt)">${unread ? "Непрочитанный ответ" : "Ответ прочитан"}</b>`;
+              const txt = unread ? "Непрочитанный ответ администрации" : "Ответ администрации прочитан";
+              return `<div style="height:8px"></div><b style="color:var(--txt)">${txt}</b>`;
             })() : ""}
         </div>
       `;
@@ -1563,7 +1565,13 @@
         const card = peBuildCard(x);
       
         // если есть ответ — считаем прочитанным в момент открытия карточки
-        if (x.admin_reply) peMarkRead(x.id);
+        if (x.admin_reply) {
+          peMarkRead(x.id);
+          // если бэкенд уже отдаёт server-flag — обновим локально, чтобы UI сразу перестроился
+          if (x && ("user_read_at" in x)) {
+            x.user_read_at = x.user_read_at || new Date().toISOString();
+          }
+        }
       
         const bindCardButtons = () => {
           // Ответить
@@ -1643,8 +1651,10 @@
         peOpenCardModal(card.html);
         bindCardButtons();
       
-        // обновляем плитку в профиле (синий/зелёный режим)
+        // обновляем UI сразу
         peUpdateProfileTile(PE_CACHE.active || []);
+        // и перерисуем список, чтобы поменялась пометка (прочитан/непрочитан)
+        peRenderPage(PE_CACHE.active || []);
       });
   
       peActiveList?.appendChild(el);
