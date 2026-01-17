@@ -1274,99 +1274,76 @@
     peSaveReadSet(peReadSet);
   }
   
-function peUpdateProfileTile(active) {
-  const list = Array.isArray(active) ? active : [];
-  const activeCount = list.length;
-
-  if (!peTile) return;
-
-  const subText = $("#photoEstimatesSubText");
-  const badge = $("#photoEstimatesBadge"); // синий бейдж
-  // pePulse = $("#photoEstimatesPulse");   // зелёная точка
-  // peCount = $("#photoEstimatesCount");   // число активных
-
-  // helper: жёстко скрыть плитку
-  const hideTile = () => {
-    peTile.hidden = true;
-    peTile.setAttribute("hidden", "");
-    peTile.style.display = "none";
-
-    // сброс хвостов
+  function peUpdateProfileTile(active) {
+    const list = Array.isArray(active) ? active : [];
+    const activeCount = list.length;
+  
+    if (!peTile) return;
+  
+    const subText = $("#photoEstimatesSubText");
+    const unreadEl = $("#photoEstimatesUnread"); // цифра внутри зелёной точки
+  
+    // helper: жёстко скрыть плитку
+    const hideTile = () => {
+      peTile.hidden = true;
+      peTile.setAttribute("hidden", "");
+      peTile.style.display = "none";
+  
+      // сброс хвостов
+      if (peCount) {
+        peCount.textContent = "0";
+        peCount.style.display = "inline";
+      }
+      if (subText) subText.textContent = "активных";
+  
+      if (pePulse) pePulse.style.display = "none";
+      if (unreadEl) { unreadEl.hidden = true; unreadEl.textContent = ""; }
+  
+      peTile.classList.remove("peGreen", "peBlue");
+    };
+  
+    // helper: показать плитку
+    const showTile = () => {
+      peTile.hidden = false;
+      peTile.removeAttribute("hidden");
+      peTile.style.display = "";
+    };
+  
+    // === 0 активных -> плитки НЕТ вообще ===
+    if (activeCount < 1) {
+      hideTile();
+      return;
+    }
+  
+    // === есть активные -> плитка есть ===
+    showTile();
+  
+    // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
+    const unreadCount = list.filter(peIsUnread).length;
+  
+    // всегда зелёный режим (синюю кнопку убрали)
+    peTile.classList.remove("peBlue");
+    peTile.classList.add("peGreen");
+  
+    // показываем N активных и зелёную точку
     if (peCount) {
-      peCount.textContent = "0";
+      peCount.textContent = String(activeCount);
       peCount.style.display = "inline";
     }
+  
     if (subText) subText.textContent = "активных";
-
-    if (pePulse) pePulse.style.display = "none";
-    if (badge) {
-      badge.hidden = true;
-      badge.textContent = "";
+    if (pePulse) pePulse.style.display = "flex";
+  
+    // цифра непрочитанных рисуется ВНУТРИ зелёной точки
+    if (unreadEl) {
+      if (unreadCount > 0) {
+        unreadEl.hidden = false;
+        unreadEl.textContent = String(unreadCount);
+      } else {
+        unreadEl.hidden = true;
+        unreadEl.textContent = "";
+      }
     }
-
-    peTile.classList.remove("peGreen", "peBlue");
-  };
-
-  // helper: показать плитку
-  const showTile = () => {
-    peTile.hidden = false;
-    peTile.removeAttribute("hidden");
-    peTile.style.display = "";
-  };
-
-  // === 0 активных -> плитки НЕТ вообще ===
-  if (activeCount < 1) {
-    hideTile();
-    return;
-  }
-
-  // === есть активные -> плитка есть ===
-  showTile();
-
-  // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
-  const unreadCount = list.filter(peIsUnread).length;
-
-  // сброс режимов
-  peTile.classList.remove("peGreen", "peBlue");
-
-  if (unreadCount > 0) {
-    // ===== СИНИЙ режим: только он =====
-    peTile.classList.add("peBlue");
-
-    // зелёной точки НЕТ
-    if (pePulse) pePulse.style.display = "none";
-
-    // число активных прячем
-    if (peCount) peCount.style.display = "none";
-
-    // текст
-    if (subText) subText.textContent = "Непрочитанные ответы администраторов";
-
-    // показываем синий бейдж
-    if (badge) {
-      badge.hidden = false;
-      badge.textContent = String(unreadCount);
-    }
-
-    return;
-  }
-
-  // ===== ЗЕЛЁНЫЙ режим: только он =====
-  peTile.classList.add("peGreen");
-
-  // синего бейджа НЕТ
-  if (badge) {
-    badge.hidden = true;
-    badge.textContent = "";
-  }
-
-  // показываем N и зелёную точку
-  if (peCount) {
-    peCount.textContent = String(activeCount);
-    peCount.style.display = "inline";
-  }
-  if (subText) subText.textContent = `${activeCount} активных`;
-  if (pePulse) pePulse.style.display = "block";
 }
   
   function peOpenCardModal(html) {
@@ -1387,35 +1364,89 @@ function peUpdateProfileTile(active) {
   $$("[data-pec-close]").forEach(el => el.addEventListener("click", peCloseCardModal));
   
   async function peDelete(id) {
-    // 1) пробуем удалить через supabase-функцию
-    await fetch(SUPABASE_ESTIMATES_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ action: "delete", id }),
-    });
+    const estId = Number(id) || 0;
+    if (!estId) return;
 
-    // 2) дублируем в бота — чтобы гарантированно удалилось из Supabase и пропало у пользователя
-    sendToBot("estimate_delete", { estimate_id: id });
+    // 0) локально убираем «прочитано» (чтобы не копились id)
+    try {
+      if (peReadSet && peReadSet.has(estId)) {
+        peReadSet.delete(estId);
+        peSaveReadSet(peReadSet);
+      }
+    } catch (_) {}
+
+    // 1) удаляем в Supabase (мини‑апп должен исчезнуть сразу)
+    try {
+      const res = await fetch(SUPABASE_ESTIMATES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ action: "delete", id: estId }),
+      });
+      const raw = await res.text();
+      let data = null;
+      try { data = JSON.parse(raw); } catch (_) {}
+      // даже если тут не ок — всё равно шлём в бота для гарантии
+      if (!res.ok || (data && data.ok === false)) {
+        console.log("peDelete supabase not ok:", res.status, raw);
+      }
+    } catch (e) {
+      console.log("peDelete supabase error:", e);
+    }
+
+    // 2) дублируем в бота — чтобы гарантированно удалилось «отовсюду» (Supabase + внутренняя БД бота)
+    sendToBot("estimate_delete", { estimate_id: estId });
   }
   
   async function peRateAndDelete(id, rating, comment) {
-    // 1) отправляем оценку в Supabase (если функция поддерживает)
-    await fetch(SUPABASE_ESTIMATES_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ action: "rate", id, rating, rating_comment: comment || "" }),
+    const estId = Number(id) || 0;
+    const r = Number(rating) || 0;
+    const c = String(comment || "").trim();
+    if (!estId || !(r >= 1 && r <= 5)) return;
+
+    // 1) отправляем оценку в Supabase
+    try {
+      const res = await fetch(SUPABASE_ESTIMATES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ action: "rate", id: estId, rating: r, rating_comment: c }),
+      });
+      const raw = await res.text();
+      let data = null;
+      try { data = JSON.parse(raw); } catch (_) {}
+      if (!res.ok || (data && data.ok === false)) {
+        console.log("peRate supabase not ok:", res.status, raw);
+      }
+    } catch (e) {
+      console.log("peRate supabase error:", e);
+    }
+
+    // 2) сразу шлём админам в бота (реал‑тайм) + бот удалит заявку из Supabase и архива в своей БД
+    //    Прикладываем максимум контекста по заявке и ответу мастера.
+    const cur = (PE_CACHE && Array.isArray(PE_CACHE.active))
+      ? (PE_CACHE.active.find(x => Number(x.id) === estId) || null)
+      : null;
+
+    sendToBot("estimate_rate", {
+      estimate_id: estId,
+      rating: r,
+      comment: c,
+      // контекст для админов
+      payload_json: cur?.payload_json || null,
+      admin_reply: cur?.admin_reply || null,
+      status: cur?.status || null,
+      created_at: cur?.created_at || null,
     });
 
-    // 2) отправляем инфу админам через бота (и параллельно бот удалит заявку из Supabase)
-    sendToBot("estimate_rate", { estimate_id: id, rating, comment: comment || "" });
+    // 3) на всякий случай удаляем и здесь (чтобы мгновенно пропало из профиля)
+    await peDelete(estId);
   }
   
   function peBuildCard(x) {
@@ -1560,6 +1591,7 @@ function peUpdateProfileTile(active) {
       
             $("#rateSendBtn")?.addEventListener("click", async () => {
               if (!(picked >= 1 && picked <= 5)) return;
+              if (!confirm("После оценки заявка будет удалена из профиля. Продолжить?") ) return;
               const comment = ($("#rateComment")?.value || "").trim();
               await peRateAndDelete(card.id, picked, comment);
               await peRefreshAll(true);
