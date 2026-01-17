@@ -267,14 +267,14 @@ html[data-theme="dark"] .cta.primary{
   display:flex;
   align-items:center;
   justify-content:center;
-  background: rgba(255,255,255,.35);
-  border:1px solid var(--hair);
+
+  /* ✅ как primary-кнопки (Оценка по фото / Курьер) */
+  border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
+  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+
   font-size: 18px;
 }
-/* маленькие окошки с эмодзи на главной (Заказы/Прайс/Поддержка) должны быть одинаковыми в обеих темах */
-html[data-theme="dark"] .tileIco{ background: rgba(255,255,255,.35); }
-/* ВАЖНО: маленькие окошки с эмодзи на главной (Заказы/Прайс/Поддержка) не меняют цвет от темы */
-html[data-theme="dark"] .tileIco{ background: rgba(255,255,255,.35); }
+
 .tileTxt{ flex:1; }
 .tileTitle{ font-weight: 900; letter-spacing:-.1px; }
 .tileSub{ margin-top:2px; font-size:12px; color: var(--muted); }
