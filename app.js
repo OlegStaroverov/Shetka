@@ -108,9 +108,12 @@
       // Берём только то, что нужно мини-аппу.
       const remote = {
         city: rp.city || "",
+        gender: (rp.gender || "").toString().toUpperCase() || "",
         first_name: rp.first_name || "",
         last_name: rp.last_name || "",
         phone: rp.phone || "",
+        avatar_kind: rp.avatar_kind || ((rp.gender || "").toString().toUpperCase() === "M" ? "ava_m" : "ava_w"),
+        avatar_url: (rp.avatar_url || "").trim() || genderToAvatar((rp.gender || "").toString().toUpperCase()),
         promo_code: rp.promo_code ?? null,
         promo_percent: rp.promo_percent ?? null,
         promo_used: !!rp.promo_used,
@@ -125,9 +128,12 @@
 
       const differs =
         String(local.city || "") !== String(remote.city || "") ||
+        String((local.gender || "").toUpperCase()) !== String((remote.gender || "").toUpperCase()) ||
         String(local.first_name || "") !== String(remote.first_name || "") ||
         String(local.last_name || "") !== String(remote.last_name || "") ||
-        String(local.phone || "") !== String(remote.phone || "");
+        String(local.phone || "") !== String(remote.phone || "") ||
+        String(local.avatar_kind || "") !== String(remote.avatar_kind || "") ||
+        String(local.avatar_url || "") !== String(remote.avatar_url || "");
 
       const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
       if (!shouldUpdate) return false;
@@ -135,6 +141,9 @@
       saveProfile({
         ...local,
         ...remote,
+        // на всякий случай нормализуем аватар под пол (в мини-аппе используем только пресеты)
+        avatar_url: remote.avatar_url || genderToAvatar(remote.gender),
+        avatar_kind: remote.avatar_kind || ((remote.gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w"),
         [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
       });
       localStorage.setItem("shetka_registered_v1", "1");
@@ -821,9 +830,31 @@
     if (regError) regError.hidden = true;
   }
 
+  // Профиль: валидация телефона как при регистрации
+  function isProfileFormReady() {
+    const p = loadProfile() || {};
+    const cityBtn = $("#profCitySeg .segBtn.active");
+    const city = cityBtn?.dataset?.city || p.city || "";
+    const genderBtn = $("#profGenderSeg .segBtn.active");
+    const gender = genderBtn?.dataset?.gender || p.gender || "";
+    const first = (profFirstName?.value || "").trim();
+    const phone = (profPhone?.value || "").trim();
+    return !!city && !!gender && !!first && isValidRuPhone(phone);
+  }
+
+  function syncProfSaveState() {
+    if (!profSaveBtn) return;
+    profSaveBtn.disabled = !isProfileFormReady();
+  }
+
 
   applyPhoneAutoprefix(regPhone);
   applyPhoneAutoprefix(profPhone);
+
+  // реактивная валидация профиля
+  [profFirstName, profLastName, profPhone].forEach(el => el?.addEventListener?.("input", syncProfSaveState));
+  profCitySeg?.addEventListener?.("click", syncProfSaveState);
+  profGenderSeg?.addEventListener?.("click", syncProfSaveState);
     
   // --- reset через URL: ?reset=1
   try {
@@ -923,6 +954,7 @@
   // --- профиль: открыть модалку настроек
   editProfileBtn?.addEventListener("click", () => {
     fillProfileEdit();
+    syncProfSaveState();
     openModalEl(profileEditModal);
     haptic("light");
   });
@@ -1024,7 +1056,8 @@
       const last = (profLastName?.value || "").trim();
       const phone = normalizePhone(profPhone?.value || "");
 
-      if (!city || !gender || !first || !phone) {
+      // валидация телефона — как в регистрации
+      if (!city || !gender || !first || !isValidRuPhone(phone)) {
         // без изменения визуала — просто не даём сохранить
         return;
       }
