@@ -142,11 +142,17 @@
               <div class="profileHint" id="tgPhoneLine">Телефон: <span id="tgPhoneValue">—</span></div>
               <div class="profileHint" id="tgCityLine">Город: <span id="tgCityValue">—</span></div>
               <div class="profileHint" id="giftLine" hidden>Подарок: <span id="giftValue">—</span></div>
-            </div>
-          </div>
 
-          <div class="profileActions">
-            <button class="profileBtn" id="editProfileBtn" type="button">Настройки профиля</button>
+              <!-- быстрые кнопки профиля (по стилю "Написать в поддержку") -->
+              <div class="profileQuickBtns">
+                <button class="supportBtn glass" id="promoBtn" type="button" hidden>
+                  🎟 Промокод
+                </button>
+                <button class="supportBtn glass" id="achievementsBtn" type="button">
+                  🏆 Достижения
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -168,14 +174,12 @@
             </button>
           </div>
 
+          <!-- фон всегда включен, поэтому вместо тумблера — кнопка настроек профиля -->
           <div class="settingRow">
             <div class="settingText">
-              <div class="settingName">Фон</div>
+              <div class="settingName">Профиль</div>
             </div>
-
-            <button id="patternToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Фон">
-              <span class="knob"></span>
-            </button>
+            <button class="profileBtn" id="editProfileBtn" type="button">Настройки профиля</button>
           </div>
         </div>
 
@@ -425,6 +429,29 @@
           </div>
           <button id="profSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
         </div>
+      </div>
+    </section>
+
+    <!-- PROMO CODES MODAL -->
+    <section class="modal" id="promoModal" aria-hidden="true">
+      <div class="modalBackdrop" data-promo-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-promo-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Промокоды</div>
+        <div id="promoModalContent"></div>
+        <div style="height:12px"></div>
+        <button class="smallBtn primary" type="button" data-promo-close>Понятно</button>
+      </div>
+    </section>
+
+    <!-- ACHIEVEMENTS MODAL (пока пустая) -->
+    <section class="modal" id="achievementsModal" aria-hidden="true">
+      <div class="modalBackdrop" data-ach-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-ach-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Достижения</div>
+        <p class="modalP">Скоро здесь появятся достижения.</p>
+        <button class="smallBtn primary" type="button" data-ach-close>Понятно</button>
       </div>
     </section>
     
