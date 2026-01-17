@@ -1262,8 +1262,19 @@
   let peReadSet = peLoadReadSet();
   
   function peIsUnread(x){
-    // “непрочитанное” = есть ответ админа и мы ещё не отметили как прочитанное
-    return !!(x && x.admin_reply && !peReadSet.has(Number(x.id)));
+    // “непрочитанное” = есть ответ админа и пользователь ещё не прочитал.
+    // 1) если бэкенд отдаёт read-статус (user_read_at/is_read/read_at) — используем его (это синхрон между устройствами)
+    // 2) иначе fallback на локальный localStorage (пока бэкенд не обновлён)
+    if (!x || !x.admin_reply) return false;
+    const isRead = !!(
+      x.user_read_at ||
+      x.read_at ||
+      x.user_read ||
+      x.is_read ||
+      x.read === true
+    );
+    if (isRead) return false;
+    return !peReadSet.has(Number(x.id));
   }
   
   function peMarkRead(id){
@@ -1272,6 +1283,22 @@
     if (peReadSet.has(n)) return;
     peReadSet.add(n);
     peSaveReadSet(peReadSet);
+
+    // Пытаемся синхронизировать “прочитано” на бэкенд (если добавишь action mark_read).
+    // Если на бэке нет — просто молча игнорируем.
+    (async () => {
+      try{
+        await fetch(SUPABASE_ESTIMATES_URL, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ action: "mark_read", id: n, tg_id: getTgId() }),
+        });
+      }catch(_){ }
+    })();
   }
   
   function peUpdateProfileTile(active) {
@@ -1325,13 +1352,22 @@
     peTile.classList.remove("peBlue");
     peTile.classList.add("peGreen");
   
-    // показываем N активных и зелёную точку
-    if (peCount) {
-      peCount.textContent = String(activeCount);
-      peCount.style.display = "inline";
+    // Текст/счётчик:
+    // - если есть непрочитанные ответы — вместо "N активных" пишем "Непрочитанные ответы администрации"
+    // - число непрочитанных рисуем ТОЛЬКО внутри зелёной точки
+    if (unreadCount > 0) {
+      if (peCount) {
+        peCount.textContent = "";
+        peCount.style.display = "none";
+      }
+      if (subText) subText.textContent = "Непрочитанные ответы администрации";
+    } else {
+      if (peCount) {
+        peCount.textContent = String(activeCount);
+        peCount.style.display = "inline";
+      }
+      if (subText) subText.textContent = "активных";
     }
-  
-    if (subText) subText.textContent = "активных";
     if (pePulse) pePulse.style.display = "flex";
   
     // цифра непрочитанных рисуется ВНУТРИ зелёной точки
@@ -1517,7 +1553,10 @@
           Категория: ${payload.category || "—"}<br/>
           ${itemLine}
           Описание: ${payload.problem || "—"}
-          ${x.admin_reply ? `<div style="height:8px"></div><b style="color:var(--txt)">Есть ответ</b>` : ""}
+          ${x.admin_reply ? (() => {
+              const unread = peIsUnread(x);
+              return `<div style="height:8px"></div><b style="color:var(--txt)">${unread ? "Непрочитанный ответ" : "Ответ прочитан"}</b>`;
+            })() : ""}
         </div>
       `;
       el.addEventListener("click", () => {
