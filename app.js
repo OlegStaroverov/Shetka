@@ -970,13 +970,18 @@
     haptic("light");
   });
 
-  // --- профиль: выбор пола
+  // --- профиль: выбор пола (настройки)
   profGenderSeg?.addEventListener("click", (e) => {
     const btn = e.target?.closest?.("button[data-gender]");
     if (!btn) return;
-    selectedGender = btn.dataset.gender || "";
+  
+    selectedGender = (btn.dataset.gender || "").toUpperCase();
+  
+    // ВАЖНО: как и с городом — ставим active на выбранную кнопку
     $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+  
     haptic("light");
+    syncProfSaveState();
   });
 
   // --- регистрация: submit
@@ -1269,103 +1274,100 @@
     peSaveReadSet(peReadSet);
   }
   
-  function peUpdateProfileTile(active) {
-    const list = Array.isArray(active) ? active : [];
-    const activeCount = list.length;
-  
-    if (!peTile) return;
-  
-    const subText = $("#photoEstimatesSubText");
-    const badge = $("#photoEstimatesBadge");     // СИНИЙ (непрочитанные)
-    // pePulse = $("#photoEstimatesPulse");       // ЗЕЛЁНЫЙ (пульс точка)
-    // peCount = $("#photoEstimatesCount");       // число N
-  
-    // helper: жёстко скрыть плитку
-    const hideTile = () => {
-      peTile.hidden = true;
-      peTile.setAttribute("hidden", "");     // на всякий случай
-      peTile.style.display = "none";         // жёстко, чтобы точно исчезло
-  
-      // сброс хвостов
-      if (peCount) {
-        peCount.textContent = "0";
-        peCount.style.display = "inline";
-      }
-      if (subText) subText.textContent = "активных";
-  
-      if (pePulse) pePulse.style.display = "none"; // зелёной точки нет
-      if (badge) {
-        badge.hidden = true;
-        badge.textContent = "";
-        badge.classList.add("peBadge");      // пусть класс будет, но элемент скрыт
-      }
-  
-      peTile.classList.remove("peGreen", "peBlue");
-    };
-  
-    // helper: показать плитку
-    const showTile = () => {
-      peTile.hidden = false;
-      peTile.removeAttribute("hidden");
-      peTile.style.display = "";             // вернём как в css (flex задан на .tile)
-    };
-  
-    // === 0 активных -> плитки НЕТ вообще ===
-    if (activeCount < 1) {
-      hideTile();
-      return;
+function peUpdateProfileTile(active) {
+  const list = Array.isArray(active) ? active : [];
+  const activeCount = list.length;
+
+  if (!peTile) return;
+
+  const subText = $("#photoEstimatesSubText");
+  const badge = $("#photoEstimatesBadge"); // синий бейдж
+  // pePulse = $("#photoEstimatesPulse");   // зелёная точка
+  // peCount = $("#photoEstimatesCount");   // число активных
+
+  // helper: жёстко скрыть плитку
+  const hideTile = () => {
+    peTile.hidden = true;
+    peTile.setAttribute("hidden", "");
+    peTile.style.display = "none";
+
+    // сброс хвостов
+    if (peCount) {
+      peCount.textContent = "0";
+      peCount.style.display = "inline";
     }
-  
-    // === есть активные -> плитка есть ===
-    showTile();
-  
-    // всегда актуализируем N (для зелёного режима)
-    if (peCount) peCount.textContent = String(activeCount);
-  
-    // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
-    const unreadCount = list.filter(peIsUnread).length;
-  
-    // сброс режимов
-    peTile.classList.remove("peGreen", "peBlue");
-  
-    if (unreadCount > 0) {
-      // ===== СИНИЙ режим =====
-      peTile.classList.add("peBlue");
-  
-      // только СИНЯЯ (зелёной быть не должно)
-      if (pePulse) pePulse.style.display = "none";
-  
-      // число активных прячем
-      if (peCount) peCount.style.display = "none";
-  
-      // подтекст меняем
-      if (subText) subText.textContent = "Непрочитанные ответы администраторов";
-  
-      // показываем синий бейдж и он пульсирует через .peBadge (у тебя уже есть pulseBlue)
-      if (badge) {
-        badge.classList.add("peBadge");  // важно: класс должен быть peBadge
-        badge.hidden = false;
-        badge.textContent = String(unreadCount);
-      }
-  
-      return;
-    }
-  
-    // ===== ЗЕЛЁНЫЙ режим =====
-    peTile.classList.add("peGreen");
-  
-    // синего бейджа быть не должно
+    if (subText) subText.textContent = "активных";
+
+    if (pePulse) pePulse.style.display = "none";
     if (badge) {
       badge.hidden = true;
       badge.textContent = "";
-      badge.classList.add("peBadge");    // класс пусть останется, но элемент скрыт
     }
-  
-    // показываем N и зелёную точку
-    if (peCount) peCount.style.display = "inline";
-    if (subText) subText.textContent = "активных";
-    if (pePulse) pePulse.style.display = "block";
+
+    peTile.classList.remove("peGreen", "peBlue");
+  };
+
+  // helper: показать плитку
+  const showTile = () => {
+    peTile.hidden = false;
+    peTile.removeAttribute("hidden");
+    peTile.style.display = "";
+  };
+
+  // === 0 активных -> плитки НЕТ вообще ===
+  if (activeCount < 1) {
+    hideTile();
+    return;
   }
+
+  // === есть активные -> плитка есть ===
+  showTile();
+
+  // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
+  const unreadCount = list.filter(peIsUnread).length;
+
+  // сброс режимов
+  peTile.classList.remove("peGreen", "peBlue");
+
+  if (unreadCount > 0) {
+    // ===== СИНИЙ режим: только он =====
+    peTile.classList.add("peBlue");
+
+    // зелёной точки НЕТ
+    if (pePulse) pePulse.style.display = "none";
+
+    // число активных прячем
+    if (peCount) peCount.style.display = "none";
+
+    // текст
+    if (subText) subText.textContent = "Непрочитанные ответы администраторов";
+
+    // показываем синий бейдж
+    if (badge) {
+      badge.hidden = false;
+      badge.textContent = String(unreadCount);
+    }
+
+    return;
+  }
+
+  // ===== ЗЕЛЁНЫЙ режим: только он =====
+  peTile.classList.add("peGreen");
+
+  // синего бейджа НЕТ
+  if (badge) {
+    badge.hidden = true;
+    badge.textContent = "";
+  }
+
+  // показываем N и зелёную точку
+  if (peCount) {
+    peCount.textContent = String(activeCount);
+    peCount.style.display = "inline";
+  }
+  if (subText) subText.textContent = `${activeCount} активных`;
+  if (pePulse) pePulse.style.display = "block";
+}
   
   function peOpenCardModal(html) {
     if (!peCardModal || !peCardContent) return;
