@@ -259,9 +259,10 @@
   };
 
   // ---------------- PATTERN ----------------
+  // По ТЗ: фон всегда включен. Кнопку/тумблер убрали.
   const patternBtn = $("#patternToggle");
 
-  const getPatternEnabled = () => localStorage.getItem("patternEnabled") !== "0";
+  const getPatternEnabled = () => true;
 
   const syncPatternSwitch = () => {
     if (!patternBtn) return;
@@ -271,17 +272,16 @@
 
   const setPatternEnabled = (enabled) => {
     html.classList.toggle("pattern-on", !!enabled);
-    localStorage.setItem("patternEnabled", enabled ? "1" : "0");
     syncPatternSwitch();
   };
 
   // init theme + pattern
   applyTheme(getPreferredTheme());
-  setPatternEnabled(getPatternEnabled());
+  setPatternEnabled(true);
   syncThemeSwitch();
 
   themeBtn?.addEventListener("click", toggleTheme);
-  patternBtn?.addEventListener("click", () => { setPatternEnabled(!getPatternEnabled()); haptic("light"); });
+  // patternBtn отсутствует (фон всегда включен)
 
   // ---------------- NAV ----------------
   let currentPage = "home";
@@ -662,6 +662,16 @@
   const phoneValue = $("#tgPhoneValue");
   const cityValue = $("#tgCityValue");
 
+  // Промокоды / достижения
+  const promoBtn = $("#promoBtn");
+  const achievementsBtn = $("#achievementsBtn");
+  const promoModal = $("#promoModal");
+  const achievementsModal = $("#achievementsModal");
+  const promoModalContent = $("#promoModalContent");
+
+  $$('[data-promo-close]').forEach(el => el.addEventListener('click', () => closeModalEl(promoModal)));
+  $$('[data-ach-close]').forEach(el => el.addEventListener('click', () => closeModalEl(achievementsModal)));
+
   // Профиль
   const hydrateProfile = () => {
     const user = tg?.initDataUnsafe?.user;
@@ -681,6 +691,44 @@
     const g = (p.gender || "").toUpperCase();
     const avatar = (p.avatar_url || "").trim() || genderToAvatar(g) || "ava_m_1.png";
     if (imgEl) imgEl.src = avatar;
+
+    // Кнопка "Промокод" показывается только если промокоды реально есть
+    // Поддерживаем 2 формата:
+    // - p.promo_code (старый)
+    // - p.promo_codes: string[] (если когда-то появятся несколько)
+    const codes = Array.isArray(p.promo_codes)
+      ? p.promo_codes.map(x => String(x || "").trim()).filter(Boolean)
+      : (p.promo_code ? [String(p.promo_code).trim()] : []);
+
+    if (promoBtn) promoBtn.hidden = codes.length < 1;
+
+    if (promoBtn) {
+      promoBtn.onclick = () => {
+        if (!promoModalContent) return;
+
+        const percent = (p.promo_percent != null) ? Number(p.promo_percent) : null;
+        const used = !!p.promo_used;
+
+        promoModalContent.innerHTML = `
+          <p class="modalP">
+            ${percent ? `Скидка: <b>${percent}%</b><br/>` : ""}
+            Статус: <b>${used ? "уже использован" : "доступен"}</b>
+          </p>
+          <div class="modalGrid">
+            ${codes.map(c => `<div class="giftCode" style="user-select:text;">${escapeHtml(c)}</div>`).join("")}
+          </div>
+        `;
+        openModalEl(promoModal);
+        haptic("light");
+      };
+    }
+
+    if (achievementsBtn) {
+      achievementsBtn.onclick = () => {
+        openModalEl(achievementsModal);
+        haptic("light");
+      };
+    }
 
     // обновляем блок заявок по фото в профиле
     peRefreshAll(false).catch(() => {
@@ -906,13 +954,15 @@
         const rp = await getRemoteProfile(tg_id);
         if (rp?.city && rp?.first_name && rp?.phone) {
           const rg = (rp.gender || rp.avatar_kind || "").toString().toUpperCase();
+          const remoteAvatar = (rp.avatar_url || "").toString().trim();
           saveProfile({
             city: rp.city,
             first_name: rp.first_name,
             last_name: rp.last_name || "",
             phone: rp.phone,
             gender: rg === "M" || rg === "W" ? rg : "",
-            avatar_url: genderToAvatar(rg),
+            avatar_url: remoteAvatar || genderToAvatar(rg),
+            avatar_kind: (rp.avatar_kind || ((rg === "M") ? "ava_m" : "ava_w")),
             promo_code: rp.promo_code || null,
             promo_percent: rp.promo_percent || null,
             promo_used: !!rp.promo_used,
@@ -1009,6 +1059,7 @@
         last_name: last || null,
         phone,
         avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        avatar_url: genderToAvatar(gender),
         promo_percent: GIFT_PERCENT,
         promo_code,
       });
@@ -1074,6 +1125,7 @@
         last_name: last || null,
         phone,
         avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        avatar_url: genderToAvatar(gender),
       });
 
       saveProfile({
@@ -1321,7 +1373,7 @@
       }
       if (subText) subText.textContent = "активных";
   
-      if (pePulse) pePulse.style.display = "none";
+      if (pePulse) { pePulse.style.display = "none"; pePulse.classList.remove("hasUnread"); }
       if (unreadEl) { unreadEl.hidden = true; unreadEl.textContent = ""; }
   
       peTile.classList.remove("peGreen", "peBlue");
@@ -1352,6 +1404,8 @@
   
     // зелёная точка всегда есть, когда есть активные
     if (pePulse) pePulse.style.display = "flex";
+    // если есть непрочитанные — делаем точку синей и усиливаем пульсацию
+    if (pePulse) pePulse.classList.toggle("hasUnread", unreadCount > 0);
 
     // ТРЕБОВАНИЕ:
     // - если есть непрочитанные ответы админов: вместо "N активных" пишем "Непрочитанные ответы администрации"
@@ -1554,11 +1608,7 @@
           Категория: ${payload.category || "—"}<br/>
           ${itemLine}
           Описание: ${payload.problem || "—"}
-          ${x.admin_reply ? (() => {
-              const unread = peIsUnread(x);
-              const txt = unread ? "Непрочитанный ответ администрации" : "Ответ администрации прочитан";
-              return `<div style="height:8px"></div><b style="color:var(--txt)">${txt}</b>`;
-            })() : ""}
+          ${""}
         </div>
       `;
       el.addEventListener("click", () => {
