@@ -1237,94 +1237,100 @@
   }
   
   function peUpdateProfileTile(active) {
-    // защита от undefined/null
     const list = Array.isArray(active) ? active : [];
     const activeCount = list.length;
   
     if (!peTile) return;
   
     const subText = $("#photoEstimatesSubText");
-    const badge = $("#photoEstimatesBadge"); // синяя пульсирующая кнопка/бейдж
-    // pePulse — зелёная пульсирующая кнопка (как у тебя было)
-    // peCount — число N
+    const badge = $("#photoEstimatesBadge");     // СИНИЙ (непрочитанные)
+    // pePulse = $("#photoEstimatesPulse");       // ЗЕЛЁНЫЙ (пульс точка)
+    // peCount = $("#photoEstimatesCount");       // число N
   
-    // === 1) ЕСЛИ 0 АКТИВНЫХ — ПЛИТКИ НЕТ ВООБЩЕ ===
-    if (activeCount < 1) {
+    // helper: жёстко скрыть плитку
+    const hideTile = () => {
       peTile.hidden = true;
+      peTile.setAttribute("hidden", "");     // на всякий случай
+      peTile.style.display = "none";         // жёстко, чтобы точно исчезло
   
-      // сброс хвостов (чтобы ничего не торчало при следующем показе)
+      // сброс хвостов
       if (peCount) {
         peCount.textContent = "0";
         peCount.style.display = "inline";
       }
       if (subText) subText.textContent = "активных";
   
+      if (pePulse) pePulse.style.display = "none"; // зелёной точки нет
       if (badge) {
         badge.hidden = true;
         badge.textContent = "";
-        badge.classList.remove("peBadgePulse");
+        badge.classList.add("peBadge");      // пусть класс будет, но элемент скрыт
       }
-      if (pePulse) pePulse.style.display = "none";
   
       peTile.classList.remove("peGreen", "peBlue");
+    };
+  
+    // helper: показать плитку
+    const showTile = () => {
+      peTile.hidden = false;
+      peTile.removeAttribute("hidden");
+      peTile.style.display = "";             // вернём как в css (flex задан на .tile)
+    };
+  
+    // === 0 активных -> плитки НЕТ вообще ===
+    if (activeCount < 1) {
+      hideTile();
       return;
     }
   
-    // === 2) ЕСТЬ ХОТЯ БЫ 1 — ПЛИТКА ВИДНА ===
-    peTile.hidden = false;
+    // === есть активные -> плитка есть ===
+    showTile();
   
-    // Всегда обновляем число активных (оно нужно для зелёного режима)
+    // всегда актуализируем N (для зелёного режима)
     if (peCount) peCount.textContent = String(activeCount);
   
-    // Считаем непрочитанные ответы
+    // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
     const unreadCount = list.filter(peIsUnread).length;
   
-    // Сбрасываем режимы
+    // сброс режимов
     peTile.classList.remove("peGreen", "peBlue");
   
-    // === 3) РЕЖИМ "ЕСТЬ НЕПРОЧИТАННЫЕ" (СИНИЙ) ===
     if (unreadCount > 0) {
+      // ===== СИНИЙ режим =====
       peTile.classList.add("peBlue");
   
-      // Подтекст меняем
-      if (subText) subText.textContent = "Непрочитанные ответы администраторов";
-  
-      // В синем режиме: зелёной пульсации нет
+      // только СИНЯЯ (зелёной быть не должно)
       if (pePulse) pePulse.style.display = "none";
   
-      // В синем режиме число "N" прячем (чтобы не мешало)
+      // число активных прячем
       if (peCount) peCount.style.display = "none";
   
-      // Синяя кнопка/бейдж показывается и пульсирует
+      // подтекст меняем
+      if (subText) subText.textContent = "Непрочитанные ответы администраторов";
+  
+      // показываем синий бейдж и он пульсирует через .peBadge (у тебя уже есть pulseBlue)
       if (badge) {
+        badge.classList.add("peBadge");  // важно: класс должен быть peBadge
         badge.hidden = false;
         badge.textContent = String(unreadCount);
-  
-        // делаем пульсацию через класс (без поломки остального)
-        // если класса нет — просто добавь CSS (ниже)
-        badge.classList.add("peBadgePulse");
       }
   
       return;
     }
   
-    // === 4) РЕЖИМ "НЕТ НЕПРОЧИТАННЫХ" (ЗЕЛЁНЫЙ) ===
+    // ===== ЗЕЛЁНЫЙ режим =====
     peTile.classList.add("peGreen");
   
-    // Подтекст обычный
-    if (subText) subText.textContent = "активных";
-  
-    // Синего бейджа нет
+    // синего бейджа быть не должно
     if (badge) {
       badge.hidden = true;
       badge.textContent = "";
-      badge.classList.remove("peBadgePulse");
+      badge.classList.add("peBadge");    // класс пусть останется, но элемент скрыт
     }
   
-    // Число "N" показываем
+    // показываем N и зелёную точку
     if (peCount) peCount.style.display = "inline";
-  
-    // Зелёная пульсация есть
+    if (subText) subText.textContent = "активных";
     if (pePulse) pePulse.style.display = "block";
   }
   
