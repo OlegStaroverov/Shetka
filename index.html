@@ -198,6 +198,20 @@
             <span class="pulseNum" id="photoEstimatesUnread" hidden>0</span>
           </div>
         </button>
+
+        <!-- COURIER REQUESTS TILE (hidden if 0) -->
+        <button class="tile glass" id="courierRequestsTile" type="button" hidden>
+          <div class="tileIco">🚚</div>
+          <div class="tileTxt">
+            <div class="tileTitle">Курьерские заявки</div>
+            <div class="tileSub" id="courierRequestsSub">
+              <span id="courierRequestsCount">0</span>
+              <span id="courierRequestsSubText">активных</span>
+            </div>
+          </div>
+
+          <div class="pulseDot" id="courierRequestsPulse" aria-hidden="true" style="display:none"></div>
+        </button>
         
         <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
           💬 Написать в поддержку
@@ -262,6 +276,36 @@
         <div id="peActiveList" class="orders"></div>
       
       </section>
+
+      <!-- COURIER WIZARD PAGE -->
+      <section class="page" data-page="courier" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" id="courierBackBtn" aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Вызвать курьера</div>
+            <div class="pageSub" id="courierStepSub">Заполните данные</div>
+          </div>
+        </div>
+
+        <div class="pageBody">
+          <div id="courierWizard" class="estimateCard glass"></div>
+        </div>
+      </section>
+
+      <!-- COURIER REQUESTS PAGE -->
+      <section class="page" data-page="courier_requests" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Курьерские заявки</div>
+            <div class="pageSub">История и статусы</div>
+          </div>
+        </div>
+
+        <div id="crList" class="orders"></div>
+      </section>
+
+
       
     </main>
 
