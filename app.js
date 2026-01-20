@@ -616,8 +616,28 @@
       ["Реставрация — сапоги", 6000],
       ["Куртки до 50 см", 6000],
       ["Куртки свыше 50 см", 8000],
-    ]},
+    ]}
   ];
+
+  // --- Courier: услуги из прайса по категории ---
+  const PRICE_SERVICES_BY_KEY = Object.fromEntries(
+    PRICE.map(c => [c.key, (c.items || []).map(([name]) => String(name || "").trim()).filter(Boolean)])
+  );
+
+  // грубая привязка категорий курьера к разделам прайса (можно расширять)
+  const CR_CATEGORY_TO_PRICE_KEYS = {
+    "Обувь": ["clean_shoes", "sole", "sew", "color", "dis"],
+    "Сумка": ["bags", "sew", "color", "dis"],
+    "Верхняя одежда": ["color", "dis"],
+    "Аксессуар": ["other", "sew", "color", "dis"],
+  };
+
+  const crServicesForCategory = (cat) => {
+    const keys = CR_CATEGORY_TO_PRICE_KEYS[String(cat || "").trim()] || [];
+    const set = new Set();
+    keys.forEach(k => (PRICE_SERVICES_BY_KEY[k] || []).forEach(s => set.add(s)));
+    return Array.from(set);
+  };
 
   let activePriceKey = PRICE[0].key;
 
@@ -711,7 +731,7 @@
           promoModalContent.innerHTML = `<div class="modalP">У вас нет активных промокодов и акций.</div>`;
         } else {
           promoModalContent.innerHTML = list.map(c => {
-            const code = String(c?.promo_code || c?.code || "").trim();
+            const code = (typeof c === "string") ? String(c).trim() : String(c?.promo_code || c?.code || "").trim();
             const pct = c?.promo_percent != null ? Number(c.promo_percent) : null;
             const used = !!c?.promo_used;
             const line = pct ? `Скидка: ${pct}%` : `Акция`;
@@ -2289,9 +2309,9 @@
     for (const it of arr) {
       const cat = String(it?.category || "").trim();
       const catOther = String(it?.category_other || "").trim();
-      const svc = String(it?.service || "").trim();
       const prob = String(it?.problem || "").trim();
-      if (!cat || !svc || !prob) return false;
+      // обязательные: категория, описание; если категория=Другое — доп. поле
+      if (!cat || !prob) return false;
       if (cat === "Другое" && !catOther) return false;
     }
     return true;
@@ -2345,7 +2365,7 @@
 
     const roundUpTo5 = (d) => {
       const ms = d.getTime();
-      const step = 5 * 60 * 1000;
+      const step = 10 * 60 * 1000;
       return new Date(Math.ceil(ms / step) * step);
     };
 
@@ -2434,7 +2454,7 @@
 
       courierWizardEl.innerHTML = `
         <div class="crSectionTitle">Вещи</div>
-        <div class="crSectionSub">Добавьте все вещи. Описание проблемы — обязательно.</div>
+        <div class="crSectionSub">Укажите, что именно нужно будет забрать курьеру.</div>
         <div id="crItems" class="crItemsList"></div>
         <div class="crActionsRow">
           <button class="smallBtn" type="button" id="crAddItemBtn" ${canAdd ? "" : "disabled"}>+ Добавить вещь</button>
@@ -2457,7 +2477,7 @@
             </div>
 
             <label class="field">
-              <div class="fieldLabel">Категория</div>
+              <div class="fieldLabel">Категория *</div>
               <select class="fieldSelect" data-cr-cat="${idx}">
                 <option value="Обувь" ${it.category === "Обувь" ? "selected" : ""}>Обувь</option>
                 <option value="Сумка" ${it.category === "Сумка" ? "selected" : ""}>Сумка</option>
@@ -2468,17 +2488,54 @@
             </label>
 
             <label class="field" data-cr-cat-other-wrap="${idx}" style="${it.category === "Другое" ? "" : "display:none;"}">
-              <div class="fieldLabel">Укажите категорию</div>
+              <div class="fieldLabel">Укажите категорию *</div>
               <input class="fieldInput" data-cr-cat-other="${idx}" value="${escapeHtml(it.category_other || "")}" />
             </label>
 
-            <label class="field">
-              <div class="fieldLabel">Услуга</div>
-              <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service)}" />
-            </label>
+            ${(() => {
+              const cat = String(it.category || "");
+              // если категория "Другое" — услуга текстом (необязательно)
+              if (cat === "Другое") {
+                return `
+                  <label class="field">
+                    <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                    <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service || "")}" placeholder="Например: чистка / ремонт" />
+                  </label>
+                `;
+              }
+
+              const services = crServicesForCategory(cat);
+              if (!services.length) {
+                return `
+                  <label class="field">
+                    <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                    <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service || "")}" placeholder="Например: чистка / ремонт" />
+                  </label>
+                `;
+              }
+
+              const cur = String(it.service || "");
+              const isOther = cur && !services.includes(cur);
+              const selectVal = isOther ? "Другое" : (cur || "");
+              return `
+                <label class="field">
+                  <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                  <select class="fieldSelect" data-cr-svcsel="${idx}">
+                    <option value="">Не выбирать</option>
+                    ${services.map(s => `<option value="${escapeHtml(s)}" ${selectVal === s ? "selected" : ""}>${escapeHtml(s)}</option>`).join("")}
+                    <option value="Другое" ${selectVal === "Другое" ? "selected" : ""}>Другое</option>
+                  </select>
+                </label>
+
+                <label class="field" data-cr-svc-other-wrap="${idx}" style="${selectVal === "Другое" ? "" : "display:none;"}">
+                  <div class="fieldLabel">Укажите услугу <span class="hint">(необязательно)</span></div>
+                  <input class="fieldInput" data-cr-svc-other="${idx}" value="${escapeHtml(isOther ? cur : (it.service_other || ""))}" />
+                </label>
+              `;
+            })()}
 
             <label class="field">
-              <div class="fieldLabel">Описание проблемы</div>
+              <div class="fieldLabel">Описание проблемы *</div>
               <input class="fieldInput" data-cr-prob="${idx}" value="${escapeHtml(it.problem)}" />
             </label>
           `;
@@ -2501,11 +2558,13 @@
           t.getAttribute("data-cr-svc") ||
           t.getAttribute("data-cr-prob") ||
           t.getAttribute("data-cr-cat-other") ||
+          t.getAttribute("data-cr-svc-other") ||
           0
         );
         if (!CR_WIZ.items[idx]) return;
         if (t.hasAttribute("data-cr-svc")) CR_WIZ.items[idx].service = String(t.value || "");
         if (t.hasAttribute("data-cr-prob")) CR_WIZ.items[idx].problem = String(t.value || "");
+        if (t.hasAttribute("data-cr-svc-other")) CR_WIZ.items[idx].service_other = String(t.value || "");
         if (t.hasAttribute("data-cr-cat-other")) CR_WIZ.items[idx].category_other = String(t.value || "");
         syncNext();
       });
@@ -2513,6 +2572,24 @@
       itemsWrap?.addEventListener("change", (e) => {
         const t = e.target;
         if (!t) return;
+
+        if (t.hasAttribute("data-cr-svcsel")) {
+          const idx = Number(t.getAttribute("data-cr-svcsel") || 0);
+          if (!CR_WIZ.items[idx]) return;
+          const v = String(t.value || "");
+          const wrap = itemsWrap.querySelector(`[data-cr-svc-other-wrap="${idx}"]`);
+          if (wrap) wrap.style.display = (v === "Другое") ? "" : "none";
+          if (!v) {
+            CR_WIZ.items[idx].service = "";
+          } else if (v === "Другое") {
+            CR_WIZ.items[idx].service = String(CR_WIZ.items[idx].service_other || "").trim();
+          } else {
+            CR_WIZ.items[idx].service = v;
+          }
+          syncNext();
+          return;
+        }
+
         const idx = Number(t.getAttribute("data-cr-cat") || 0);
         if (!CR_WIZ.items[idx]) return;
         CR_WIZ.items[idx].category = String(t.value || "Обувь");
@@ -2572,10 +2649,10 @@
 
       courierWizardEl.innerHTML = `
         <div class="crSectionTitle">Адрес забора</div>
-        <div class="crSectionSub">Обязательные поля отмечены ✅</div>
+        <div class="crSectionSub">Обязательные поля отмечены *</div>
 
         <div class="modalRowCol">
-          <span>Город ✅</span>
+          <span>Город *</span>
           <div class="seg" id="crCitySeg">
             ${CITY_OPTIONS.map(c => `<button class="segBtn" type="button" data-city="${c}">${c}</button>`).join('')}
           </div>
@@ -2594,17 +2671,17 @@
         ` : ''}
 
         <label class="field">
-          <div class="fieldLabel">Улица ✅</div>
+          <div class="fieldLabel">Улица *</div>
           <input class="fieldInput" id="crStreet" value="${escapeHtml(a.street)}" />
         </label>
 
         <div class="crTwoCols">
           <label class="field">
-            <div class="fieldLabel">Дом ✅</div>
+            <div class="fieldLabel">Дом *</div>
             <input class="fieldInput" id="crHouse" value="${escapeHtml(a.house)}" />
           </label>
           <label class="field">
-            <div class="fieldLabel">КВ ✅</div>
+            <div class="fieldLabel">Квартира *</div>
             <input class="fieldInput" id="crApartment" value="${escapeHtml(a.apartment)}" />
           </label>
         </div>
@@ -2731,7 +2808,7 @@
 
         <label class="field">
           <div class="fieldLabel">Время</div>
-          <input class="fieldInput" id="crTime" type="time" step="300" value="${escapeHtml(CR_WIZ.slot || '')}" />
+          <input class="fieldInput" id="crTime" type="time" step="600" value="${escapeHtml(CR_WIZ.slot || '')}" />
         </label>
 
         <div id="crTimeErr" class="crErr" style="display:none"></div>
