@@ -982,6 +982,18 @@ html[data-theme="dark"] .fieldSelect{ background: rgba(255,255,255,.06); }
 /* ====== ESTIMATE FLOW ====== */
 .cta[disabled]{ opacity:.45; pointer-events:none; transform:none !important; }
 
+/* ====== COURIER FLOW (local tweaks, НЕ трогаем общий визуал) ====== */
+section.page[data-page="courier"] .fieldInput,
+section.page[data-page="courier"] .fieldSelect{
+  padding: 14px 14px;
+  font-size: 15px;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+section.page[data-page="courier"] .fieldLabel{ font-size: 13px; }
+section.page[data-page="courier"] .orderLine{ font-size: 14px; }
+section.page[data-page="courier"] .field{ min-width: 0; }
+
 .reveal{
   max-height:0;
   opacity:0;
