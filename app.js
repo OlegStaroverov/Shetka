@@ -1910,8 +1910,12 @@
     });
 
     $("#crAddMediaBtn")?.addEventListener("click", () => {
-      // пока поддерживаем только сценарий "Ожидаем фото" (как в оценке по фото)
-      try { tg?.close?.(); } catch (_) {}
+      // Через очередь в бота: бот переведёт клиента в режим ожидания медиа по заявке
+      showLoading();
+      crUserAddMedia(id)
+        .then(() => { try { tg?.close?.(); } catch (_) {} })
+        .catch((e) => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ } })
+        .finally(() => hideLoading());
     });
 
     $("#crEditBtn")?.addEventListener("click", () => {
@@ -1937,40 +1941,95 @@
   async function crUserCancel(id) {
     const reqId = Number(id) || 0;
     if (!reqId) return;
-    const url = `${SUPABASE_REST_URL}/courier_requests?id=eq.${encodeURIComponent(reqId)}`;
-    const res = await fetch(url, {
-      method: "PATCH",
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
       headers: {
         "content-type": "application/json",
         "apikey": SUPABASE_ANON_KEY,
         "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ status: "cancelled", cancel_reason: "Отменено клиентом" }),
+      body: JSON.stringify({
+        kind: "courier_cancel_user",
+        tg_id,
+        payload_json: { request_id: reqId },
+      }),
     });
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${t.slice(0, 140)}`);
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
     }
   }
 
   async function crUserUpdateItems(id, items) {
     const reqId = Number(id) || 0;
     if (!reqId) return;
-    const url = `${SUPABASE_REST_URL}/courier_requests?id=eq.${encodeURIComponent(reqId)}`;
-    const res = await fetch(url, {
-      method: "PATCH",
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
       headers: {
         "content-type": "application/json",
         "apikey": SUPABASE_ANON_KEY,
         "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ items_json: items, updated_at: new Date().toISOString() }),
+      body: JSON.stringify({
+        kind: "courier_update_items",
+        tg_id,
+        payload_json: {
+          request_id: reqId,
+          items_json: Array.isArray(items) ? items.map(it => {
+            const cat = String(it?.category || "").trim();
+            const other = String(it?.category_other || "").trim();
+            return {
+              category: (cat === "Другое" && other) ? other : cat,
+              service: String(it?.service || ""),
+              problem: String(it?.problem || ""),
+            };
+          }) : [],
+        },
+      }),
     });
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${t.slice(0, 140)}`);
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
+  }
+
+  async function crUserAddMedia(id) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "courier_add_media",
+        tg_id,
+        payload_json: { request_id: reqId },
+      }),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
     }
   }
 
@@ -2224,9 +2283,11 @@
     if (arr.length < 1) return false;
     for (const it of arr) {
       const cat = String(it?.category || "").trim();
+      const catOther = String(it?.category_other || "").trim();
       const svc = String(it?.service || "").trim();
       const prob = String(it?.problem || "").trim();
       if (!cat || !svc || !prob) return false;
+      if (cat === "Другое" && !catOther) return false;
     }
     return true;
   }
@@ -2238,8 +2299,18 @@
     return !!(city && street && house);
   }
 
-  function crValidateTime(dateStr, slotStr) {
-    return !!(String(dateStr || "").trim() && String(slotStr || "").trim());
+  function crValidateTime(dateStr, timeStr) {
+    const d = String(dateStr || "").trim();
+    const t = String(timeStr || "").trim();
+    if (!d || !t) return false;
+    // нельзя выбрать прошедшее время; минимум — через час от текущего момента
+    try {
+      const chosen = new Date(`${d}T${t}:00`);
+      const min = new Date(Date.now() + 60 * 60 * 1000);
+      return chosen.getTime() >= min.getTime();
+    } catch {
+      return false;
+    }
   }
 
   function crRenderWizard() {
@@ -2296,6 +2367,11 @@
               </select>
             </label>
 
+            <label class="field" style="margin-top:10px; ${it.category === 'Другое' ? '' : 'display:none;'}" data-cr-cat-other-wrap="${idx}">
+              <div class="fieldLabel">Укажите категорию</div>
+              <input class="fieldInput" data-cr-cat-other="${idx}" value="${escapeHtml(it.category_other || '')}" />
+            </label>
+
             <label class="field" style="margin-top:10px;">
               <div class="fieldLabel">Услуга</div>
               <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service)}" />
@@ -2322,10 +2398,16 @@
       itemsWrap?.addEventListener("input", (e) => {
         const t = e.target;
         if (!t) return;
-        const idx = Number(t.getAttribute("data-cr-svc") || t.getAttribute("data-cr-prob") || 0);
+        const idx = Number(
+          t.getAttribute("data-cr-svc") ||
+          t.getAttribute("data-cr-prob") ||
+          t.getAttribute("data-cr-cat-other") ||
+          0
+        );
         if (!CR_WIZ.items[idx]) return;
         if (t.hasAttribute("data-cr-svc")) CR_WIZ.items[idx].service = String(t.value || "");
         if (t.hasAttribute("data-cr-prob")) CR_WIZ.items[idx].problem = String(t.value || "");
+        if (t.hasAttribute("data-cr-cat-other")) CR_WIZ.items[idx].category_other = String(t.value || "");
         syncNext();
       });
 
@@ -2335,6 +2417,9 @@
         const idx = Number(t.getAttribute("data-cr-cat") || 0);
         if (!CR_WIZ.items[idx]) return;
         CR_WIZ.items[idx].category = String(t.value || "Обувь");
+        // показываем поле "Другое"
+        const wrap = itemsWrap.querySelector(`[data-cr-cat-other-wrap="${idx}"]`);
+        if (wrap) wrap.style.display = (CR_WIZ.items[idx].category === "Другое") ? "" : "none";
         syncNext();
       });
 
@@ -2473,20 +2558,28 @@
       crSetStepSub("Дата и время");
       const city = String(CR_WIZ.address?.city || "").trim();
       const dateVal = CR_WIZ.date || "";
-      const slotVal = CR_WIZ.slot || "";
+      const timeVal = CR_WIZ.slot || ""; // slot используем как точное время "HH:MM"
+
+      const today = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      })();
 
       courierWizardEl.innerHTML = `
         <label class="field">
           <div class="fieldLabel">Дата</div>
-          <input class="fieldInput" id="crDate" type="date" value="${escapeHtml(dateVal)}" />
+          <input class="fieldInput" id="crDate" type="date" min="${today}" value="${escapeHtml(dateVal)}" />
         </label>
 
-        <div style="height:12px"></div>
-        <div class="fieldLabel">Слот (2 часа)</div>
-        <div class="seg" id="crSlots" style="margin-top:10px; flex-wrap:wrap;">
-          ${COURIER_SLOTS.map(s => `<button class="segBtn" type="button" data-cr-slot="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join("")}
-        </div>
-        <div id="crSlotReason" class="orderMeta" style="margin-top:10px; display:none"></div>
+        <label class="field" style="margin-top:12px;">
+          <div class="fieldLabel">Время</div>
+          <input class="fieldInput" id="crTime" type="time" step="300" value="${escapeHtml(timeVal)}" />
+        </label>
+
+        <div id="crTimeReason" class="orderMeta" style="margin-top:10px; display:none"></div>
 
         <div style="height:12px"></div>
         <div class="modalGrid">
@@ -2496,72 +2589,93 @@
       `;
 
       const dateInput = $("#crDate");
-      const slotsWrap = $("#crSlots");
-      const reasonEl = $("#crSlotReason");
+      const timeInput = $("#crTime");
+      const reasonEl = $("#crTimeReason");
       const nextBtn = $("#crTimeNextBtn");
 
-      const syncNext = () => {
-        const ok = crValidateTime(CR_WIZ.date, CR_WIZ.slot);
-        if (nextBtn) nextBtn.disabled = !ok;
+      const minAllowedMs = () => Date.now() + 60 * 60 * 1000; // можно выбрать на час вперед
+
+      const validateSelected = () => {
+        const d = String(CR_WIZ.date || "").trim();
+        const t = String(CR_WIZ.slot || "").trim();
+        const blocks = CR_WIZ.slotBlocks || {};
+        if (reasonEl) {
+          reasonEl.style.display = "none";
+          reasonEl.textContent = "";
+        }
+        if (!d || !t) return false;
+        if (blocks[t]) {
+          if (reasonEl) {
+            reasonEl.style.display = "block";
+            reasonEl.textContent = `Время недоступно: ${blocks[t]}`;
+          }
+          return false;
+        }
+        try {
+          const dt = new Date(`${d}T${t}:00`);
+          if (!isFinite(dt.getTime())) return false;
+          if (dt.getTime() < minAllowedMs()) {
+            if (reasonEl) {
+              reasonEl.style.display = "block";
+              reasonEl.textContent = "Можно выбрать время не раньше чем через 1 час.";
+            }
+            return false;
+          }
+          return true;
+        } catch {
+          return false;
+        }
       };
 
-      const applySlotUi = () => {
-        const blocks = CR_WIZ.slotBlocks || {};
-        $$("#crSlots .segBtn").forEach(b => {
-          const s = b.getAttribute("data-cr-slot") || "";
-          const blockedReason = blocks[s];
-          b.disabled = !!blockedReason;
-          b.classList.toggle("active", s === CR_WIZ.slot);
-        });
-        if (reasonEl) {
-          const r = blocks[CR_WIZ.slot];
-          if (r) {
-            reasonEl.style.display = "block";
-            reasonEl.textContent = `Слот недоступен: ${r}`;
-          } else {
-            reasonEl.style.display = "none";
-            reasonEl.textContent = "";
-          }
-        }
+      const syncNext = () => {
+        const ok = validateSelected();
+        if (nextBtn) nextBtn.disabled = !ok;
       };
 
       const refreshBlocks = async () => {
         const d = String(CR_WIZ.date || "").trim();
         if (!d || !city) {
           CR_WIZ.slotBlocks = {};
-          applySlotUi();
+          syncNext();
           return;
         }
         const m = await crFetchSlotBlocks(d, city);
         CR_WIZ.slotBlocks = m;
-        // если выбранный слот заблокировали — сбрасываем выбор
         if (CR_WIZ.slot && m[CR_WIZ.slot]) CR_WIZ.slot = "";
-        applySlotUi();
         syncNext();
+      };
+
+      const applyTimeMin = () => {
+        if (!timeInput) return;
+        const d = String(CR_WIZ.date || "").trim();
+        if (d === today) {
+          const min = new Date(minAllowedMs());
+          const hh = String(min.getHours()).padStart(2, "0");
+          const mm = String(min.getMinutes()).padStart(2, "0");
+          timeInput.min = `${hh}:${mm}`;
+        } else {
+          timeInput.min = "00:00";
+        }
       };
 
       dateInput?.addEventListener("change", async () => {
         CR_WIZ.date = String(dateInput.value || "").trim();
-        CR_WIZ.slot = "";
-        applySlotUi();
+        applyTimeMin();
         syncNext();
         await refreshBlocks();
         haptic("light");
       });
 
-      slotsWrap?.addEventListener("click", (e) => {
-        const btn = e.target?.closest?.("button[data-cr-slot]");
-        if (!btn || btn.disabled) return;
-        CR_WIZ.slot = String(btn.getAttribute("data-cr-slot") || "");
-        applySlotUi();
+      timeInput?.addEventListener("change", () => {
+        CR_WIZ.slot = String(timeInput.value || "").trim();
         syncNext();
         haptic("light");
       });
 
       // init
-      $$("#crSlots .segBtn").forEach(b => b.classList.remove("active"));
-      if (slotVal) CR_WIZ.slot = slotVal;
-      applySlotUi();
+      if (dateVal) CR_WIZ.date = dateVal;
+      if (timeVal) CR_WIZ.slot = timeVal;
+      applyTimeMin();
       syncNext();
       refreshBlocks().catch(() => null);
 
@@ -2597,7 +2711,8 @@
         <div style="height:8px"></div>
         <div class="orderBody">
           ${CR_WIZ.items.map((it, idx) => {
-            return `<div class="orderLine"><span>${idx + 1}.</span> ${escapeHtml(it.category)} • ${escapeHtml(it.service)}<br/><span style="color:var(--muted)">${escapeHtml(it.problem)}</span></div>`;
+            const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
+            return `<div class="orderLine"><span>${idx + 1}.</span> ${escapeHtml(cat)} • ${escapeHtml(it.service)}<br/><span style="color:var(--muted)">${escapeHtml(it.problem)}</span></div>`;
           }).join("")}
         </div>
 
@@ -2619,7 +2734,7 @@
         const user = tg?.initDataUnsafe?.user || {};
         if (!crValidateItems(CR_WIZ.items)) throw new Error("Заполните все вещи");
         if (!crValidateAddress(CR_WIZ.address)) throw new Error("Заполните адрес");
-        if (!crValidateTime(CR_WIZ.date, CR_WIZ.slot)) throw new Error("Выберите дату и слот");
+        if (!crValidateTime(CR_WIZ.date, CR_WIZ.slot)) throw new Error("Выберите дату и время");
 
         showLoading();
         try {
@@ -2639,7 +2754,15 @@
                 city: CR_WIZ.address.city,
                 phone: String(p.phone || "").trim(),
                 address_json: CR_WIZ.address,
-                items_json: CR_WIZ.items,
+                items_json: CR_WIZ.items.map(it => {
+                  const cat = String(it?.category || "").trim();
+                  const other = String(it?.category_other || "").trim();
+                  return {
+                    category: (cat === "Другое" && other) ? other : cat,
+                    service: String(it?.service || ""),
+                    problem: String(it?.problem || ""),
+                  };
+                }),
                 date: CR_WIZ.date,
                 slot: CR_WIZ.slot,
                 need_media: !!needMedia,
