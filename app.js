@@ -107,9 +107,11 @@
       if (!rp) return false;
 
       // Берём только то, что нужно мини-аппу.
+      // ВАЖНО: не затираем локальные поля пустыми значениями с сервера.
+      // (Особенно gender — иначе он "слетает" после переключения вкладок.)
       const remote = {
-        city: rp.city || "",
-        gender: (rp.gender || "").toString().toUpperCase() || "",
+        city: (rp.city || "").toString(),
+        gender: (rp.gender || "").toString().toUpperCase() || "", // может быть пустым
         first_name: rp.first_name || "",
         last_name: rp.last_name || "",
         phone: rp.phone || "",
@@ -139,12 +141,16 @@
       const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
       if (!shouldUpdate) return false;
 
+      const mergedGender = remote.gender || (local.gender || "");
+      const mergedCity = String(remote.city || "").trim() || (local.city || "");
       saveProfile({
         ...local,
         ...remote,
+        city: mergedCity,
+        gender: mergedGender,
         // на всякий случай нормализуем аватар под пол (в мини-аппе используем только пресеты)
-        avatar_url: remote.avatar_url || genderToAvatar(remote.gender),
-        avatar_kind: remote.avatar_kind || ((remote.gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w"),
+        avatar_url: (remote.avatar_url || "").trim() || (local.avatar_url || "").trim() || genderToAvatar(mergedGender),
+        avatar_kind: (remote.avatar_kind || "").trim() || (local.avatar_kind || "").trim() || ((mergedGender || "").toUpperCase() === "M" ? "ava_m" : "ava_w"),
         [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
       });
       localStorage.setItem("shetka_registered_v1", "1");
@@ -164,6 +170,25 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  // ---------------- Micro-animations helpers ----------------
+  let _revealObs = null;
+  function initRevealObserver(){
+    if (_revealObs) {
+      // обновим список на текущем DOM
+      $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
+      return;
+    }
+    if (!('IntersectionObserver' in window)) return;
+    _revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-revealed');
+        _revealObs.unobserve(e.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+    $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
+  }
 
   const html = document.documentElement;
 
@@ -220,6 +245,83 @@
     el.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
   };
+
+  // ---------------- Dropoff choice + map (no API key) ----------------
+  const dropoffChoiceBtn = $("#openDropoffChoice");
+  const dropoffModal = $("#dropoffModal");
+  const dropoffMapModal = $("#dropoffMapModal");
+  const dropoffMapFrame = $("#dropoffMapFrame");
+  const dropoffCopyBtn = $("#dropoffCopyBtn");
+  const dropoffRouteBtn = $("#dropoffRouteBtn");
+
+  // Константы точки (один источник)
+  const DROPOFF_POINT = {
+    lat: 44.61665,
+    lon: 33.52537,
+    address: "Адрес мастерской (изменить в DROPOFF_POINT)",
+    hours: "Ежедневно 09:00–21:00",
+  };
+
+  function buildYandexMapUrl({ lat, lon, z = 14 } = {}) {
+    const ll = `${lon},${lat}`;
+    // Yandex maps embed without keys
+    return `https://yandex.ru/map-widget/v1/?ll=${encodeURIComponent(ll)}&z=${encodeURIComponent(String(z))}&l=map&pt=${encodeURIComponent(ll)},pm2rdm`;
+  }
+
+  function openDropoffModal(){
+    openModalEl(dropoffModal);
+    initRevealObserver();
+  }
+
+  dropoffChoiceBtn?.addEventListener('click', () => {
+    haptic('light');
+    openDropoffModal();
+  });
+
+  $$('[data-dropoff-close]').forEach(el => el.addEventListener('click', () => closeModalEl(dropoffModal)));
+  $$('[data-map-close]').forEach(el => el.addEventListener('click', () => closeModalEl(dropoffMapModal)));
+
+  // Open map modal + "zoom-in" steps via URL change
+  document.getElementById('openDropoffMap')?.addEventListener('click', () => {
+    haptic('light');
+    try { closeModalEl(dropoffModal); } catch(_) {}
+    if (dropoffMapFrame) {
+      dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 13 });
+      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 15 }); } catch(_){} }, 420);
+      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 16 }); } catch(_){} }, 820);
+    }
+    const addr = document.getElementById('dropoffAddr');
+    const hrs = document.getElementById('dropoffHours');
+    if (addr) addr.textContent = DROPOFF_POINT.address;
+    if (hrs) hrs.textContent = DROPOFF_POINT.hours;
+    openModalEl(dropoffMapModal);
+  });
+
+  dropoffCopyBtn?.addEventListener('click', async () => {
+    const text = DROPOFF_POINT.address;
+    try {
+      await navigator.clipboard.writeText(text);
+      tg?.showAlert?.('Адрес скопирован');
+    } catch (_) {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(_e) {}
+      ta.remove();
+      try { tg?.showAlert?.('Адрес скопирован'); } catch(_e){}
+    }
+    haptic('light');
+  });
+
+  dropoffRouteBtn?.addEventListener('click', () => {
+    // открываем внешний маршрут (Yandex / Apple / Google) через Telegram WebApp
+    const ll = `${DROPOFF_POINT.lat},${DROPOFF_POINT.lon}`;
+    const url = `https://yandex.ru/maps/?pt=${DROPOFF_POINT.lon},${DROPOFF_POINT.lat}&z=16&l=map&rtext=~${ll}`;
+    try { tg?.openLink?.(url); } catch (_) { window.open(url, '_blank'); }
+    haptic('light');
+  });
     
   // ---------------- THEME ----------------
   const themeBtn = $("#themeToggle");
@@ -285,6 +387,8 @@
   // patternBtn отсутствует (фон всегда включен)
 
   // ---------------- NAV ----------------
+  // Tab pages (bottom nav): home | orders | services | about
+  // Flow pages (push stack): estimate | courierWizard | courier_requests | photo_estimates | ...
   let currentPage = "home";
   const pageStack = ["home"];
 
@@ -299,8 +403,18 @@
     const nextEl = $(`.page[data-page="${page}"]`);
     if (!nextEl) return;
 
-    if (curEl) curEl.hidden = true;
+    // page transition (fade + slight translateY)
+    if (curEl) {
+      curEl.classList.remove("pageActive");
+      // hide after transition
+      setTimeout(() => { try { curEl.hidden = true; } catch (_) {} }, 240);
+    }
     nextEl.hidden = false;
+    nextEl.classList.add("pageEntering");
+    requestAnimationFrame(() => {
+      nextEl.classList.add("pageActive");
+      nextEl.classList.remove("pageEntering");
+    });
 
     currentPage = page;
     if (push) pageStack.push(page);
@@ -312,16 +426,16 @@
     
     document.body.classList.toggle("page-estimate", page === "estimate");
 
-    if (page === "orders") renderOrders();
-    if (page === "price") renderPrice();
-    if (page === "profile") {
-      // 1) показываем то, что уже есть локально
+    // Tab pages
+    if (page === "home") {
       hydrateProfile();
-      // 2) подтягиваем свежий профиль из Supabase (для второго устройства)
       syncRemoteProfileIfNewer({ force: true }).then((changed) => {
         if (changed) hydrateProfile();
       });
     }
+    if (page === "orders") renderOrders();
+    if (page === "services") renderServices();
+    if (page === "about") initAboutOnce();
     if (page === "photo_estimates") {
       // при заходе обновляем и рисуем
       peRefreshAll(true).catch(() => {});
@@ -342,7 +456,72 @@
       haptic("light");
     });
   });
-  $$("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
+  $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
+
+  // ---------------- ABOUT (segmented + scroll storytelling) ----------------
+  let _aboutInited = false;
+  function initAboutOnce(){
+    if (_aboutInited) return;
+    _aboutInited = true;
+
+    const seg = document.getElementById('aboutSeg');
+    const pAbout = document.getElementById('aboutPanelAbout');
+    const pCases = document.getElementById('aboutPanelCases');
+
+    const setAboutTab = (key) => {
+      const k = String(key || 'about');
+      seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
+      if (pAbout) pAbout.hidden = (k !== 'about');
+      if (pCases) pCases.hidden = (k !== 'cases');
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
+      initRevealObserver();
+    };
+
+    seg?.addEventListener('click', (e) => {
+      const btn = e.target?.closest?.('button[data-about-tab]');
+      if (!btn) return;
+      setAboutTab(btn.getAttribute('data-about-tab'));
+      haptic('light');
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('[data-acc]')?.forEach((acc) => {
+      acc.addEventListener('click', (e) => {
+        const head = e.target?.closest?.('[data-acc-head]');
+        if (!head) return;
+        const item = head.closest('[data-acc-item]');
+        if (!item) return;
+        const open = item.classList.toggle('open');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+        haptic('light');
+      });
+    });
+
+    // reviews carousel dots
+    const track = document.getElementById('reviewsTrack');
+    const dots = document.getElementById('reviewsDots');
+    if (track && dots) {
+      const slides = Array.from(track.querySelectorAll('.reviewSlide'));
+      dots.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+      const setDot = (i) => {
+        dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+      };
+      track.addEventListener('scroll', () => {
+        const w = track.clientWidth || 1;
+        const i = Math.round(track.scrollLeft / w);
+        setDot(Math.max(0, Math.min(slides.length-1, i)));
+      }, { passive: true });
+      dots.addEventListener('click', (e) => {
+        const dot = e.target?.closest?.('[data-dot]');
+        if (!dot) return;
+        const i = Number(dot.getAttribute('data-dot') || 0);
+        track.scrollTo({ left: i * (track.clientWidth || 0), behavior: 'smooth' });
+      });
+    }
+
+    // init default
+    setAboutTab('about');
+  }
 
   // ---------------- STATUS NORMALIZATION ----------------
   const normalizeStatus = (raw) => {
@@ -562,9 +741,10 @@
 
   $$("[data-close]").forEach(el => el.addEventListener("click", closeModal));
 
-  // ---------------- PRICE ----------------
-  const priceTabs = $("#priceTabs");
-  const priceContent = $("#priceContent");
+  // ---------------- SERVICES (based on PRICE data) ----------------
+  // Важно: один источник данных для витрины "Услуги" и для курьер‑формы.
+  const servicesTabs = $("#priceTabs");
+  const servicesContent = $("#priceContent");
 
   const PRICE = [
     { key:"clean_shoes", title:"Чистка обуви", items:[
@@ -639,44 +819,105 @@
     return Array.from(set);
   };
 
-  let activePriceKey = PRICE[0].key;
+  // Верхний фильтр (segmented) — 4 витринные категории.
+  const SERVICES_SEG = [
+    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "sole", "sew", "color", "dis"] },
+    { key: "bags", title: "Сумки", price_keys: ["bags", "sew", "color", "dis"] },
+    { key: "clothes", title: "Одежда", price_keys: ["color", "dis"] },
+    { key: "other", title: "Другое/ремонт", price_keys: ["other", "sole", "sew", "dis"] },
+  ];
+  let activeServicesKey = SERVICES_SEG[0].key;
 
-  const renderPriceTabs = () => {
-    if (!priceTabs) return;
-    priceTabs.innerHTML = "";
-    PRICE.forEach(cat => {
-      const b = document.createElement("button");
-      b.className = "priceTab" + (cat.key === activePriceKey ? " active" : "");
-      b.type = "button";
-      b.textContent = cat.title;
-      b.addEventListener("click", () => {
-        activePriceKey = cat.key;
-        renderPrice();
+  function buildServiceCardsByKeys(keys){
+    const set = new Map();
+    (keys || []).forEach(k => {
+      const cat = PRICE.find(x => x.key === k);
+      (cat?.items || []).forEach(([name, price]) => {
+        const n = String(name || "").trim();
+        if (!n) return;
+        if (!set.has(n)) set.set(n, { name: n, from: Number(price || 0) || null, source_key: k });
+        else {
+          const cur = set.get(n);
+          const v = Number(price || 0) || null;
+          if (v && (!cur.from || v < cur.from)) cur.from = v;
+        }
+      });
+    });
+    return Array.from(set.values()).sort((a,b) => String(a.name).localeCompare(String(b.name), "ru"));
+  }
+
+  const renderServicesTabs = () => {
+    if (!servicesTabs) return;
+    servicesTabs.classList.add("seg", "servicesSeg");
+    servicesTabs.innerHTML = SERVICES_SEG.map(x => {
+      const isA = x.key === activeServicesKey;
+      return `<button class="segBtn${isA ? " active" : ""}" type="button" data-svcseg="${x.key}">${escapeHtml(x.title)}</button>`;
+    }).join("");
+
+    servicesTabs.querySelectorAll("button[data-svcseg]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeServicesKey = String(btn.getAttribute("data-svcseg") || SERVICES_SEG[0].key);
+        renderServices();
         haptic("light");
       });
-      priceTabs.appendChild(b);
     });
   };
 
-  const renderPrice = () => {
-    renderPriceTabs();
-    if (!priceContent) return;
+  const renderServices = () => {
+    renderServicesTabs();
+    if (!servicesContent) return;
 
-    const cat = PRICE.find(x => x.key === activePriceKey) || PRICE[0];
+    const seg = SERVICES_SEG.find(x => x.key === activeServicesKey) || SERVICES_SEG[0];
+    const cards = buildServiceCardsByKeys(seg.price_keys);
 
-    const card = document.createElement("div");
-    card.className = "priceCard glass";
-    card.innerHTML = `
-      <div class="priceH">${escapeHtml(cat.title)}</div>
-      <ul class="priceList">
-        ${cat.items.map(([name, price]) => `
-          <li><span>${escapeHtml(name)}</span><b>${escapeHtml(formatMoney(price))}</b></li>
-        `).join("")}
-      </ul>
+    servicesContent.innerHTML = `
+      <div class="servicesHero glass reveal">
+        <div class="servicesHeroTitle">${escapeHtml(seg.title)}</div>
+        <div class="servicesHeroSub">Выберите услугу — при желании мы подставим её в «Сдать вещь».</div>
+      </div>
+      <div class="servicesGrid">
+        ${cards.map(c => {
+          const from = c.from ? `от ${escapeHtml(formatMoney(c.from))}` : "по запросу";
+          return `
+            <div class="svcCard glass reveal" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
+              <div class="svcIco" aria-hidden="true">✨</div>
+              <div class="svcBody">
+                <div class="svcTitle">${escapeHtml(c.name)}</div>
+                <div class="svcSub">Результат зависит от состояния изделия</div>
+              </div>
+              <div class="svcMeta">
+                <div class="svcPrice">${from}</div>
+                <button class="smallBtn" type="button">Выбрать</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
     `;
 
-    priceContent.innerHTML = "";
-    priceContent.appendChild(card);
+    // tap-scale on cards + prefill courier wizard (optional)
+    servicesContent.querySelectorAll('[data-svc-pick]')?.forEach(el => {
+      el.addEventListener('click', (e) => {
+        const name = String(el.getAttribute('data-svc-name') || '').trim();
+        const catTitle = String(el.getAttribute('data-svc-cat') || '').trim();
+        const mapCat = (t) => {
+          if (t === 'Сумки') return 'Сумка';
+          if (t === 'Одежда') return 'Верхняя одежда';
+          if (t === 'Другое/ремонт') return 'Аксессуар';
+          return 'Обувь';
+        };
+        if (!name) return;
+        // Префилл: открываем выбор сдачи и затем курьера с предвыбором
+        window.__SHETKA_PREFILL = { category: mapCat(catTitle), service: name };
+        try { document.getElementById('openDropoffChoice')?.click(); } catch (_) {}
+        haptic('light');
+      });
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); el.click(); }
+      });
+    });
+
+    initRevealObserver();
   };
 
   // ---------------- PROFILE ----------------
@@ -2134,7 +2375,17 @@
 
   // Новый модуль: курьерская доставка (многошаговая форма)
   openCourierSheetBtn?.addEventListener("click", () => {
+    try { closeModalEl(dropoffModal); } catch (_) {}
     crStartWizard({ mode: "create" });
+    // optional prefill from Services screen
+    try {
+      const p = window.__SHETKA_PREFILL;
+      if (p && CR_WIZ && Array.isArray(CR_WIZ.items) && CR_WIZ.items[0]) {
+        CR_WIZ.items[0].category = String(p.category || CR_WIZ.items[0].category || "Обувь");
+        CR_WIZ.items[0].service = String(p.service || "");
+      }
+      window.__SHETKA_PREFILL = null;
+    } catch (_) {}
     showPage("courier");
     haptic("light");
   });
@@ -3259,7 +3510,10 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   
   // ---------------- INIT ----------------
   setTabActive("home");
+  // mark first page as active for CSS transitions
+  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
   hydrateProfile();
+  initRevealObserver();
   renderChat();
   } catch (e) {
     _showFatal(e);
