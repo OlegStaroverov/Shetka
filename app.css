@@ -1331,3 +1331,62 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
   padding:2px 6px;
   font-weight:600;
 }
+
+
+/* --- Iteration 4 UX tweaks (minimal, local) --- */
+.settingRowCenter{justify-content:center;}
+.settingRowCenter .profileBtn{width:100%; max-width:360px; margin:0 auto;}
+
+/* Profile card prettier (no color changes) */
+.profileRow{gap:12px;}
+.profileName{font-size:18px; line-height:22px;}
+.profileHint{font-size:13px;}
+.profileQuickBtns{gap:8px; margin-top:10px;}
+
+/* Courier wizard form polish (only inside courier page) */
+[data-page="courier"] .estimateCard{padding:14px;}
+[data-page="courier"] .fieldLabel{font-size:13px; margin-bottom:6px;}
+[data-page="courier"] .fieldInput,
+[data-page="courier"] .fieldSelect{font-size:16px; padding:12px 12px;}
+[data-page="courier"] .order{border-radius:18px;}
+[data-page="courier"] .orderTop{align-items:center;}
+[data-page="courier"] .orderId{font-size:14px; opacity:.9;}
+[data-page="courier"] .crItemCard{margin-top:10px;}
+[data-page="courier"] .crItemCard:first-child{margin-top:0;}
+[data-page="courier"] .crItemTitle{font-size:13px; margin-left:2px;}
+
+/* Fix mobile overflow for date/time rows */
+[data-page="courier"] .modalGrid{grid-template-columns:1fr; gap:10px;}
+[data-page="courier"] input[type="date"],
+[data-page="courier"] input[type="time"]{width:100%; box-sizing:border-box;}
+
+/* Inline errors */
+.crErr{font-size:14px; margin-top:8px; font-weight:600;}
+
+
+/* --- Courier wizard (new screens only) --- */
+.page[data-page="courier"] .estimateCard{padding:14px;}
+.page[data-page="courier"] .fieldInput,
+.page[data-page="courier"] .fieldSelect{width:100%; box-sizing:border-box;}
+.crSectionTitle{font-size:18px; font-weight:800; margin-bottom:6px;}
+.crSectionSub{font-size:14px; color:var(--muted); margin-bottom:12px;}
+.crItemsList{display:flex; flex-direction:column; gap:10px;}
+.crItemCard{padding:12px;}
+.crItemHead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+.crItemTitle{font-size:14px; font-weight:700;}
+.crActionsRow{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+@media (max-width:420px){
+  .crActionsRow{grid-template-columns:1fr;}
+}
+.crFormGrid{display:flex; flex-direction:column; gap:12px;}
+.crRow2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+@media (max-width:420px){
+  .crRow2{grid-template-columns:1fr;}
+}
+.crErr{color:var(--danger,#ff3b30); font-size:15px; font-weight:700; margin-top:8px;}
+.crPreview{padding:12px; border-radius:14px;}
+.crPreviewLine{margin:6px 0;}
+.crPreviewItems{margin-top:10px; display:flex; flex-direction:column; gap:10px;}
+.crBadgeReq{font-weight:800;}
+.crSavedAddrs{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+.crSavedAddrs .smallBtn{white-space:nowrap;}
