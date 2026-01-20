@@ -167,6 +167,18 @@
     tg.expand();
     try { tg.disableVerticalSwipes(); } catch (_) {}
   }
+  
+  // ---------------- Viewport height sync (fix 100vh issues in Telegram/iOS) ----------------
+  const syncViewportVars = () => {
+    const h = (tg && (tg.viewportHeight || tg.viewportStableHeight)) || window.innerHeight || 0;
+    if (h) document.documentElement.style.setProperty('--vh', `${h}px`);
+  };
+  syncViewportVars();
+  window.addEventListener('resize', syncViewportVars, { passive: true });
+  try {
+    tg?.onEvent?.('viewportChanged', syncViewportVars);
+  } catch (_) {}
+
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -231,20 +243,42 @@
     return data;
   }
 
-  // ---------------- MODALS HELPERS ----------------
-  const openModalEl = (el) => {
-    if (!el) return;
-    el.classList.add("show");
-    el.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  };
+// ---------------- MODALS HELPERS ----------------
+let __scrollY = 0;
 
-  const closeModalEl = (el) => {
-    if (!el) return;
-    el.classList.remove("show");
-    el.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  };
+const lockScroll = () => {
+  __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${__scrollY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+  document.body.style.overflow = "hidden";
+};
+
+const unlockScroll = () => {
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+  document.body.style.right = "";
+  document.body.style.width = "";
+  document.body.style.overflow = "";
+  window.scrollTo(0, __scrollY);
+};
+
+const openModalEl = (el) => {
+  if (!el) return;
+  el.classList.add("show");
+  el.setAttribute("aria-hidden", "false");
+  lockScroll();
+};
+
+const closeModalEl = (el) => {
+  if (!el) return;
+  el.classList.remove("show");
+  el.setAttribute("aria-hidden", "true");
+  unlockScroll();
+};
 
   // ---------------- Dropoff choice + map (no API key) ----------------
   const dropoffChoiceBtn = $("#openDropoffChoice");
