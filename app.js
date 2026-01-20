@@ -236,14 +236,14 @@
     if (!el) return;
     el.classList.add("show");
     el.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
   };
-
+  
   const closeModalEl = (el) => {
     if (!el) return;
     el.classList.remove("show");
     el.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
+    document.body.classList.remove("modal-open");
   };
 
   // ---------------- Dropoff choice + map (no API key) ----------------
