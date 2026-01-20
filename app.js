@@ -701,28 +701,32 @@
       ? p.promo_codes.map(x => String(x || "").trim()).filter(Boolean)
       : (p.promo_code ? [String(p.promo_code).trim()] : []);
 
-    if (promoBtn) promoBtn.hidden = codes.length < 1;
+    if (promoBtn) promoBtn.hidden = false;
 
     if (promoBtn) {
       promoBtn.onclick = () => {
-        if (!promoModalContent) return;
-
-        const percent = (p.promo_percent != null) ? Number(p.promo_percent) : null;
-        const used = !!p.promo_used;
-
-        promoModalContent.innerHTML = `
-          <p class="modalP">
-            ${percent ? `Скидка: <b>${percent}%</b><br/>` : ""}
-            Статус: <b>${used ? "уже использован" : "доступен"}</b>
-          </p>
-          <div class="modalGrid">
-            ${codes.map(c => `<div class="giftCode" style="user-select:text;">${escapeHtml(c)}</div>`).join("")}
-          </div>
-        `;
-        openModalEl(promoModal);
         haptic("light");
+        const list = (Array.isArray(codes) ? codes : []).filter(Boolean);
+        if (!list.length) {
+          promoModalContent.innerHTML = `<div class="modalP">У вас нет активных промокодов и акций.</div>`;
+        } else {
+          promoModalContent.innerHTML = list.map(c => {
+            const code = String(c?.promo_code || c?.code || "").trim();
+            const pct = c?.promo_percent != null ? Number(c.promo_percent) : null;
+            const used = !!c?.promo_used;
+            const line = pct ? `Скидка: ${pct}%` : `Акция`;
+            return `<div class="order glass" style="padding:12px; margin-bottom:10px;">
+              <div class="orderTop">
+                <div><div class="orderId">${escapeHtml(code || "Промокод")}</div></div>
+                <div class="status">${used ? "Использован" : "Активен"}</div>
+              </div>
+              <div class="orderMeta" style="margin-top:6px;">${escapeHtml(line)}</div>
+            </div>`;
+          }).join("");
+        }
+        promoModal.classList.add("show");
+        promoModal.setAttribute("aria-hidden", "false");
       };
-    }
 
     if (achievementsBtn) {
       achievementsBtn.onclick = () => {
@@ -2257,7 +2261,7 @@
   }
 
   async function crFetchSlotBlocks(dateStr, city) {
-    if (!dateStr || !city) return {};
+    if (!dateStr || !city) return [];
     const url = `${SUPABASE_REST_URL}/courier_slot_blocks?date=eq.${encodeURIComponent(dateStr)}&city=eq.${encodeURIComponent(city)}&active=eq.true&select=slot,reason`;
     const res = await fetch(url, {
       method: "GET",
@@ -2268,14 +2272,13 @@
       },
     });
     const data = await res.json().catch(() => null);
-    if (!res.ok || !Array.isArray(data)) return {};
-    const m = {};
-    data.forEach(x => {
-      const s = String(x?.slot || "").trim();
-      if (!s) return;
-      m[s] = String(x?.reason || "").trim();
-    });
-    return m;
+    if (!res.ok || !Array.isArray(data)) return [];
+    return data
+      .map(x => ({
+        slot: String(x?.slot || "").trim(),
+        reason: String(x?.reason || "").trim(),
+      }))
+      .filter(x => x.slot);
   }
 
   function crValidateItems(items) {
@@ -2293,10 +2296,11 @@
   }
 
   function crValidateAddress(a) {
-    const city = String(a?.city || "").trim();
-    const street = String(a?.street || "").trim();
-    const house = String(a?.house || "").trim();
-    return !!(city && street && house);
+    const city = String(a?.city || '').trim();
+    const street = String(a?.street || '').trim();
+    const house = String(a?.house || '').trim();
+    const apartment = String(a?.apartment || '').trim();
+    return !!(city && street && house && apartment);
   }
 
   function crValidateTime(dateStr, timeStr) {
@@ -2316,47 +2320,141 @@
   function crRenderWizard() {
     if (!CR_WIZ || !courierWizardEl) return;
 
+    const CITY_OPTIONS = ["Севастополь", "Симферополь"];
+    const WORK_HOURS = {
+      "Севастополь": { start: "09:00", end: "21:00" },
+      "Симферополь": { start: "09:00", end: "21:00" },
+      default: { start: "09:00", end: "21:00" },
+    };
+
     const step = CR_WIZ.step;
+
+    const formatDt = (dateStr, timeStr) => {
+      try {
+        const dt = new Date(`${dateStr}T${timeStr}:00`);
+        if (!isFinite(dt.getTime())) return "—";
+        const d = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(dt);
+        const t = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(dt);
+        return `${d} — ${t}`;
+      } catch {
+        return "—";
+      }
+    };
+
+    const roundUpTo5 = (d) => {
+      const ms = d.getTime();
+      const step = 5 * 60 * 1000;
+      return new Date(Math.ceil(ms / step) * step);
+    };
+
+    const _unused_hmToMin = (hm) => {
+      const [h, m] = String(hm || "").split(":").map(n => Number(n));
+      if (!isFinite(h) || !isFinite(m)) return null
+    };
+
+    const parseHM = (hm) => {
+      try {
+        const [h, m] = String(hm || "").split(":");
+        const hh = Number(h);
+        const mm = Number(m);
+        if (!isFinite(hh) || !isFinite(mm)) return null;
+        return hh * 60 + mm;
+      } catch {
+        return null;
+      }
+    };
+
+    const inRange = (t, a, b) => {
+      const tt = parseHM(t);
+      const aa = parseHM(a);
+      const bb = parseHM(b);
+      if (tt === null || aa === null || bb === null) return true;
+      return tt >= aa && tt <= bb;
+    };
+
+    const getSavedKey = () => `cr_saved_addrs_${getTgId() || 0}`;
+    const loadSavedAddrs = () => {
+      try {
+        const raw = localStorage.getItem(getSavedKey());
+        const arr = JSON.parse(raw || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const saveAddrIfNeeded = () => {
+      if (!CR_WIZ?.remember_address) return;
+      const a = CR_WIZ.address || {};
+      const entry = {
+        city: String(a.city || "").trim(),
+        street: String(a.street || "").trim(),
+        house: String(a.house || "").trim(),
+        apartment: String(a.apartment || "").trim(),
+        entrance: String(a.entrance || "").trim(),
+        floor: String(a.floor || "").trim(),
+        intercom: String(a.intercom || "").trim(),
+        comment: String(a.comment || "").trim(),
+      };
+      if (!crValidateAddress(entry)) return;
+      const list = loadSavedAddrs();
+      const fingerprint = `${entry.city}|${entry.street}|${entry.house}|${entry.apartment}`.toLowerCase();
+      const exists = list.some(x => `${x.city}|${x.street}|${x.house}|${x.apartment}`.toLowerCase() == fingerprint);
+      if (!exists) {
+        list.unshift(entry);
+        localStorage.setItem(getSavedKey(), JSON.stringify(list.slice(0, 5)));
+      }
+    };
+
+    const isBlockedTime = (timeStr) => {
+      const blocks = Array.isArray(CR_WIZ.slotBlocks) ? CR_WIZ.slotBlocks : [];
+      for (const b of blocks) {
+        const slot = String(b?.slot || "").trim();
+        const reason = String(b?.reason || "").trim();
+        if (!slot) continue;
+        if (slot === "*" || slot.toUpperCase() === "ALL") return reason || "Недоступно";
+        if (slot.includes("-")) {
+          const [a, c] = slot.split("-", 2);
+          if (inRange(timeStr, a.trim(), c.trim())) return reason || "Недоступно";
+        }
+        if (slot === timeStr) return reason || "Недоступно";
+      }
+      return null;
+    };
+
     if (step === "items") {
       crSetStepSub("Что забрать");
 
       const st = String(CR_WIZ.status || "");
       const canMutateByStatus = !(st === "in_route" || st === "picked_up" || st === "done" || st === "cancelled");
-
-      // Реализуй именно так:
-      // “+ Добавить вещь” доступна до (время визита − 2 часа) и пока статус < “В пути”.
-      // “Удалить вещь” доступна пока статус < “В пути”.
       const canDelete = (CR_WIZ.mode === "create") ? true : canMutateByStatus;
       const canAdd = (CR_WIZ.mode === "create") ? true : (canMutateByStatus && crIsBeforeVisitMinus2h(CR_WIZ.date, CR_WIZ.slot));
 
       courierWizardEl.innerHTML = `
-        <div class="modalH" style="margin-bottom:6px;">Вещи</div>
-        <p class="modalP" style="margin-top:0;">Добавьте все вещи. Описание проблемы — обязательно.</p>
-        <div id="crItems"></div>
-        <div style="height:12px"></div>
-        <div class="modalGrid">
+        <div class="crSectionTitle">Вещи</div>
+        <div class="crSectionSub">Добавьте все вещи. Описание проблемы — обязательно.</div>
+        <div id="crItems" class="crItemsList"></div>
+        <div class="crActionsRow">
           <button class="smallBtn" type="button" id="crAddItemBtn" ${canAdd ? "" : "disabled"}>+ Добавить вещь</button>
           <button class="smallBtn primary" type="button" id="crItemsNextBtn" disabled>${CR_WIZ.mode === "edit" ? "Сохранить" : "Далее"}</button>
         </div>
       `;
 
       const itemsWrap = $("#crItems");
+
       const renderItems = () => {
         if (!itemsWrap) return;
         itemsWrap.innerHTML = "";
         CR_WIZ.items.forEach((it, idx) => {
           const card = document.createElement("div");
-          card.className = "order glass";
-          card.style.padding = "12px";
+          card.className = "crItemCard glass";
           card.innerHTML = `
-            <div class="orderTop">
-              <div>
-                <div class="orderId">Вещь ${idx + 1}</div>
-              </div>
+            <div class="crItemHead">
+              <div class="crItemTitle">Вещь №${idx + 1}</div>
               ${(CR_WIZ.items.length > 1 && canDelete) ? `<button class="smallBtn" type="button" data-cr-del="${idx}">Удалить</button>` : ``}
             </div>
 
-            <label class="field" style="margin-top:10px;">
+            <label class="field">
               <div class="fieldLabel">Категория</div>
               <select class="fieldSelect" data-cr-cat="${idx}">
                 <option value="Обувь" ${it.category === "Обувь" ? "selected" : ""}>Обувь</option>
@@ -2367,17 +2465,17 @@
               </select>
             </label>
 
-            <label class="field" style="margin-top:10px; ${it.category === 'Другое' ? '' : 'display:none;'}" data-cr-cat-other-wrap="${idx}">
+            <label class="field" data-cr-cat-other-wrap="${idx}" style="${it.category === "Другое" ? "" : "display:none;"}">
               <div class="fieldLabel">Укажите категорию</div>
-              <input class="fieldInput" data-cr-cat-other="${idx}" value="${escapeHtml(it.category_other || '')}" />
+              <input class="fieldInput" data-cr-cat-other="${idx}" value="${escapeHtml(it.category_other || "")}" />
             </label>
 
-            <label class="field" style="margin-top:10px;">
+            <label class="field">
               <div class="fieldLabel">Услуга</div>
               <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service)}" />
             </label>
 
-            <label class="field" style="margin-top:10px;">
+            <label class="field">
               <div class="fieldLabel">Описание проблемы</div>
               <input class="fieldInput" data-cr-prob="${idx}" value="${escapeHtml(it.problem)}" />
             </label>
@@ -2388,8 +2486,7 @@
 
       const syncNext = () => {
         const btn = $("#crItemsNextBtn");
-        if (!btn) return;
-        btn.disabled = !crValidateItems(CR_WIZ.items);
+        if (btn) btn.disabled = !crValidateItems(CR_WIZ.items);
       };
 
       renderItems();
@@ -2417,7 +2514,6 @@
         const idx = Number(t.getAttribute("data-cr-cat") || 0);
         if (!CR_WIZ.items[idx]) return;
         CR_WIZ.items[idx].category = String(t.value || "Обувь");
-        // показываем поле "Другое"
         const wrap = itemsWrap.querySelector(`[data-cr-cat-other-wrap="${idx}"]`);
         if (wrap) wrap.style.display = (CR_WIZ.items[idx].category === "Другое") ? "" : "none";
         syncNext();
@@ -2427,7 +2523,7 @@
         const btn = e.target?.closest?.("button[data-cr-del]");
         if (!btn) return;
         const idx = Number(btn.getAttribute("data-cr-del") || 0);
-        if (!(CR_WIZ.items.length > 1)) return;
+        if (CR_WIZ.items.length <= 1) return;
         CR_WIZ.items.splice(idx, 1);
         renderItems();
         syncNext();
@@ -2454,14 +2550,13 @@
             await crRefreshAll(true).catch(() => null);
             showPage("courier_requests");
             crRenderPage(CR_CACHE.list || []);
-            try { tg?.showAlert?.("Сохранено"); } catch(_){ }
+            try { tg?.showAlert?.("Сохранено"); } catch(_){}
           } catch (e) {
             hideLoading();
-            try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ }
+            try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){}
           }
           return;
         }
-
         CR_WIZ.step = "address";
         crRenderWizard();
       });
@@ -2470,60 +2565,88 @@
 
     if (step === "address") {
       crSetStepSub("Адрес");
-      const a = CR_WIZ.address;
-      courierWizardEl.innerHTML = `
-        <label class="field">
-          <div class="fieldLabel">Город</div>
-          <input class="fieldInput" id="crCity" value="${escapeHtml(a.city)}" />
-        </label>
+      const a = CR_WIZ.address || {};
+      const saved = loadSavedAddrs();
 
-        <label class="field" style="margin-top:12px;">
-          <div class="fieldLabel">Улица</div>
+      courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Адрес забора</div>
+        <div class="crSectionSub">Обязательные поля отмечены ✅</div>
+
+        <div class="modalRowCol">
+          <span>Город ✅</span>
+          <div class="seg" id="crCitySeg">
+            ${CITY_OPTIONS.map(c => `<button class="segBtn" type="button" data-city="${c}">${c}</button>`).join('')}
+          </div>
+        </div>
+
+        ${saved.length ? `
+          <div class="crSavedBlock">
+            <div class="crSavedTitle">Сохранённые адреса</div>
+            <div class="crSavedList">
+              ${saved.map((x, i) => {
+                const line = [x.city, x.street, x.house, x.apartment ? ('кв ' + x.apartment) : ''].filter(Boolean).join(', ');
+                return `<button class="smallBtn" type="button" data-cr-saved="${i}">${escapeHtml(line)}</button>`;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <label class="field">
+          <div class="fieldLabel">Улица ✅</div>
           <input class="fieldInput" id="crStreet" value="${escapeHtml(a.street)}" />
         </label>
 
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <label class="field" style="flex:1;">
-            <div class="fieldLabel">Дом</div>
+        <div class="crTwoCols">
+          <label class="field">
+            <div class="fieldLabel">Дом ✅</div>
             <input class="fieldInput" id="crHouse" value="${escapeHtml(a.house)}" />
           </label>
-          <label class="field" style="flex:1;">
-            <div class="fieldLabel">Кв</div>
+          <label class="field">
+            <div class="fieldLabel">КВ ✅</div>
             <input class="fieldInput" id="crApartment" value="${escapeHtml(a.apartment)}" />
           </label>
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <label class="field" style="flex:1;">
+        <div class="crTwoCols">
+          <label class="field">
             <div class="fieldLabel">Подъезд</div>
             <input class="fieldInput" id="crEntrance" value="${escapeHtml(a.entrance)}" />
           </label>
-          <label class="field" style="flex:1;">
+          <label class="field">
             <div class="fieldLabel">Этаж</div>
             <input class="fieldInput" id="crFloor" value="${escapeHtml(a.floor)}" />
           </label>
         </div>
 
-        <label class="field" style="margin-top:12px;">
+        <label class="field">
           <div class="fieldLabel">Домофон</div>
           <input class="fieldInput" id="crIntercom" value="${escapeHtml(a.intercom)}" />
         </label>
 
-        <label class="field" style="margin-top:12px;">
+        <label class="field">
           <div class="fieldLabel">Комментарий</div>
           <input class="fieldInput" id="crComment" value="${escapeHtml(a.comment)}" />
         </label>
 
-        <div style="height:12px"></div>
-        <div class="modalGrid">
+        <label class="crRemember">
+          <input type="checkbox" id="crRememberAddr" ${CR_WIZ.remember_address ? "checked" : ""} />
+          Запомнить адрес
+        </label>
+
+        <div class="crActionsRow">
           <button class="smallBtn" type="button" id="crAddrBackBtn">Назад</button>
           <button class="smallBtn primary" type="button" id="crAddrNextBtn" disabled>Далее</button>
         </div>
       `;
 
+      const applyCityActive = (city) => {
+        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+      };
+
       const sync = () => {
+        const cityBtn = $("#crCitySeg .segBtn.active");
         CR_WIZ.address = {
-          city: String($("#crCity")?.value || "").trim(),
+          city: String(cityBtn?.dataset?.city || a.city || "").trim(),
           street: String($("#crStreet")?.value || "").trim(),
           house: String($("#crHouse")?.value || "").trim(),
           apartment: String($("#crApartment")?.value || "").trim(),
@@ -2532,13 +2655,41 @@
           intercom: String($("#crIntercom")?.value || "").trim(),
           comment: String($("#crComment")?.value || "").trim(),
         };
-
+        CR_WIZ.remember_address = !!$("#crRememberAddr")?.checked;
         const ok = crValidateAddress(CR_WIZ.address);
         const btn = $("#crAddrNextBtn");
         if (btn) btn.disabled = !ok;
       };
 
+      // init city
+      const initCity = String(a.city || CITY_OPTIONS[0]).trim();
+      applyCityActive(initCity);
+
+      $$("#crCitySeg .segBtn").forEach(btn => btn.addEventListener("click", () => {
+        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+        sync();
+        haptic("light");
+      }));
+
+      $$("[data-cr-saved]").forEach(btn => btn.addEventListener("click", () => {
+        const i = Number(btn.getAttribute("data-cr-saved") || 0);
+        const sel = saved[i];
+        if (!sel) return;
+        // подставляем
+        $("#crStreet").value = sel.street || "";
+        $("#crHouse").value = sel.house || "";
+        $("#crApartment").value = sel.apartment || "";
+        $("#crEntrance").value = sel.entrance || "";
+        $("#crFloor").value = sel.floor || "";
+        $("#crIntercom").value = sel.intercom || "";
+        $("#crComment").value = sel.comment || "";
+        applyCityActive(sel.city || initCity);
+        sync();
+        haptic("light");
+      }));
+
       courierWizardEl.querySelectorAll("input").forEach(el => el.addEventListener("input", sync));
+      $("#crRememberAddr")?.addEventListener("change", sync);
       sync();
 
       $("#crAddrBackBtn")?.addEventListener("click", () => {
@@ -2557,8 +2708,7 @@
     if (step === "time") {
       crSetStepSub("Дата и время");
       const city = String(CR_WIZ.address?.city || "").trim();
-      const dateVal = CR_WIZ.date || "";
-      const timeVal = CR_WIZ.slot || ""; // slot используем как точное время "HH:MM"
+      const wh = WORK_HOURS[city] || WORK_HOURS.default;
 
       const today = (() => {
         const d = new Date();
@@ -2569,20 +2719,22 @@
       })();
 
       courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Когда приехать</div>
+        <div class="crSectionSub">Рабочие часы: ${wh.start}–${wh.end}. Время можно выбрать не раньше, чем через 1 час.</div>
+
         <label class="field">
           <div class="fieldLabel">Дата</div>
-          <input class="fieldInput" id="crDate" type="date" min="${today}" value="${escapeHtml(dateVal)}" />
+          <input class="fieldInput" id="crDate" type="date" min="${today}" value="${escapeHtml(CR_WIZ.date || '')}" />
         </label>
 
-        <label class="field" style="margin-top:12px;">
+        <label class="field">
           <div class="fieldLabel">Время</div>
-          <input class="fieldInput" id="crTime" type="time" step="300" value="${escapeHtml(timeVal)}" />
+          <input class="fieldInput" id="crTime" type="time" step="300" value="${escapeHtml(CR_WIZ.slot || '')}" />
         </label>
 
-        <div id="crTimeReason" class="orderMeta" style="margin-top:10px; display:none"></div>
+        <div id="crTimeErr" class="crErr" style="display:none"></div>
 
-        <div style="height:12px"></div>
-        <div class="modalGrid">
+        <div class="crActionsRow">
           <button class="smallBtn" type="button" id="crTimeBackBtn">Назад</button>
           <button class="smallBtn primary" type="button" id="crTimeNextBtn" disabled>Далее</button>
         </div>
@@ -2590,79 +2742,107 @@
 
       const dateInput = $("#crDate");
       const timeInput = $("#crTime");
-      const reasonEl = $("#crTimeReason");
+      const errEl = $("#crTimeErr");
       const nextBtn = $("#crTimeNextBtn");
 
-      const minAllowedMs = () => Date.now() + 60 * 60 * 1000; // можно выбрать на час вперед
+      const showErr = (msg) => {
+        if (!errEl) return;
+        if (!msg) {
+          errEl.style.display = "none";
+          errEl.textContent = "";
+          return;
+        }
+        errEl.style.display = "block";
+        errEl.textContent = msg;
+      };
 
-      const validateSelected = () => {
+      const minAllowed = () => {
+        const d = new Date(Date.now() + 60 * 60 * 1000);
+        return roundUpTo5(d);
+      };
+
+      const applyMinMax = () => {
+        if (!timeInput) return;
         const d = String(CR_WIZ.date || "").trim();
-        const t = String(CR_WIZ.slot || "").trim();
-        const blocks = CR_WIZ.slotBlocks || {};
-        if (reasonEl) {
-          reasonEl.style.display = "none";
-          reasonEl.textContent = "";
-        }
-        if (!d || !t) return false;
-        if (blocks[t]) {
-          if (reasonEl) {
-            reasonEl.style.display = "block";
-            reasonEl.textContent = `Время недоступно: ${blocks[t]}`;
-          }
-          return false;
-        }
-        try {
-          const dt = new Date(`${d}T${t}:00`);
-          if (!isFinite(dt.getTime())) return false;
-          if (dt.getTime() < minAllowedMs()) {
-            if (reasonEl) {
-              reasonEl.style.display = "block";
-              reasonEl.textContent = "Можно выбрать время не раньше чем через 1 час.";
-            }
-            return false;
-          }
-          return true;
-        } catch {
-          return false;
+        // базовый min/max — рабочие часы
+        timeInput.min = wh.start;
+        timeInput.max = wh.end;
+
+        if (d === today) {
+          const m = minAllowed();
+          const hh = String(m.getHours()).padStart(2, "0");
+          const mm = String(m.getMinutes()).padStart(2, "0");
+          const minHm = `${hh}:${mm}`;
+          // минимум = max(рабочее начало, now+1h)
+          const startOk = inRange(minHm, wh.start, wh.end) ? minHm : wh.start;
+          timeInput.min = startOk;
         }
       };
 
+      const validate = () => {
+        const d = String(CR_WIZ.date || "").trim();
+        const t = String(CR_WIZ.slot || "").trim();
+        showErr("");
+        if (!d || !t) return false;
+
+        // дата не может быть прошлой (iOS иногда позволяет выбрать, поэтому показываем ошибку)
+        if (d < today) {
+          showErr("Дата уже прошла. Выберите актуальную дату.");
+          return false;
+        }
+
+        // рабочие часы
+        if (!inRange(t, wh.start, wh.end)) {
+          showErr(`Время вне рабочих часов. Доступно: ${wh.start}–${wh.end}`);
+          return false;
+        }
+
+        // блокировки
+        const br = isBlockedTime(t);
+        if (br) {
+          showErr(`Время недоступно: ${br}`);
+          return false;
+        }
+
+        // минимум: +1 час от текущего момента
+        try {
+          const dt = new Date(`${d}T${t}:00`);
+          const minDt = minAllowed();
+          if (!isFinite(dt.getTime())) return false;
+          if (dt.getTime() < minDt.getTime()) {
+            showErr("Можно выбрать время не раньше, чем через 1 час от текущего момента.");
+            return false;
+          }
+        } catch {
+          showErr("Некорректная дата или время");
+          return false;
+        }
+
+        return true;
+      };
+
       const syncNext = () => {
-        const ok = validateSelected();
+        const ok = validate();
         if (nextBtn) nextBtn.disabled = !ok;
       };
 
       const refreshBlocks = async () => {
         const d = String(CR_WIZ.date || "").trim();
         if (!d || !city) {
-          CR_WIZ.slotBlocks = {};
+          CR_WIZ.slotBlocks = [];
           syncNext();
           return;
         }
-        const m = await crFetchSlotBlocks(d, city);
-        CR_WIZ.slotBlocks = m;
-        if (CR_WIZ.slot && m[CR_WIZ.slot]) CR_WIZ.slot = "";
+        CR_WIZ.slotBlocks = await crFetchSlotBlocks(d, city);
+        if (CR_WIZ.slot && isBlockedTime(CR_WIZ.slot)) CR_WIZ.slot = "";
         syncNext();
-      };
-
-      const applyTimeMin = () => {
-        if (!timeInput) return;
-        const d = String(CR_WIZ.date || "").trim();
-        if (d === today) {
-          const min = new Date(minAllowedMs());
-          const hh = String(min.getHours()).padStart(2, "0");
-          const mm = String(min.getMinutes()).padStart(2, "0");
-          timeInput.min = `${hh}:${mm}`;
-        } else {
-          timeInput.min = "00:00";
-        }
       };
 
       dateInput?.addEventListener("change", async () => {
         CR_WIZ.date = String(dateInput.value || "").trim();
-        applyTimeMin();
-        syncNext();
+        applyMinMax();
         await refreshBlocks();
+        syncNext();
         haptic("light");
       });
 
@@ -2673,11 +2853,9 @@
       });
 
       // init
-      if (dateVal) CR_WIZ.date = dateVal;
-      if (timeVal) CR_WIZ.slot = timeVal;
-      applyTimeMin();
-      syncNext();
+      applyMinMax();
       refreshBlocks().catch(() => null);
+      syncNext();
 
       $("#crTimeBackBtn")?.addEventListener("click", () => {
         CR_WIZ.step = "address";
@@ -2695,31 +2873,52 @@
     if (step === "confirm") {
       crSetStepSub("Подтверждение");
 
-      const a = CR_WIZ.address;
-      const addrLine = [a.city, a.street, a.house, a.apartment].filter(Boolean).join(", ") || "—";
-      const dtLine = [CR_WIZ.date, CR_WIZ.slot].filter(Boolean).join(" ") || "—";
-      const itemsLine = String(CR_WIZ.items.length || 0);
+      const a = CR_WIZ.address || {};
+      const addrLine = [a.city, a.street, a.house, a.apartment ? ('кв ' + a.apartment) : ""].filter(Boolean).join(", ") || "—";
+      const dtPretty = (CR_WIZ.date && CR_WIZ.slot) ? formatDt(CR_WIZ.date, CR_WIZ.slot) : "—";
+
+      const items = CR_WIZ.items || [];
+      const itemsHtml = (() => {
+        if (items.length <= 1) {
+          const it = items[0] || {};
+          const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
+          return `
+            <div class="crPreviewItemSingle">
+              <div class="crPreviewItemTitle">${escapeHtml(cat)} • ${escapeHtml(String(it.service||''))}</div>
+              <div class="crPreviewItemProblem">${escapeHtml(String(it.problem||''))}</div>
+            </div>
+          `;
+        }
+        return `
+          <div class="crPreviewCount">Вещей: ${items.length}</div>
+          ${items.map((it, i) => {
+            const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
+            return `
+              <div class="crPreviewItem">
+                <div class="crPreviewItemTitle">${i+1}. ${escapeHtml(cat)} • ${escapeHtml(String(it.service||''))}</div>
+                <div class="crPreviewItemProblem">${escapeHtml(String(it.problem||''))}</div>
+              </div>
+            `;
+          }).join('')}
+        `;
+      })();
 
       courierWizardEl.innerHTML = `
-        <div class="modalH" style="margin-bottom:6px;">Проверьте данные</div>
-        <p class="modalP" style="margin-top:0;">
-          <b>Дата:</b> ${escapeHtml(dtLine)}<br/>
-          <b>Адрес:</b> ${escapeHtml(addrLine)}<br/>
-          <b>Вещей:</b> ${escapeHtml(itemsLine)}
-        </p>
+        <div class="crSectionTitle">Проверьте данные</div>
 
-        <div style="height:8px"></div>
-        <div class="orderBody">
-          ${CR_WIZ.items.map((it, idx) => {
-            const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
-            return `<div class="orderLine"><span>${idx + 1}.</span> ${escapeHtml(cat)} • ${escapeHtml(it.service)}<br/><span style="color:var(--muted)">${escapeHtml(it.problem)}</span></div>`;
-          }).join("")}
+        <div class="crPreview glass">
+          <div class="crPreviewRow"><span>Дата</span><b>${escapeHtml(dtPretty)}</b></div>
+          <div class="crPreviewRow"><span>Адрес</span><b>${escapeHtml(addrLine)}</b></div>
         </div>
 
-        <div style="height:12px"></div>
-        <div class="modalH" style="font-size:16px;">Прикрепить фото?</div>
-        <p class="modalP" style="margin-top:4px;">Если да — откроется бот и можно отправить фото/видео.</p>
-        <div class="modalGrid">
+        <div class="crPreviewItems">
+          ${itemsHtml}
+        </div>
+
+        <div class="crSectionTitle" style="margin-top:10px;">Прикрепить фото?</div>
+        <div class="crSectionSub">Если да — откроется бот, и вы отправите фото/видео.</div>
+
+        <div class="crActionsRow crActionsRow3">
           <button class="smallBtn primary" type="button" id="crSendYes">Да</button>
           <button class="smallBtn" type="button" id="crSendNo">Нет</button>
           <button class="smallBtn" type="button" id="crConfirmBackBtn">Назад</button>
@@ -2727,13 +2926,12 @@
       `;
 
       const doSend = async (needMedia) => {
-        // create via enqueue_request (как в оценке по фото)
         const tg_id = getTgId();
         if (!tg_id) throw new Error("Нет tg_id");
         const p = loadProfile() || {};
         const user = tg?.initDataUnsafe?.user || {};
         if (!crValidateItems(CR_WIZ.items)) throw new Error("Заполните все вещи");
-        if (!crValidateAddress(CR_WIZ.address)) throw new Error("Заполните адрес");
+        if (!crValidateAddress(CR_WIZ.address)) throw new Error("Заполните обязательные поля адреса");
         if (!crValidateTime(CR_WIZ.date, CR_WIZ.slot)) throw new Error("Выберите дату и время");
 
         showLoading();
@@ -2770,27 +2968,26 @@
             }),
           });
 
-          const text = await res.text();
+          const raw = await res.text();
           let data = null;
-          try { data = JSON.parse(text); } catch (_) {}
+          try { data = JSON.parse(raw); } catch(_) {}
           if (!res.ok || !data || !data.ok) {
-            const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+            const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${raw.slice(0, 160)}`;
             throw new Error(err);
           }
         } finally {
           hideLoading();
         }
 
-        // локально сбрасываем мастер
+        saveAddrIfNeeded();
         CR_WIZ = null;
 
-        // как в оценке по фото: если нужно медиа — закрываем WebApp
         if (needMedia) {
-          try { tg?.close(); } catch (_) {}
+          try { tg?.close(); } catch(_) {}
           return;
         }
 
-        try { tg?.showAlert?.("Заявка отправлена"); } catch (_) {}
+        try { tg?.showAlert?.("Заявка отправлена"); } catch(_) {}
         await crRefreshAll(true).catch(() => null);
         showPage("profile");
       };
@@ -2805,6 +3002,8 @@
       return;
     }
   }
+
+  // back button in wizard header
 
   // back button in wizard header
   courierBackBtn?.addEventListener("click", () => {
