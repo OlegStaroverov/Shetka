@@ -9,6 +9,16 @@
   --shadow: 0 14px 34px rgba(0,0,0,.08);
 
   --radius: 22px;
+
+  --accent: #34c759;
+  --accent2: #30d158;
+  --accentBorder: color-mix(in oklab, var(--accent) 55%, var(--hair));
+  --accentBg: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--accent) 22%, transparent),
+    color-mix(in oklab, var(--accent) 10%, transparent)
+  );
+
   --lime: #d7ff00;
   --lime2:#b9ff00;
 
@@ -23,6 +33,9 @@
 
   --safeTop: env(safe-area-inset-top, 0px);
   --safeBot: env(safe-area-inset-bottom, 0px);
+  
+  --vh: 100vh;
+
 
   --patternOpacity: .18;
   --patternSize: 340px;
@@ -36,6 +49,9 @@ html[data-theme="dark"]{
   --muted:rgba(243,245,247,.68);
   --hair:rgba(243,245,247,.12);
 
+  --accent: #30d158;
+  --accent2: #34c759;
+  
   --glass: rgba(18,20,26,.72);
   --shadow: 0 18px 42px rgba(0,0,0,.55);
 
@@ -54,6 +70,7 @@ html,body{
   background: transparent;
   overflow-x:hidden;
   overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Prevent accidental horizontal overflow from long text/flex children */
@@ -112,6 +129,13 @@ html.pattern-on body::after { opacity: calc(var(--patternOpacity) * 0.45); backg
 
 button,input,select{ font:inherit; color:inherit; }
 button{ border:0; background:none; cursor:pointer; }
+button{
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.2;
+  touch-action: manipulation;
+}
+input,select{ line-height: 1.2; }
 
 input[type="date"], input[type="time"]{
   max-width: 100%;
@@ -129,7 +153,7 @@ input[type="date"], input[type="time"]{
 .app{
   position: relative;
   z-index: 1;
-  min-height: 100vh;
+  min-height: var(--vh);
 
   /* Responsive: keep content readable on large screens */
   max-width: 560px;
@@ -251,13 +275,13 @@ html[data-theme="dark"] .kickerCenter{ background: rgba(255,255,255,.06); }
 html[data-theme="dark"] .cta{ background: rgba(255,255,255,.06); }
 .cta:active{ transform: scale(.98); }
 .cta.primary{
-  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
 /* ВАЖНО: "Оценка по фото" и "Вызвать курьера" должны быть одинаковыми в светлой/тёмной теме */
 html[data-theme="dark"] .cta.primary{
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
-  border-color: color-mix(in oklab, var(--lime) 55%, rgba(15,17,21,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
 .ctaIco{ font-size:20px; }
 .ctaTitle{ font-weight: 850; font-size: 13px; }
@@ -284,9 +308,8 @@ html[data-theme="dark"] .cta.primary{
   align-items:center;
   justify-content:center;
 
-  /* ✅ как primary-кнопки (Оценка по фото / Курьер) */
-  border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 
   font-size: 18px;
 }
@@ -355,7 +378,8 @@ html[data-theme="dark"] .searchInput{ background: rgba(255,255,255,.06); }
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
   font-weight: 900;
 }
 .searchBtn:active{ transform: scale(.98); }
@@ -401,6 +425,25 @@ html[data-theme="dark"] .status{ background: rgba(255,255,255,.06); }
   padding: 10px;
   overflow:auto;
 }
+
+/* Scrollbar: в светлой теме делаем темнее, чтобы было видно */
+:where(.priceTabs, .modalCard){
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(15,17,21,.35) transparent;
+}
+html[data-theme="dark"] :where(.priceTabs, .modalCard){
+  scrollbar-color: rgba(243,245,247,.25) transparent;
+}
+:where(.priceTabs, .modalCard)::-webkit-scrollbar{ width: 6px; height: 6px; }
+:where(.priceTabs, .modalCard)::-webkit-scrollbar-track{ background: transparent; }
+:where(.priceTabs, .modalCard)::-webkit-scrollbar-thumb{
+  background: rgba(15,17,21,.35);
+  border-radius: 999px;
+}
+html[data-theme="dark"] :where(.priceTabs, .modalCard)::-webkit-scrollbar-thumb{
+  background: rgba(243,245,247,.25);
+}
+
 .priceTab{
   padding: 10px 12px;
   border-radius: 999px;
@@ -411,9 +454,10 @@ html[data-theme="dark"] .status{ background: rgba(255,255,255,.06); }
 }
 html[data-theme="dark"] .priceTab{ background: rgba(255,255,255,.06); }
 .priceTab.active{
-  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
+
 .priceCard{ padding: 14px; }
 .priceH{ font-weight: 950; letter-spacing:-.2px; }
 .priceList{ list-style:none; padding:0; margin:10px 0 0; display:flex; flex-direction:column; gap: 10px; }
@@ -446,7 +490,8 @@ html[data-theme="dark"] .priceTab{ background: rgba(255,255,255,.06); }
   padding: 12px 12px;
   border-radius: 18px;
   border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
   font-weight: 950;
 }
 .profileBtn:active{ transform: scale(.98); }
@@ -457,7 +502,8 @@ html[data-theme="dark"] .priceTab{ background: rgba(255,255,255,.06); }
   padding: 12px 12px;
   border-radius: 18px;
   border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
   font-weight: 950;
   text-align:center;
 }
@@ -594,8 +640,8 @@ html[data-theme="dark"] .themeKnob .moon{
 .tab .tTxt{ font-size: 11px; }
 .tab.active{
   opacity: 1;
-  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
 
 /* --------- Page transitions --------- */
@@ -606,8 +652,15 @@ html[data-theme="dark"] .themeKnob .moon{
 /* --------- Modal transitions --------- */
 .modal{display:none;}
 .modal.show{display:block;}
-.modal .modalCard{opacity:0; transform: scale(.98); transition: opacity 220ms cubic-bezier(0.25,1,0.33,1), transform 220ms cubic-bezier(0.25,1,0.33,1);}
-.modal.show .modalCard{opacity:1; transform: scale(1);} 
+.modal .modalCard{
+  opacity:0;
+  transform: translate(-50%, -50%) scale(.98);
+  transition: opacity 220ms cubic-bezier(0.25,1,0.33,1), transform 220ms cubic-bezier(0.25,1,0.33,1);
+}
+.modal.show .modalCard{
+  opacity:1;
+  transform: translate(-50%, -50%) scale(1);
+}
 
 /* --------- Reveal on scroll --------- */
 .reveal, [data-reveal]{opacity:0; transform: translateY(12px); transition: opacity 600ms cubic-bezier(0.25,1,0.33,1), transform 600ms cubic-bezier(0.25,1,0.33,1);}
@@ -772,7 +825,7 @@ html[data-theme="dark"] .crSavedDel{ background: rgba(15,17,21,.55); }
   right: 14px;
   bottom: calc(var(--pad) + var(--tabH) + 18px + var(--safeBot));
   width: min(380px, calc(100vw - 28px));
-  height: min(560px, calc(100vh - 200px));
+  height: min(560px, calc(var(--vh) - 200px));
   border-radius: 26px;
   overflow:hidden;
 
@@ -848,7 +901,8 @@ html[data-theme="dark"] .chatInput{ background: rgba(255,255,255,.06); }
   width: 46px;
   border-radius: 16px;
   border: 1px solid color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
   font-weight: 950;
 }
 .chatSend:active{ transform: scale(.96); }
@@ -866,7 +920,7 @@ html[data-theme="dark"] .chatInput{ background: rgba(255,255,255,.06); }
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(520px, calc(100vw - 28px));
-  max-height: min(640px, calc(100vh - 120px));
+  max-height: min(640px, calc(var(--vh) - 120px));
   overflow:auto;
 
   border-radius: 26px;
@@ -906,15 +960,18 @@ html[data-theme="dark"] .modalClose{ background: rgba(255,255,255,.06); }
   flex:1;
   border:1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
-  color: var(--text);
+  color: var(--txt);
   border-radius: 14px;
   padding: 10px 12px;
   font-weight: 800;
   font-size: 13px;
 }
 html[data-theme="light"] .segBtn{ border-color: rgba(0,0,0,.08); background: rgba(0,0,0,.03); }
-.segBtn.active{ outline: 2px solid rgba(255,255,255,.24); }
-html[data-theme="light"] .segBtn.active{ outline: 2px solid rgba(0,0,0,.12); }
+.segBtn.active{
+  outline: 2px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
+}
 
 .avatarPick{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .avatarOpt{
@@ -1397,7 +1454,7 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
   border:1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
   /* Цвет иконки должен зависеть от темы */
-  color: var(--text);
+  color: var(--txt);
 }
 .tgIconBtn svg{ opacity:.9; }
 .tgIconBtn svg path{ fill: currentColor; }
