@@ -286,9 +286,25 @@
     haptic('light');
     try { closeModalEl(dropoffModal); } catch(_) {}
     if (dropoffMapFrame) {
-      dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 13 });
-      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 15 }); } catch(_){} }, 420);
-      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 16 }); } catch(_){} }, 820);
+      // сначала показываем карту без сильного зума
+      const initialSrc = buildYandexMapUrl({ ...DROPOFF_POINT, z: 13 });
+      dropoffMapFrame.src = initialSrc;
+
+      // Зум делаем только после того, как iframe успел загрузиться (и подождали 2–3 секунды)
+      // чтобы избежать дерганий/перезагрузок на слабых устройствах.
+      let zoomed = false;
+      const onLoad = () => {
+        if (zoomed) return;
+        zoomed = true;
+        setTimeout(() => {
+          try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 16 }); } catch(_){}
+        }, 2400);
+      };
+      try {
+        dropoffMapFrame.addEventListener('load', onLoad, { once: true });
+      } catch(_) {
+        setTimeout(onLoad, 2600);
+      }
     }
     const addr = document.getElementById('dropoffAddr');
     const hrs = document.getElementById('dropoffHours');
@@ -316,10 +332,21 @@
   });
 
   dropoffRouteBtn?.addEventListener('click', () => {
-    // открываем внешний маршрут (Yandex / Apple / Google) через Telegram WebApp
-    const ll = `${DROPOFF_POINT.lat},${DROPOFF_POINT.lon}`;
-    const url = `https://yandex.ru/maps/?pt=${DROPOFF_POINT.lon},${DROPOFF_POINT.lat}&z=16&l=map&rtext=~${ll}`;
-    try { tg?.openLink?.(url); } catch (_) { window.open(url, '_blank'); }
+    // Открываем маршрут в Yandex Navigator (если есть), иначе — в Яндекс.Картах
+    const lat = DROPOFF_POINT.lat;
+    const lon = DROPOFF_POINT.lon;
+    const deep = `yandexnavi://build_route_on_map?lat_to=${encodeURIComponent(String(lat))}&lon_to=${encodeURIComponent(String(lon))}`;
+    const web = `https://yandex.ru/maps/?rtext=~${encodeURIComponent(String(lat))},${encodeURIComponent(String(lon))}&rtt=auto&z=16`;
+
+    try {
+      // Telegram на мобилках обычно корректно открывает deep-link
+      tg?.openLink?.(deep);
+      // fallback, если deep-link не сработал
+      setTimeout(() => { try { tg?.openLink?.(web); } catch(_) { window.open(web, '_blank'); } }, 420);
+    } catch (_) {
+      try { window.location.href = deep; } catch(_e) {}
+      setTimeout(() => { try { window.open(web, '_blank'); } catch(_e) {} }, 420);
+    }
     haptic('light');
   });
     
@@ -442,6 +469,23 @@
     }
   };
 
+  const confirmLeaveCourier = (next) => {
+    const doLeave = () => {
+      try { CR_WIZ = null; } catch(_) {}
+      if (typeof next === "function") next();
+    };
+    try {
+      if (tg?.showConfirm) {
+        tg.showConfirm("Выйти из формы? Данные не сохранятся.", (ok) => {
+          if (ok) doLeave();
+        });
+        return;
+      }
+    } catch(_) {}
+    // fallback
+    if (window.confirm("Выйти из формы? Данные не сохранятся.")) doLeave();
+  };
+
   const goBack = () => {
     if (pageStack.length <= 1) return;
     pageStack.pop();
@@ -450,10 +494,15 @@
     haptic("light");
   };
 
-  $$("[data-nav]").forEach(btn => {
+  $$ ("[data-nav]").forEach(btn => {
     btn.addEventListener("click", () => {
-      showPage(btn.dataset.nav);
-      haptic("light");
+      const target = String(btn.dataset.nav || "");
+      const go = () => { showPage(target); haptic("light"); };
+      if (currentPage === "courier" && CR_WIZ && target && target !== "courier") {
+        confirmLeaveCourier(go);
+        return;
+      }
+      go();
     });
   });
   $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
@@ -476,6 +525,20 @@
       try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
     };
+
+    // Before/After: slide-in placeholders from edges (10 cases)
+    try {
+      if ('IntersectionObserver' in window) {
+        const baObs = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('baActive');
+            baObs.unobserve(e.target);
+          });
+        }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+        document.querySelectorAll('[data-ba]').forEach(el => baObs.observe(el));
+      }
+    } catch(_) {}
 
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
@@ -819,12 +882,14 @@
     return Array.from(set);
   };
 
-  // Верхний фильтр (segmented) — 4 витринные категории.
+  // Верхний фильтр (segmented) — витринные категории.
+  // Важно: "Другое" и "Ремонт" — отдельно (по просьбе).
   const SERVICES_SEG = [
-    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "sole", "sew", "color", "dis"] },
-    { key: "bags", title: "Сумки", price_keys: ["bags", "sew", "color", "dis"] },
+    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "color", "dis"] },
+    { key: "bags", title: "Сумки", price_keys: ["bags", "color", "dis"] },
     { key: "clothes", title: "Одежда", price_keys: ["color", "dis"] },
-    { key: "other", title: "Другое/ремонт", price_keys: ["other", "sole", "sew", "dis"] },
+    { key: "repair", title: "Ремонт", price_keys: ["sole", "sew"] },
+    { key: "other", title: "Другое", price_keys: ["other", "dis"] },
   ];
   let activeServicesKey = SERVICES_SEG[0].key;
 
@@ -903,7 +968,8 @@
         const mapCat = (t) => {
           if (t === 'Сумки') return 'Сумка';
           if (t === 'Одежда') return 'Верхняя одежда';
-          if (t === 'Другое/ремонт') return 'Аксессуар';
+          if (t === 'Ремонт') return 'Обувь';
+          if (t === 'Другое') return 'Аксессуар';
           return 'Обувь';
         };
         if (!name) return;
@@ -2606,9 +2672,11 @@
       try {
         const dt = new Date(`${dateStr}T${timeStr}:00`);
         if (!isFinite(dt.getTime())) return "—";
-        const d = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(dt);
+        let d = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(dt);
+        // убираем "г." если Intl добавил
+        d = d.replace(/\s?г\.?\s?/g, "").trim();
         const t = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(dt);
-        return `${d} — ${t}`;
+        return `в ${t}, ${d}`;
       } catch {
         return "—";
       }
@@ -2915,7 +2983,12 @@
             <div class="crSavedList">
               ${saved.map((x, i) => {
                 const line = [x.city, x.street, x.house, x.apartment ? ('кв ' + x.apartment) : ''].filter(Boolean).join(', ');
-                return `<button class="smallBtn" type="button" data-cr-saved="${i}">${escapeHtml(line)}</button>`;
+                return `
+                  <div class="crSavedRow">
+                    <button class="smallBtn crSavedPick" type="button" data-cr-saved="${i}">${escapeHtml(line)}</button>
+                    <button class="crSavedDel" type="button" aria-label="Удалить адрес" data-cr-saved-del="${i}">✕</button>
+                  </div>
+                `;
               }).join('')}
             </div>
           </div>
@@ -3015,6 +3088,21 @@
         $("#crComment").value = sel.comment || "";
         applyCityActive(sel.city || initCity);
         sync();
+        haptic("light");
+      }));
+
+      // delete saved address
+      $$ ("[data-cr-saved-del]").forEach(btn => btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const i = Number(btn.getAttribute("data-cr-saved-del") || 0);
+        const list = loadSavedAddrs();
+        if (i < 0 || i >= list.length) return;
+        list.splice(i, 1);
+        try { localStorage.setItem(getSavedKey(), JSON.stringify(list)); } catch(_) {}
+        // rerender same step
+        CR_WIZ.step = "address";
+        crRenderWizard();
         haptic("light");
       }));
 
@@ -3237,8 +3325,14 @@
         <div class="crSectionTitle">Проверьте данные</div>
 
         <div class="crPreview glass">
-          <div class="crPreviewRow"><span>Дата</span><b>${escapeHtml(dtPretty)}</b></div>
-          <div class="crPreviewRow"><span>Адрес</span><b>${escapeHtml(addrLine)}</b></div>
+          <div class="crPreviewRow">
+            <span class="crPreviewKey">Дата:</span>
+            <span class="crPreviewVal"><b>${escapeHtml(dtPretty)}</b></span>
+          </div>
+          <div class="crPreviewRow">
+            <span class="crPreviewKey">Адрес:</span>
+            <span class="crPreviewVal"><b>${escapeHtml(addrLine)}</b></span>
+          </div>
         </div>
 
         <div class="crPreviewItems">
@@ -3339,7 +3433,7 @@
   courierBackBtn?.addEventListener("click", () => {
     if (!CR_WIZ) { goBack(); return; }
     const step = CR_WIZ.step;
-    if (step === "items") { goBack(); return; }
+    if (step === "items") { confirmLeaveCourier(() => goBack()); return; }
     if (step === "address") CR_WIZ.step = "items";
     else if (step === "time") CR_WIZ.step = "address";
     else if (step === "confirm") CR_WIZ.step = "time";
@@ -3500,13 +3594,20 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   syncEstimate();
 
   // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
+  // Throttled (rAF) scroll handler for 60fps
+  let _logoTicking = false;
   const headerLogoFade = () => {
+    _logoTicking = false;
     const y = window.scrollY || document.documentElement.scrollTop || 0;
-    document.body.classList.toggle("logoBehind", y > 12); // порог можно менять (12..30)
+    document.body.classList.toggle("logoBehind", y > 12);
   };
-
-  window.addEventListener("scroll", headerLogoFade, { passive: true });
-  headerLogoFade(); // сразу применяем состояние при загрузке
+  const onScroll = () => {
+    if (_logoTicking) return;
+    _logoTicking = true;
+    requestAnimationFrame(headerLogoFade);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  headerLogoFade();
   
   // ---------------- INIT ----------------
   setTabActive("home");
