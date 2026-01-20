@@ -13,6 +13,7 @@
   try {
 
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
+  const SUPABASE_REST_URL = "https://jcnusmqellszoiuupaat.supabase.co/rest/v1";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
   const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
   const SUPABASE_RESERVE_PROMO_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/reserve_promo";
@@ -733,6 +734,11 @@
     // обновляем блок заявок по фото в профиле
     peRefreshAll(false).catch(() => {
       if (peTile) peTile.hidden = true;
+    });
+
+    // обновляем блок курьерских заявок в профиле
+    crRefreshAll(false).catch(() => {
+      if (crTile) crTile.hidden = true;
     });
   };
 
@@ -1734,6 +1740,262 @@
     peRenderPage(PE_CACHE.active);
     haptic("light");
   });
+
+  // =====================
+  // COURIER REQUESTS (profile tile + page)
+  // =====================
+  const crTile = $("#courierRequestsTile");
+  const crCount = $("#courierRequestsCount");
+  const crPulse = $("#courierRequestsPulse");
+  const crListEl = $("#crList");
+
+  let CR_CACHE = { list: [] };
+
+  const crStatusLabel = (s) => {
+    if (s === "waiting_media") return "Ожидаем фото";
+    if (s === "waiting_confirm") return "Ожидает подтверждения";
+    if (s === "confirmed") return "Подтверждено";
+    if (s === "in_route") return "Курьер в пути";
+    if (s === "picked_up") return "Забрано";
+    if (s === "done") return "Завершено";
+    if (s === "cancelled") return "Отменено";
+    return s || "—";
+  };
+
+  const crStatusDot = (s) => {
+    // используем существующие классы цветов
+    if (s === "done") return "green";
+    if (s === "cancelled") return "red";
+    if (s === "in_route" || s === "picked_up") return "orange";
+    if (s === "confirmed") return "blue";
+    return "gray";
+  };
+
+  async function crFetchList() {
+    const tg_id = getTgId();
+    if (!tg_id) return [];
+
+    // читаем напрямую из Supabase REST (минимально, как fallback)
+    const url = `${SUPABASE_REST_URL}/courier_requests?tg_id=eq.${encodeURIComponent(tg_id)}&select=id,date,slot,address_json,items_json,status,cancel_reason,created_at,updated_at&order=created_at.desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "accept": "application/json",
+      },
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) {
+      const msg = (data && data.message) ? data.message : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data;
+  }
+
+  function crUpdateProfileTile(list) {
+    const arr = Array.isArray(list) ? list : [];
+    const activeCount = arr.length;
+
+    if (!crTile) return;
+
+    const hideTile = () => {
+      crTile.hidden = true;
+      crTile.setAttribute("hidden", "");
+      crTile.style.display = "none";
+      if (crCount) crCount.textContent = "0";
+      if (crPulse) crPulse.style.display = "none";
+    };
+
+    const showTile = () => {
+      crTile.hidden = false;
+      crTile.removeAttribute("hidden");
+      crTile.style.display = "";
+      if (crPulse) crPulse.style.display = "none"; // без пульсации (требований нет)
+    };
+
+    if (activeCount < 1) {
+      hideTile();
+      return;
+    }
+
+    showTile();
+    if (crCount) crCount.textContent = String(activeCount);
+  }
+
+  function crCard(x) {
+    const id = Number(x?.id || 0);
+    const date = String(x?.date || "");
+    const slot = String(x?.slot || "");
+    const addr = x?.address_json || {};
+    const items = Array.isArray(x?.items_json) ? x.items_json : [];
+    const st = String(x?.status || "");
+
+    const addrLine = [addr.city, addr.street, addr.house, addr.apartment].filter(Boolean).join(", ") || "—";
+    const dtLine = [date, slot].filter(Boolean).join(" ") || "—";
+
+    const wrap = document.createElement("div");
+    wrap.className = "order glass";
+    wrap.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderId">Заявка №${escapeHtml(String(id))}</div>
+          <div class="orderMeta">${escapeHtml(dtLine)}</div>
+        </div>
+        <div class="status"><span class="sDot ${escapeHtml(crStatusDot(st))}"></span>${escapeHtml(crStatusLabel(st))}</div>
+      </div>
+      <div class="orderBody">
+        <div class="orderLine"><span>Адрес:</span> ${escapeHtml(addrLine)}</div>
+        <div class="orderLine"><span>Вещей:</span> ${escapeHtml(String(items.length || 0))}</div>
+      </div>
+    `;
+
+    wrap.addEventListener("click", () => crOpenDetailsModal(x));
+    return wrap;
+  }
+
+  function crOpenDetailsModal(x) {
+    const id = Number(x?.id || 0);
+    if (!id) return;
+    const date = String(x?.date || "");
+    const slot = String(x?.slot || "");
+    const addr = x?.address_json || {};
+    const items = Array.isArray(x?.items_json) ? x.items_json : [];
+    const st = String(x?.status || "");
+    const reason = String(x?.cancel_reason || "").trim();
+
+    const addrLine = [addr.city, addr.street, addr.house, addr.apartment].filter(Boolean).join(", ") || "—";
+    const dtLine = [date, slot].filter(Boolean).join(" ") || "—";
+
+    const canEdit = (st !== "in_route" && st !== "picked_up" && st !== "done" && st !== "cancelled");
+    const canAddMedia = (st === "waiting_media");
+    const canCancel = canEdit;
+
+    const itemsHtml = items.map((it, idx) => {
+      const cat = escapeHtml(String(it?.category || "—"));
+      const svc = escapeHtml(String(it?.service || "—"));
+      const prob = escapeHtml(String(it?.problem || "—"));
+      return `<div class="orderLine"><span>${idx + 1}.</span> ${cat} • ${svc}<br/><span style="color:var(--muted)">${prob}</span></div>`;
+    }).join("") || `<div class="orderLine"><span>Вещи:</span> —</div>`;
+
+    const html = `
+      <div class="modalH">Заявка курьера №${escapeHtml(String(id))}</div>
+      <p class="modalP">
+        <b>${escapeHtml(crStatusLabel(st))}</b><br/>
+        ${escapeHtml(dtLine)}<br/>
+        ${escapeHtml(addrLine)}
+        ${reason ? `<br/><span style="color:var(--muted)">Причина отмены: ${escapeHtml(reason)}</span>` : ""}
+      </p>
+      <div style="height:8px"></div>
+      ${itemsHtml}
+      <div style="height:12px"></div>
+      <div class="modalGrid">
+        <button class="smallBtn primary" type="button" id="crWriteBtn">Написать</button>
+        ${canAddMedia ? `<button class="smallBtn" type="button" id="crAddMediaBtn">Добавить медиа</button>` : ""}
+        ${canEdit ? `<button class="smallBtn" type="button" id="crEditBtn">Редактировать вещи</button>` : ""}
+        ${canCancel ? `<button class="smallBtn" type="button" id="crCancelBtn">Отменить</button>` : ""}
+      </div>
+    `;
+
+    openOrderModal({ id: `courier_${id}`, item: "", services: [], status_raw: crStatusLabel(st), price: "—", created_ts: Date.now() }, true);
+    // подменяем контент существующей модалки (не трогаем визуал)
+    const mc = $("#modalContent");
+    if (mc) mc.innerHTML = html;
+
+    $("#crWriteBtn")?.addEventListener("click", () => {
+      closeModal();
+      openChat();
+    });
+
+    $("#crAddMediaBtn")?.addEventListener("click", () => {
+      // пока поддерживаем только сценарий "Ожидаем фото" (как в оценке по фото)
+      try { tg?.close?.(); } catch (_) {}
+    });
+
+    $("#crEditBtn")?.addEventListener("click", () => {
+      closeModal();
+      crStartWizard({ mode: "edit", request: x });
+      showPage("courier");
+      haptic("light");
+    });
+
+    $("#crCancelBtn")?.addEventListener("click", async () => {
+      if (!confirm("Отменить курьерскую заявку?")) return;
+      try {
+        await crUserCancel(id);
+        await crRefreshAll(true);
+        closeModal();
+        try { tg?.showAlert?.("Заявка отменена"); } catch(_){ }
+      } catch (e) {
+        try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ }
+      }
+    });
+  }
+
+  async function crUserCancel(id) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const url = `${SUPABASE_REST_URL}/courier_requests?id=eq.${encodeURIComponent(reqId)}`;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({ status: "cancelled", cancel_reason: "Отменено клиентом" }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${t.slice(0, 140)}`);
+    }
+  }
+
+  async function crUserUpdateItems(id, items) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const url = `${SUPABASE_REST_URL}/courier_requests?id=eq.${encodeURIComponent(reqId)}`;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({ items_json: items, updated_at: new Date().toISOString() }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${t.slice(0, 140)}`);
+    }
+  }
+
+  function crRenderPage(list) {
+    if (!crListEl) return;
+    const arr = Array.isArray(list) ? list : [];
+    crListEl.innerHTML = "";
+    arr.forEach(x => crListEl.appendChild(crCard(x)));
+  }
+
+  async function crRefreshAll(refreshPageIfOpened = false) {
+    const list = await crFetchList();
+    CR_CACHE = { list };
+    crUpdateProfileTile(list);
+    if (refreshPageIfOpened && currentPage === "courier_requests") {
+      crRenderPage(list);
+    }
+  }
+
+  crTile?.addEventListener("click", async () => {
+    try { await crRefreshAll(true); } catch (_) {}
+    showPage("courier_requests");
+    crRenderPage(CR_CACHE.list || []);
+    haptic("light");
+  });
   
   const addBubble = (text, who = "me") => {
     chatMessages.push({ who, text });
@@ -1782,6 +2044,13 @@
   openEstimateSheetBtn?.addEventListener("click", () => {
     resetEstimate();
     showPage("estimate");
+    haptic("light");
+  });
+
+  // Новый модуль: курьерская доставка (многошаговая форма)
+  openCourierSheetBtn?.addEventListener("click", () => {
+    crStartWizard({ mode: "create" });
+    showPage("courier");
     haptic("light");
   });
 
@@ -1843,6 +2112,588 @@
     if (dotsTimer) clearInterval(dotsTimer);
     dotsTimer = null;
   };
+
+  // =====================
+  // COURIER WIZARD (new screens)
+  // =====================
+  const courierWizardEl = $("#courierWizard");
+  const courierStepSub = $("#courierStepSub");
+  const courierBackBtn = $("#courierBackBtn");
+
+  const COURIER_SLOTS = [
+    "10:00-12:00",
+    "12:00-14:00",
+    "14:00-16:00",
+    "16:00-18:00",
+    "18:00-20:00",
+  ];
+
+  let CR_WIZ = null;
+
+  function crStartWizard({ mode = "create", request = null } = {}) {
+    const p = loadProfile() || {};
+    const baseCity = String(p.city || "").trim();
+
+    const items = (() => {
+      const src = request && Array.isArray(request.items_json) ? request.items_json : null;
+      if (src && src.length) {
+        return src.map(it => ({
+          category: String(it?.category || "Обувь"),
+          service: String(it?.service || ""),
+          problem: String(it?.problem || ""),
+        }));
+      }
+      return [{ category: "Обувь", service: "", problem: "" }];
+    })();
+
+    const addr = request?.address_json || {};
+    CR_WIZ = {
+      mode,
+      request_id: request ? Number(request.id || 0) : 0,
+      status: String(request?.status || "").trim(),
+      step: "items",
+      items,
+      address: {
+        city: String(addr.city || baseCity || "").trim(),
+        street: String(addr.street || "").trim(),
+        house: String(addr.house || "").trim(),
+        apartment: String(addr.apartment || "").trim(),
+        entrance: String(addr.entrance || "").trim(),
+        floor: String(addr.floor || "").trim(),
+        intercom: String(addr.intercom || "").trim(),
+        comment: String(addr.comment || "").trim(),
+      },
+      date: String(request?.date || "").trim(),
+      slot: String(request?.slot || "").trim(),
+      need_media: (mode === "edit") ? (String(request?.status || "") === "waiting_media") : false,
+      slotBlocks: {},
+    };
+
+    crRenderWizard();
+  }
+
+  function crSetStepSub(text) {
+    if (courierStepSub) courierStepSub.textContent = text || "";
+  }
+
+  function crIsBeforeVisitMinus2h(dateStr, slotStr) {
+    // правило: "+ Добавить вещь" доступно до (время визита − 2 часа)
+    try {
+      const slotStart = String(slotStr || "").split("-")[0] || "";
+      const [hh, mm] = slotStart.split(":").map(x => Number(x));
+      const d = new Date(`${dateStr}T${String(hh).padStart(2,"0")}:${String(mm||0).padStart(2,"0")}:00`);
+      const cutoff = new Date(d.getTime() - 2 * 60 * 60 * 1000);
+      return Date.now() < cutoff.getTime();
+    } catch {
+      return false;
+    }
+  }
+
+  function crCanMutateItems() {
+    if (!CR_WIZ) return false;
+    // удаление: пока статус < "В пути" (для create статус ещё не установлен)
+    if (CR_WIZ.mode === "create") return true;
+    const st = String(CR_WIZ.request?.status || CR_WIZ._status || "");
+    return !(st === "in_route" || st === "picked_up" || st === "done" || st === "cancelled");
+  }
+
+  async function crFetchSlotBlocks(dateStr, city) {
+    if (!dateStr || !city) return {};
+    const url = `${SUPABASE_REST_URL}/courier_slot_blocks?date=eq.${encodeURIComponent(dateStr)}&city=eq.${encodeURIComponent(city)}&active=eq.true&select=slot,reason`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "accept": "application/json",
+      },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) return {};
+    const m = {};
+    data.forEach(x => {
+      const s = String(x?.slot || "").trim();
+      if (!s) return;
+      m[s] = String(x?.reason || "").trim();
+    });
+    return m;
+  }
+
+  function crValidateItems(items) {
+    const arr = Array.isArray(items) ? items : [];
+    if (arr.length < 1) return false;
+    for (const it of arr) {
+      const cat = String(it?.category || "").trim();
+      const svc = String(it?.service || "").trim();
+      const prob = String(it?.problem || "").trim();
+      if (!cat || !svc || !prob) return false;
+    }
+    return true;
+  }
+
+  function crValidateAddress(a) {
+    const city = String(a?.city || "").trim();
+    const street = String(a?.street || "").trim();
+    const house = String(a?.house || "").trim();
+    return !!(city && street && house);
+  }
+
+  function crValidateTime(dateStr, slotStr) {
+    return !!(String(dateStr || "").trim() && String(slotStr || "").trim());
+  }
+
+  function crRenderWizard() {
+    if (!CR_WIZ || !courierWizardEl) return;
+
+    const step = CR_WIZ.step;
+    if (step === "items") {
+      crSetStepSub("Что забрать");
+
+      const st = String(CR_WIZ.status || "");
+      const canMutateByStatus = !(st === "in_route" || st === "picked_up" || st === "done" || st === "cancelled");
+
+      // Реализуй именно так:
+      // “+ Добавить вещь” доступна до (время визита − 2 часа) и пока статус < “В пути”.
+      // “Удалить вещь” доступна пока статус < “В пути”.
+      const canDelete = (CR_WIZ.mode === "create") ? true : canMutateByStatus;
+      const canAdd = (CR_WIZ.mode === "create") ? true : (canMutateByStatus && crIsBeforeVisitMinus2h(CR_WIZ.date, CR_WIZ.slot));
+
+      courierWizardEl.innerHTML = `
+        <div class="modalH" style="margin-bottom:6px;">Вещи</div>
+        <p class="modalP" style="margin-top:0;">Добавьте все вещи. Описание проблемы — обязательно.</p>
+        <div id="crItems"></div>
+        <div style="height:12px"></div>
+        <div class="modalGrid">
+          <button class="smallBtn" type="button" id="crAddItemBtn" ${canAdd ? "" : "disabled"}>+ Добавить вещь</button>
+          <button class="smallBtn primary" type="button" id="crItemsNextBtn" disabled>${CR_WIZ.mode === "edit" ? "Сохранить" : "Далее"}</button>
+        </div>
+      `;
+
+      const itemsWrap = $("#crItems");
+      const renderItems = () => {
+        if (!itemsWrap) return;
+        itemsWrap.innerHTML = "";
+        CR_WIZ.items.forEach((it, idx) => {
+          const card = document.createElement("div");
+          card.className = "order glass";
+          card.style.padding = "12px";
+          card.innerHTML = `
+            <div class="orderTop">
+              <div>
+                <div class="orderId">Вещь ${idx + 1}</div>
+              </div>
+              ${(CR_WIZ.items.length > 1 && canDelete) ? `<button class="smallBtn" type="button" data-cr-del="${idx}">Удалить</button>` : ``}
+            </div>
+
+            <label class="field" style="margin-top:10px;">
+              <div class="fieldLabel">Категория</div>
+              <select class="fieldSelect" data-cr-cat="${idx}">
+                <option value="Обувь" ${it.category === "Обувь" ? "selected" : ""}>Обувь</option>
+                <option value="Сумка" ${it.category === "Сумка" ? "selected" : ""}>Сумка</option>
+                <option value="Верхняя одежда" ${it.category === "Верхняя одежда" ? "selected" : ""}>Верхняя одежда</option>
+                <option value="Аксессуар" ${it.category === "Аксессуар" ? "selected" : ""}>Аксессуар</option>
+                <option value="Другое" ${it.category === "Другое" ? "selected" : ""}>Другое</option>
+              </select>
+            </label>
+
+            <label class="field" style="margin-top:10px;">
+              <div class="fieldLabel">Услуга</div>
+              <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service)}" />
+            </label>
+
+            <label class="field" style="margin-top:10px;">
+              <div class="fieldLabel">Описание проблемы</div>
+              <input class="fieldInput" data-cr-prob="${idx}" value="${escapeHtml(it.problem)}" />
+            </label>
+          `;
+          itemsWrap.appendChild(card);
+        });
+      };
+
+      const syncNext = () => {
+        const btn = $("#crItemsNextBtn");
+        if (!btn) return;
+        btn.disabled = !crValidateItems(CR_WIZ.items);
+      };
+
+      renderItems();
+      syncNext();
+
+      itemsWrap?.addEventListener("input", (e) => {
+        const t = e.target;
+        if (!t) return;
+        const idx = Number(t.getAttribute("data-cr-svc") || t.getAttribute("data-cr-prob") || 0);
+        if (!CR_WIZ.items[idx]) return;
+        if (t.hasAttribute("data-cr-svc")) CR_WIZ.items[idx].service = String(t.value || "");
+        if (t.hasAttribute("data-cr-prob")) CR_WIZ.items[idx].problem = String(t.value || "");
+        syncNext();
+      });
+
+      itemsWrap?.addEventListener("change", (e) => {
+        const t = e.target;
+        if (!t) return;
+        const idx = Number(t.getAttribute("data-cr-cat") || 0);
+        if (!CR_WIZ.items[idx]) return;
+        CR_WIZ.items[idx].category = String(t.value || "Обувь");
+        syncNext();
+      });
+
+      itemsWrap?.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("button[data-cr-del]");
+        if (!btn) return;
+        const idx = Number(btn.getAttribute("data-cr-del") || 0);
+        if (!(CR_WIZ.items.length > 1)) return;
+        CR_WIZ.items.splice(idx, 1);
+        renderItems();
+        syncNext();
+        haptic("light");
+      });
+
+      $("#crAddItemBtn")?.addEventListener("click", () => {
+        CR_WIZ.items.push({ category: "Обувь", service: "", problem: "" });
+        renderItems();
+        syncNext();
+        haptic("light");
+      });
+
+      $("#crItemsNextBtn")?.addEventListener("click", async () => {
+        haptic("light");
+        if (CR_WIZ.mode === "edit") {
+          const rid = Number(CR_WIZ.request_id || 0);
+          if (!rid) return;
+          try {
+            showLoading();
+            await crUserUpdateItems(rid, CR_WIZ.items);
+            CR_WIZ = null;
+            hideLoading();
+            await crRefreshAll(true).catch(() => null);
+            showPage("courier_requests");
+            crRenderPage(CR_CACHE.list || []);
+            try { tg?.showAlert?.("Сохранено"); } catch(_){ }
+          } catch (e) {
+            hideLoading();
+            try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ }
+          }
+          return;
+        }
+
+        CR_WIZ.step = "address";
+        crRenderWizard();
+      });
+      return;
+    }
+
+    if (step === "address") {
+      crSetStepSub("Адрес");
+      const a = CR_WIZ.address;
+      courierWizardEl.innerHTML = `
+        <label class="field">
+          <div class="fieldLabel">Город</div>
+          <input class="fieldInput" id="crCity" value="${escapeHtml(a.city)}" />
+        </label>
+
+        <label class="field" style="margin-top:12px;">
+          <div class="fieldLabel">Улица</div>
+          <input class="fieldInput" id="crStreet" value="${escapeHtml(a.street)}" />
+        </label>
+
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <label class="field" style="flex:1;">
+            <div class="fieldLabel">Дом</div>
+            <input class="fieldInput" id="crHouse" value="${escapeHtml(a.house)}" />
+          </label>
+          <label class="field" style="flex:1;">
+            <div class="fieldLabel">Кв</div>
+            <input class="fieldInput" id="crApartment" value="${escapeHtml(a.apartment)}" />
+          </label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <label class="field" style="flex:1;">
+            <div class="fieldLabel">Подъезд</div>
+            <input class="fieldInput" id="crEntrance" value="${escapeHtml(a.entrance)}" />
+          </label>
+          <label class="field" style="flex:1;">
+            <div class="fieldLabel">Этаж</div>
+            <input class="fieldInput" id="crFloor" value="${escapeHtml(a.floor)}" />
+          </label>
+        </div>
+
+        <label class="field" style="margin-top:12px;">
+          <div class="fieldLabel">Домофон</div>
+          <input class="fieldInput" id="crIntercom" value="${escapeHtml(a.intercom)}" />
+        </label>
+
+        <label class="field" style="margin-top:12px;">
+          <div class="fieldLabel">Комментарий</div>
+          <input class="fieldInput" id="crComment" value="${escapeHtml(a.comment)}" />
+        </label>
+
+        <div style="height:12px"></div>
+        <div class="modalGrid">
+          <button class="smallBtn" type="button" id="crAddrBackBtn">Назад</button>
+          <button class="smallBtn primary" type="button" id="crAddrNextBtn" disabled>Далее</button>
+        </div>
+      `;
+
+      const sync = () => {
+        CR_WIZ.address = {
+          city: String($("#crCity")?.value || "").trim(),
+          street: String($("#crStreet")?.value || "").trim(),
+          house: String($("#crHouse")?.value || "").trim(),
+          apartment: String($("#crApartment")?.value || "").trim(),
+          entrance: String($("#crEntrance")?.value || "").trim(),
+          floor: String($("#crFloor")?.value || "").trim(),
+          intercom: String($("#crIntercom")?.value || "").trim(),
+          comment: String($("#crComment")?.value || "").trim(),
+        };
+
+        const ok = crValidateAddress(CR_WIZ.address);
+        const btn = $("#crAddrNextBtn");
+        if (btn) btn.disabled = !ok;
+      };
+
+      courierWizardEl.querySelectorAll("input").forEach(el => el.addEventListener("input", sync));
+      sync();
+
+      $("#crAddrBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "items";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crAddrNextBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "time";
+        crRenderWizard();
+        haptic("light");
+      });
+      return;
+    }
+
+    if (step === "time") {
+      crSetStepSub("Дата и время");
+      const city = String(CR_WIZ.address?.city || "").trim();
+      const dateVal = CR_WIZ.date || "";
+      const slotVal = CR_WIZ.slot || "";
+
+      courierWizardEl.innerHTML = `
+        <label class="field">
+          <div class="fieldLabel">Дата</div>
+          <input class="fieldInput" id="crDate" type="date" value="${escapeHtml(dateVal)}" />
+        </label>
+
+        <div style="height:12px"></div>
+        <div class="fieldLabel">Слот (2 часа)</div>
+        <div class="seg" id="crSlots" style="margin-top:10px; flex-wrap:wrap;">
+          ${COURIER_SLOTS.map(s => `<button class="segBtn" type="button" data-cr-slot="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join("")}
+        </div>
+        <div id="crSlotReason" class="orderMeta" style="margin-top:10px; display:none"></div>
+
+        <div style="height:12px"></div>
+        <div class="modalGrid">
+          <button class="smallBtn" type="button" id="crTimeBackBtn">Назад</button>
+          <button class="smallBtn primary" type="button" id="crTimeNextBtn" disabled>Далее</button>
+        </div>
+      `;
+
+      const dateInput = $("#crDate");
+      const slotsWrap = $("#crSlots");
+      const reasonEl = $("#crSlotReason");
+      const nextBtn = $("#crTimeNextBtn");
+
+      const syncNext = () => {
+        const ok = crValidateTime(CR_WIZ.date, CR_WIZ.slot);
+        if (nextBtn) nextBtn.disabled = !ok;
+      };
+
+      const applySlotUi = () => {
+        const blocks = CR_WIZ.slotBlocks || {};
+        $$("#crSlots .segBtn").forEach(b => {
+          const s = b.getAttribute("data-cr-slot") || "";
+          const blockedReason = blocks[s];
+          b.disabled = !!blockedReason;
+          b.classList.toggle("active", s === CR_WIZ.slot);
+        });
+        if (reasonEl) {
+          const r = blocks[CR_WIZ.slot];
+          if (r) {
+            reasonEl.style.display = "block";
+            reasonEl.textContent = `Слот недоступен: ${r}`;
+          } else {
+            reasonEl.style.display = "none";
+            reasonEl.textContent = "";
+          }
+        }
+      };
+
+      const refreshBlocks = async () => {
+        const d = String(CR_WIZ.date || "").trim();
+        if (!d || !city) {
+          CR_WIZ.slotBlocks = {};
+          applySlotUi();
+          return;
+        }
+        const m = await crFetchSlotBlocks(d, city);
+        CR_WIZ.slotBlocks = m;
+        // если выбранный слот заблокировали — сбрасываем выбор
+        if (CR_WIZ.slot && m[CR_WIZ.slot]) CR_WIZ.slot = "";
+        applySlotUi();
+        syncNext();
+      };
+
+      dateInput?.addEventListener("change", async () => {
+        CR_WIZ.date = String(dateInput.value || "").trim();
+        CR_WIZ.slot = "";
+        applySlotUi();
+        syncNext();
+        await refreshBlocks();
+        haptic("light");
+      });
+
+      slotsWrap?.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("button[data-cr-slot]");
+        if (!btn || btn.disabled) return;
+        CR_WIZ.slot = String(btn.getAttribute("data-cr-slot") || "");
+        applySlotUi();
+        syncNext();
+        haptic("light");
+      });
+
+      // init
+      $$("#crSlots .segBtn").forEach(b => b.classList.remove("active"));
+      if (slotVal) CR_WIZ.slot = slotVal;
+      applySlotUi();
+      syncNext();
+      refreshBlocks().catch(() => null);
+
+      $("#crTimeBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "address";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crTimeNextBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "confirm";
+        crRenderWizard();
+        haptic("light");
+      });
+      return;
+    }
+
+    if (step === "confirm") {
+      crSetStepSub("Подтверждение");
+
+      const a = CR_WIZ.address;
+      const addrLine = [a.city, a.street, a.house, a.apartment].filter(Boolean).join(", ") || "—";
+      const dtLine = [CR_WIZ.date, CR_WIZ.slot].filter(Boolean).join(" ") || "—";
+      const itemsLine = String(CR_WIZ.items.length || 0);
+
+      courierWizardEl.innerHTML = `
+        <div class="modalH" style="margin-bottom:6px;">Проверьте данные</div>
+        <p class="modalP" style="margin-top:0;">
+          <b>Дата:</b> ${escapeHtml(dtLine)}<br/>
+          <b>Адрес:</b> ${escapeHtml(addrLine)}<br/>
+          <b>Вещей:</b> ${escapeHtml(itemsLine)}
+        </p>
+
+        <div style="height:8px"></div>
+        <div class="orderBody">
+          ${CR_WIZ.items.map((it, idx) => {
+            return `<div class="orderLine"><span>${idx + 1}.</span> ${escapeHtml(it.category)} • ${escapeHtml(it.service)}<br/><span style="color:var(--muted)">${escapeHtml(it.problem)}</span></div>`;
+          }).join("")}
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="modalH" style="font-size:16px;">Прикрепить фото?</div>
+        <p class="modalP" style="margin-top:4px;">Если да — откроется бот и можно отправить фото/видео.</p>
+        <div class="modalGrid">
+          <button class="smallBtn primary" type="button" id="crSendYes">Да</button>
+          <button class="smallBtn" type="button" id="crSendNo">Нет</button>
+          <button class="smallBtn" type="button" id="crConfirmBackBtn">Назад</button>
+        </div>
+      `;
+
+      const doSend = async (needMedia) => {
+        // create via enqueue_request (как в оценке по фото)
+        const tg_id = getTgId();
+        if (!tg_id) throw new Error("Нет tg_id");
+        const p = loadProfile() || {};
+        const user = tg?.initDataUnsafe?.user || {};
+        if (!crValidateItems(CR_WIZ.items)) throw new Error("Заполните все вещи");
+        if (!crValidateAddress(CR_WIZ.address)) throw new Error("Заполните адрес");
+        if (!crValidateTime(CR_WIZ.date, CR_WIZ.slot)) throw new Error("Выберите дату и слот");
+
+        showLoading();
+        try {
+          const res = await fetch(SUPABASE_FUNCTION_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "content-type": "application/json",
+              "apikey": SUPABASE_ANON_KEY,
+              "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              kind: "courier_create",
+              tg_id,
+              payload_json: {
+                username: user?.username || "",
+                city: CR_WIZ.address.city,
+                phone: String(p.phone || "").trim(),
+                address_json: CR_WIZ.address,
+                items_json: CR_WIZ.items,
+                date: CR_WIZ.date,
+                slot: CR_WIZ.slot,
+                need_media: !!needMedia,
+              },
+            }),
+          });
+
+          const text = await res.text();
+          let data = null;
+          try { data = JSON.parse(text); } catch (_) {}
+          if (!res.ok || !data || !data.ok) {
+            const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+            throw new Error(err);
+          }
+        } finally {
+          hideLoading();
+        }
+
+        // локально сбрасываем мастер
+        CR_WIZ = null;
+
+        // как в оценке по фото: если нужно медиа — закрываем WebApp
+        if (needMedia) {
+          try { tg?.close(); } catch (_) {}
+          return;
+        }
+
+        try { tg?.showAlert?.("Заявка отправлена"); } catch (_) {}
+        await crRefreshAll(true).catch(() => null);
+        showPage("profile");
+      };
+
+      $("#crConfirmBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "time";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crSendYes")?.addEventListener("click", () => { haptic("light"); doSend(true).catch(e => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){} }); });
+      $("#crSendNo")?.addEventListener("click", () => { haptic("light"); doSend(false).catch(e => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){} }); });
+      return;
+    }
+  }
+
+  // back button in wizard header
+  courierBackBtn?.addEventListener("click", () => {
+    if (!CR_WIZ) { goBack(); return; }
+    const step = CR_WIZ.step;
+    if (step === "items") { goBack(); return; }
+    if (step === "address") CR_WIZ.step = "items";
+    else if (step === "time") CR_WIZ.step = "address";
+    else if (step === "confirm") CR_WIZ.step = "time";
+    crRenderWizard();
+    haptic("light");
+  });
   
   let estimateDirty = false;
   let leaveAction = null;
