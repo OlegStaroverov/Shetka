@@ -1341,7 +1341,8 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .profileRow{gap:12px;}
 .profileName{font-size:18px; line-height:22px;}
 .profileHint{font-size:13px;}
-.profileQuickBtns{gap:8px; margin-top:10px;}
+.profileQuickBtns{display:flex; gap:12px; margin-top:10px;}
+.profileQuickBtns .supportBtn{flex:1; justify-content:center;}
 
 /* Courier wizard form polish (only inside courier page) */
 [data-page="courier"] .estimateCard{padding:14px;}
