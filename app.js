@@ -727,13 +727,15 @@
         promoModal.classList.add("show");
         promoModal.setAttribute("aria-hidden", "false");
       };
-
+    }
+    
     if (achievementsBtn) {
       achievementsBtn.onclick = () => {
         openModalEl(achievementsModal);
         haptic("light");
       };
     }
+
 
     // обновляем блок заявок по фото в профиле
     peRefreshAll(false).catch(() => {
