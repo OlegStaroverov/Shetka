@@ -26,72 +26,55 @@
 
       <!-- HOME -->
       <section class="page" data-page="home">
-        <div class="hero glass">
-          <div class="heroGlow" aria-hidden="true"></div>
-
-          <div class="heroTop">
-            <div class="kickerCenter">Химчистка • Покраска • Ремонт</div>
-            <div class="heroSubCenter">
-              Быстро оформляйте услуги, отслеживайте заказы и общайтесь с менеджером — всё в одном месте.
+        <div class="profile glass homeProfile reveal">
+          <div class="profileRow">
+            <div class="avatarWrap">
+              <img id="tgAvatar" class="avatarImg" alt="" />
             </div>
-          </div>
 
-          <div class="ctaRow">
-            <button class="cta primary" type="button" id="openEstimateSheet">
-              <div class="ctaIco">📸</div>
-              <div class="ctaText">
-                <div class="ctaTitle">Оценка по фото</div>
-                <div class="ctaSub">Расскажем стоимость и варианты</div>
+            <div class="profileMeta">
+              <div class="profileTopLine">
+                <div id="tgName" class="profileName">—</div>
+                <button class="iconBtn" id="editProfileBtn" type="button" aria-label="Настройки профиля">⚙️</button>
               </div>
-            </button>
+              <div class="profileHint">Телефон: <span id="tgPhoneValue">—</span></div>
+              <div class="profileHint">Город: <span id="tgCityValue">—</span></div>
 
-            <button class="cta primary" type="button" id="openCourierSheet">
-              <div class="ctaIco">🚚</div>
-              <div class="ctaText">
-                <div class="ctaTitle">Вызвать курьера</div>
-                <div class="ctaSub">Заберём и привезём обратно</div>
+              <div class="profileQuickBtns">
+                <button class="supportBtn glass" id="promoBtn" type="button">🎟 Промокоды</button>
+                <button class="supportBtn glass" id="achievementsBtn" type="button">🏆 Достижения</button>
               </div>
-            </button>
+            </div>
           </div>
         </div>
 
-        <div class="grid">
-          <button class="tile glass" type="button" data-nav="orders">
-            <div class="tileIco">📦</div>
-            <div class="tileTxt">
-              <div class="tileTitle">Заказы</div>
-              <div class="tileSub">Статусы и детали</div>
+        <div class="homeCtas">
+          <button class="cta primary reveal" type="button" id="openDropoffChoice">
+            <div class="ctaIco">✨</div>
+            <div class="ctaText">
+              <div class="ctaTitle">Сдать вещь</div>
+              <div class="ctaSub">Выберите способ: курьер или принести самому</div>
             </div>
-            <div class="tileChevron">›</div>
           </button>
 
-          <button class="tile glass" type="button" data-nav="price">
-            <div class="tileIco">💰</div>
-            <div class="tileTxt">
-              <div class="tileTitle">Прайс</div>
-              <div class="tileSub">Категории и услуги</div>
+          <button class="cta secondary reveal" type="button" id="openEstimateSheet">
+            <div class="ctaIco">📸</div>
+            <div class="ctaText">
+              <div class="ctaTitle">Консультация по фото/видео</div>
+              <div class="ctaSub">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки.</div>
             </div>
-            <div class="tileChevron">›</div>
-          </button>
-
-          <button class="tile glass" type="button" id="supportOpenFromHome">
-            <div class="tileIco">💬</div>
-            <div class="tileTxt">
-              <div class="tileTitle">Поддержка</div>
-              <div class="tileSub">Написать менеджеру</div>
-            </div>
-            <div class="tileChevron">›</div>
           </button>
         </div>
+
+        <button class="supportBtn glass reveal" id="supportOpenFromHome" type="button">💬 Написать менеджеру</button>
       </section>
 
       <!-- ORDERS -->
       <section class="page" data-page="orders" hidden>
-        <div class="pageHead">
-          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
+        <div class="pageHead noBack">
           <div>
             <div class="pageTitle">Заказы</div>
-            <div class="pageSub">Поиск по номеру и список ваших заказов</div>
+            <div class="pageSub">Все заявки и заказы в одном месте</div>
           </div>
         </div>
 
@@ -105,98 +88,23 @@
 
         <div class="sectionTitle">Ваши заказы</div>
         <div id="ordersList" class="orders"></div>
-      </section>
 
-      <!-- PRICE -->
-      <section class="page" data-page="price" hidden>
-        <div class="pageHead">
-          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
-          <div>
-            <div class="pageTitle">Прайс</div>
-            <div class="pageSub">Категории услуг</div>
-          </div>
-        </div>
-
-        <div class="priceTabs glass" id="priceTabs"></div>
-        <div id="priceContent" class="price"></div>
-      </section>
-
-      <!-- PROFILE -->
-      <section class="page" data-page="profile" hidden>
-        <div class="pageHead">
-          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
-          <div>
-            <div class="pageTitle">Профиль</div>
-            <div class="pageSub">Настройки и запросы</div>
-          </div>
-        </div>
-
-        <div class="profile glass">
-          <div class="profileRow">
-            <div class="avatarWrap">
-              <img id="tgAvatar" class="avatarImg" alt="" />
-            </div>
-
-            <div class="profileMeta">
-              <div id="tgName" class="profileName">—</div>
-              <div class="profileHint" id="tgPhoneLine">Телефон: <span id="tgPhoneValue">—</span></div>
-              <div class="profileHint" id="tgCityLine">Город: <span id="tgCityValue">—</span></div>
-              <div class="profileHint" id="giftLine" hidden>Подарок: <span id="giftValue">—</span></div>
-
-              <!-- быстрые кнопки профиля (по стилю "Написать в поддержку") -->
-              <div class="profileQuickBtns">
-                <button class="supportBtn glass" id="promoBtn" type="button">
-                  🎟 Промокод
-                </button>
-                <button class="supportBtn glass" id="achievementsBtn" type="button">
-                  🏆 Достижения
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings glass">
-          <div class="settingsTitle">Настройки</div>
-
-          <div class="settingRow">
-            <div class="settingText">
-              <div class="settingName">Тема</div>
-              <div class="settingDesc">Светлая или тёмная</div>
-            </div>
-
-            <!-- Переключатель темы: слева солнце, справа луна -->
-            <button id="themeToggle" class="themeSwitch" type="button" role="switch" aria-checked="false" aria-label="Тема">
-              <span class="themeKnob" aria-hidden="true">
-                <span class="themeIcon sun" aria-hidden="true">☀️</span>
-                <span class="themeIcon moon" aria-hidden="true">🌙</span>
-              </span>
-            </button>
-          </div>
-
-          <!-- фон всегда включен, поэтому вместо тумблера — кнопка настроек профиля -->
-          <div class="settingRow settingRowCenter">
-            <button class="profileBtn" id="editProfileBtn" type="button">Настройки профиля</button>
-          </div>
-        </div>
+        <div class="sectionTitle">Заявки</div>
 
         <button class="tile glass" id="photoEstimatesTile" type="button" hidden>
           <div class="tileIco">📸</div>
           <div class="tileTxt">
-            <div class="tileTitle">Запросы на оценку по фото</div>
+            <div class="tileTitle">Консультации по фото/видео</div>
             <div class="tileSub" id="photoEstimatesSub">
               <span id="photoEstimatesCount">0</span>
               <span id="photoEstimatesSubText">активных</span>
             </div>
           </div>
-        
-          <!-- зелёная “мигалка” + цифра непрочитанных внутри -->
           <div class="pulseDot" id="photoEstimatesPulse" aria-hidden="true">
             <span class="pulseNum" id="photoEstimatesUnread" hidden>0</span>
           </div>
         </button>
 
-        <!-- COURIER REQUESTS TILE (hidden if 0) -->
         <button class="tile glass" id="courierRequestsTile" type="button" hidden>
           <div class="tileIco">🚚</div>
           <div class="tileTxt">
@@ -206,21 +114,179 @@
               <span id="courierRequestsSubText">активных</span>
             </div>
           </div>
-
           <div class="pulseDot" id="courierRequestsPulse" aria-hidden="true" style="display:none"></div>
         </button>
-        
+
         <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
           💬 Написать в поддержку
         </button>
+      </section>
+
+      <!-- SERVICES -->
+      <section class="page" data-page="services" hidden>
+        <div class="pageHead noBack">
+          <div>
+            <div class="pageTitle">Услуги</div>
+            <div class="pageSub">Витрина услуг и ориентировочные цены</div>
+          </div>
+        </div>
+
+        <div class="priceTabs glass" id="priceTabs"></div>
+        <div id="priceContent" class="price"></div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="page" data-page="about" hidden>
+        <div class="pageHead noBack">
+          <div>
+            <div class="pageTitle">О нас</div>
+            <div class="pageSub">Коротко, по делу — и с примерами работ</div>
+          </div>
+        </div>
+
+        <div class="seg glass" id="aboutSeg">
+          <button class="segBtn active" type="button" data-about-tab="about">О нас</button>
+          <button class="segBtn" type="button" data-about-tab="cases">До/После</button>
+        </div>
+
+        <!-- TAB: ABOUT -->
+        <div id="aboutPanelAbout">
+          <div class="glass aboutCard reveal">
+            <div class="aboutTitle">Щётка — мастерская ухода за вещами</div>
+            <div class="aboutText">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки. Дальше — либо курьер, либо приём в мастерской.</div>
+          </div>
+
+          <div class="glass aboutCard reveal" data-acc>
+            <div class="aboutTitle">FAQ</div>
+            <div class="acc">
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Сколько занимает чистка/ремонт?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Обычно 2–7 дней. Точные сроки зависят от состояния и загруженности.</div>
+              </div>
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Можно ли понять цену по фото?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Да, дадим диапазон и варианты работ. Финальная цена — после осмотра.</div>
+              </div>
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Что делать, если вещь дорогая?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Расскажем про риски и согласуем работы до старта. Ничего не делаем без подтверждения.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass aboutCard reveal">
+            <div class="aboutTitle">Отзывы</div>
+            <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
+              <div class="reviewSlide">🖼️ Слайд 1</div>
+              <div class="reviewSlide">🖼️ Слайд 2</div>
+              <div class="reviewSlide">🖼️ Слайд 3</div>
+            </div>
+            <div class="dots" id="reviewsDots" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <!-- TAB: CASES -->
+        <div id="aboutPanelCases" hidden>
+          <div class="story">
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 1</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 2</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 3</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 4</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 5</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 6</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 7</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 8</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+          </div>
+        </div>
       </section>
 
       <section class="page" data-page="estimate" hidden>
         <div class="pageHead">
           <button class="backBtn" id="estimateBackBtn" type="button" aria-label="Назад">‹</button>
           <div>
-            <div class="pageTitle">Оценка по фото</div>
-            <div class="pageSub">Быстрый расчет стоимости услуги по фотографии и описанию</div>
+            <div class="pageTitle">Консультация</div>
+            <div class="pageSub">По фото/видео подскажем варианты, примерную стоимость и сроки</div>
           </div>
         </div>
       
@@ -245,7 +311,7 @@
             </div>
       
             <label class="field" style="margin-top:12px;">
-              <div class="fieldHint">Опишите вещь, проблему и что необходимо сделать?</div>
+              <div class="fieldHint">Опишите вещь и проблему — что нужно сделать?</div>
               <input id="estimateProblem" class="fieldInput" />
             </label>
       
@@ -318,14 +384,14 @@
         <span class="tTxt">Заказы</span>
       </button>
 
-      <button class="tab" type="button" data-nav="price" aria-label="Прайс">
-        <span class="tIco" aria-hidden="true">💰</span>
-        <span class="tTxt">Прайс</span>
+      <button class="tab" type="button" data-nav="services" aria-label="Услуги">
+        <span class="tIco" aria-hidden="true">✨</span>
+        <span class="tTxt">Услуги</span>
       </button>
 
-      <button class="tab" type="button" data-nav="profile" aria-label="Профиль">
-        <span class="tIco" aria-hidden="true">👤</span>
-        <span class="tTxt">Профиль</span>
+      <button class="tab" type="button" data-nav="about" aria-label="О нас">
+        <span class="tIco" aria-hidden="true">ℹ️</span>
+        <span class="tTxt">О нас</span>
       </button>
     </nav>
 
@@ -358,6 +424,52 @@
     </section>
 
     <!-- ORDER MODAL (center) -->
+    <!-- DROP-OFF CHOICE MODAL -->
+    <section class="modal" id="dropoffModal" aria-hidden="true">
+      <div class="modalBackdrop" data-dropoff-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-dropoff-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Сдать вещь</div>
+        <div class="modalP">Выберите удобный способ.</div>
+        <div style="height:10px"></div>
+        <button class="cta primary" type="button" id="openCourierSheet">
+          <div class="ctaIco">🚚</div>
+          <div class="ctaText">
+            <div class="ctaTitle">Вызвать курьера</div>
+            <div class="ctaSub">Заберём и привезём обратно</div>
+          </div>
+        </button>
+        <div style="height:10px"></div>
+        <button class="cta secondary" type="button" id="openDropoffMap">
+          <div class="ctaIco">🏬</div>
+          <div class="ctaText">
+            <div class="ctaTitle">Принести самому</div>
+            <div class="ctaSub">Покажем адрес и построим маршрут</div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- DROP-OFF MAP MODAL -->
+    <section class="modal" id="dropoffMapModal" aria-hidden="true">
+      <div class="modalBackdrop" data-map-close></div>
+      <div class="modalCard modalCardWide">
+        <button class="modalClose" type="button" data-map-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Пункт приёма</div>
+        <div class="mapFrameWrap">
+          <iframe id="dropoffMapFrame" title="Карта" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="mapMeta">
+          <div class="mapLine" id="dropoffAddr">—</div>
+          <div class="mapLine hint" id="dropoffHours">—</div>
+          <div class="mapBtns">
+            <button class="smallBtn primary" type="button" id="dropoffRouteBtn">Маршрут</button>
+            <button class="smallBtn" type="button" id="dropoffCopyBtn">Скопировать адрес</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="modal" id="orderModal" aria-hidden="true">
       <div class="modalBackdrop" data-close></div>
       <div class="modalCard">
