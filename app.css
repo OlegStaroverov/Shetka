@@ -581,6 +581,86 @@ html[data-theme="dark"] .themeKnob .moon{
   background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
 }
 
+/* --------- Page transitions --------- */
+.page{opacity:0; transform: translateY(8px); transition: opacity 260ms cubic-bezier(0.25,1,0.33,1), transform 260ms cubic-bezier(0.25,1,0.33,1);}
+.page[hidden]{display:none !important;}
+.page.pageActive{opacity:1; transform: translateY(0);} 
+
+/* --------- Modal transitions --------- */
+.modal{display:none;}
+.modal.show{display:block;}
+.modal .modalCard{opacity:0; transform: scale(.98); transition: opacity 220ms cubic-bezier(0.25,1,0.33,1), transform 220ms cubic-bezier(0.25,1,0.33,1);}
+.modal.show .modalCard{opacity:1; transform: scale(1);} 
+
+/* --------- Reveal on scroll --------- */
+.reveal, [data-reveal]{opacity:0; transform: translateY(12px); transition: opacity 600ms cubic-bezier(0.25,1,0.33,1), transform 600ms cubic-bezier(0.25,1,0.33,1);}
+.reveal.is-revealed, [data-reveal].is-revealed{opacity:1; transform: translateY(0);} 
+
+/* Tap scale (cards/buttons) */
+.svcCard:active, .tile:active, .cta:active{transform: scale(.98);} 
+
+/* --------- Home layout --------- */
+.homeProfile{margin-bottom:14px;}
+.profileTopLine{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.iconBtn{width:38px; height:38px; border-radius:14px; border:1px solid var(--hair); background: rgba(255,255,255,.6); display:flex; align-items:center; justify-content:center;}
+html[data-theme="dark"] .iconBtn{background: rgba(15,17,21,.55);} 
+.homeCtas{display:flex; flex-direction:column; gap:12px; margin-top:12px;}
+.cta.secondary{background: rgba(255,255,255,.55); border:1px solid var(--hair);} 
+html[data-theme="dark"] .cta.secondary{background: rgba(15,17,21,.55);} 
+.profileQuickBtns{display:flex; gap:10px; margin-top:10px;}
+.profileQuickBtns .supportBtn{flex:1; height:48px; display:flex; align-items:center; justify-content:center;}
+
+/* --------- Services --------- */
+.servicesSeg{margin-top:10px;}
+.servicesHero{padding:14px; margin-top:12px;}
+.servicesHeroTitle{font-weight:700; font-size:18px;}
+.servicesHeroSub{opacity:.75; margin-top:4px;}
+.servicesGrid{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+.svcCard{display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:18px;}
+.svcIco{width:42px; height:42px; border-radius:16px; display:flex; align-items:center; justify-content:center; background: rgba(215,255,0,.18);} 
+.svcBody{flex:1; min-width:0;}
+.svcTitle{font-weight:700; line-height:1.2;}
+.svcSub{opacity:.7; font-size:13px; margin-top:2px;}
+.svcMeta{display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+.svcPrice{font-weight:700; font-size:13px; opacity:.9;}
+
+/* --------- About --------- */
+.aboutCard{padding:14px; margin-top:12px;}
+.aboutTitle{font-weight:800; font-size:18px;}
+.aboutText{opacity:.8; margin-top:6px;}
+.acc{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+.accItem{border:1px solid var(--hair); border-radius:16px; overflow:hidden; background: rgba(255,255,255,.5);} 
+html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);} 
+.accHead{width:100%; display:flex; align-items:center; justify-content:space-between; padding:12px 12px; background: transparent; border:0; font-weight:600;}
+.accIco{transition: transform 220ms cubic-bezier(0.25,1,0.33,1); opacity:.7;}
+.accBody{max-height:0; overflow:hidden; opacity:0; padding:0 12px; transition: max-height 260ms cubic-bezier(0.25,1,0.33,1), opacity 200ms ease;}
+.accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
+.accItem.open .accIco{transform: rotate(180deg);} 
+
+.reviewsTrack{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:12px 2px 6px;}
+.reviewSlide{flex:0 0 86%; scroll-snap-align:center; border:1px dashed var(--hair); border-radius:18px; min-height:130px; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
+.dot{width:6px; height:6px; border-radius:999px; background: rgba(0,0,0,.25);} 
+html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);} 
+.dot.active{background: var(--lime);} 
+
+.story{margin-top:12px;}
+.storySection{height:140vh;}
+.storySticky{position:sticky; top:12px; padding:14px;}
+.storyTitle{font-weight:800; font-size:18px;}
+.storyGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+.storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
+.storySub{opacity:.7; margin-top:10px; font-size:13px;}
+
+/* --------- Map modal --------- */
+.modalCardWide{width: min(520px, calc(100vw - 28px));}
+.mapFrameWrap{margin-top:10px; border-radius:18px; overflow:hidden; border:1px solid var(--hair);}
+.mapFrameWrap iframe{width:100%; height:280px; border:0;}
+.mapMeta{margin-top:10px;}
+.mapLine{font-weight:600;}
+.mapLine.hint{opacity:.7; font-weight:400; margin-top:2px;}
+.mapBtns{display:flex; gap:10px; margin-top:10px;}
+
 /* CHAT */
 .chatFab{
   position: fixed;
@@ -1391,3 +1471,4218 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .crBadgeReq{font-weight:800;}
 .crSavedAddrs{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
 .crSavedAddrs .smallBtn{white-space:nowrap;}
+
+(() => {
+  const tg = window.Telegram?.WebApp;
+
+  // Диагностика: ловим ошибки JS и показываем алерт в Telegram
+  const _showFatal = (err) => {
+    try { console.error(err); } catch (_) {}
+    const msg = (err && (err.message || err.reason)) ? String(err.message || err.reason) : String(err);
+    try { tg?.showAlert?.('Ошибка в мини‑аппе: ' + msg.slice(0, 220)); } catch (_) {}
+  };
+  window.addEventListener('error', (ev) => _showFatal(ev?.error || ev?.message || ev));
+  window.addEventListener('unhandledrejection', (ev) => _showFatal(ev?.reason || ev));
+
+  try {
+
+  const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
+  const SUPABASE_REST_URL = "https://jcnusmqellszoiuupaat.supabase.co/rest/v1";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
+  const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
+  const SUPABASE_RESERVE_PROMO_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/reserve_promo";
+  const SUPABASE_GET_PROFILE_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/get_profile";
+
+  async function reservePromoCode() {
+    const res = await fetch(SUPABASE_RESERVE_PROMO_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({}),
+    });
+  
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+  
+    if (!res.ok || !data?.ok || !data?.code) {
+      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
+    }
+  
+    return String(data.code);
+  }
+
+  function updatePhotoRequestsButton(requests){
+    const btn = document.getElementById('photoRequestsBtn');
+    if (!btn) return;
+  
+    if (!requests || requests.length === 0){
+      btn.style.display = 'none';
+      return;
+    }
+  
+    btn.style.display = 'flex';
+  
+    const unread = requests.filter(r => r.has_admin_reply && !r.read).length;
+  
+    btn.classList.remove('green','blue','blink');
+    btn.querySelector('.badge')?.remove();
+  
+    if (unread > 0){
+      btn.classList.add('blue');
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = unread;
+      btn.appendChild(badge);
+    } else {
+      btn.classList.add('green','blink');
+    }
+  }
+    
+  async function getRemoteProfile(tg_id) {
+    const res = await fetch(SUPABASE_GET_PROFILE_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ tg_id }),
+    });
+  
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+  
+    if (!res.ok || !data?.ok) return null;
+    return data.profile || null;
+  }
+
+  // ---------------- PROFILE SYNC (Supabase -> mini-app) ----------------
+  // Нужно, чтобы изменения профиля на одном устройстве подтягивались на другом.
+  const REMOTE_STAMP_KEY = "_remote_updated_at";
+
+  function _stampOfProfile(p){
+    const s = (p && (p[REMOTE_STAMP_KEY] || p.updated_at)) ? String(p[REMOTE_STAMP_KEY] || p.updated_at) : "";
+    return s;
+  }
+
+  async function syncRemoteProfileIfNewer({ force = false } = {}) {
+    try {
+      const tg_id = getTgId();
+      if (!tg_id) return false;
+
+      const rp = await getRemoteProfile(tg_id);
+      if (!rp) return false;
+
+      // Берём только то, что нужно мини-аппу.
+      // ВАЖНО: не затираем локальные поля пустыми значениями с сервера.
+      // (Особенно gender — иначе он "слетает" после переключения вкладок.)
+      const remote = {
+        city: (rp.city || "").toString(),
+        gender: (rp.gender || "").toString().toUpperCase() || "", // может быть пустым
+        first_name: rp.first_name || "",
+        last_name: rp.last_name || "",
+        phone: rp.phone || "",
+        avatar_kind: rp.avatar_kind || ((rp.gender || "").toString().toUpperCase() === "M" ? "ava_m" : "ava_w"),
+        avatar_url: (rp.avatar_url || "").trim() || genderToAvatar((rp.gender || "").toString().toUpperCase()),
+        promo_code: rp.promo_code ?? null,
+        promo_percent: rp.promo_percent ?? null,
+        promo_used: !!rp.promo_used,
+      };
+
+      // Если профиль в Supabase пустой — не трогаем локальный
+      if (!(remote.city && remote.first_name && remote.phone)) return false;
+
+      const local = loadProfile() || {};
+      const localStamp = _stampOfProfile(local);
+      const remoteStamp = String(rp.updated_at || "");
+
+      const differs =
+        String(local.city || "") !== String(remote.city || "") ||
+        String((local.gender || "").toUpperCase()) !== String((remote.gender || "").toUpperCase()) ||
+        String(local.first_name || "") !== String(remote.first_name || "") ||
+        String(local.last_name || "") !== String(remote.last_name || "") ||
+        String(local.phone || "") !== String(remote.phone || "") ||
+        String(local.avatar_kind || "") !== String(remote.avatar_kind || "") ||
+        String(local.avatar_url || "") !== String(remote.avatar_url || "");
+
+      const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
+      if (!shouldUpdate) return false;
+
+      const mergedGender = remote.gender || (local.gender || "");
+      const mergedCity = String(remote.city || "").trim() || (local.city || "");
+      saveProfile({
+        ...local,
+        ...remote,
+        city: mergedCity,
+        gender: mergedGender,
+        // на всякий случай нормализуем аватар под пол (в мини-аппе используем только пресеты)
+        avatar_url: (remote.avatar_url || "").trim() || (local.avatar_url || "").trim() || genderToAvatar(mergedGender),
+        avatar_kind: (remote.avatar_kind || "").trim() || (local.avatar_kind || "").trim() || ((mergedGender || "").toUpperCase() === "M" ? "ava_m" : "ava_w"),
+        [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
+      });
+      localStorage.setItem("shetka_registered_v1", "1");
+      return true;
+    } catch (e) {
+      console.log("syncRemoteProfileIfNewer error:", e);
+      return false;
+    }
+  }
+  
+  // telegram init
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    try { tg.disableVerticalSwipes(); } catch (_) {}
+  }
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  // ---------------- Micro-animations helpers ----------------
+  let _revealObs = null;
+  function initRevealObserver(){
+    if (_revealObs) {
+      // обновим список на текущем DOM
+      $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
+      return;
+    }
+    if (!('IntersectionObserver' in window)) return;
+    _revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-revealed');
+        _revealObs.unobserve(e.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+    $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
+  }
+
+  const html = document.documentElement;
+
+  // sendData bridge
+  const sendToBot = (cmd, payload = {}) => {
+    const data = JSON.stringify({ cmd, ...payload, ts: Date.now() });
+    if (tg) tg.sendData(data);
+    else console.log("sendData:", data);
+  };
+
+  const haptic = (kind = "light") => {
+    if (!tg?.HapticFeedback) return;
+    try { tg.HapticFeedback.impactOccurred(kind); } catch (_) {}
+  };
+
+  // ---------------- SUPABASE QUEUE (enqueue_request) ----------------
+  const getTgId = () => tg?.initDataUnsafe?.user?.id || 0;
+
+  async function supaEnqueue(kind, payload_json = {}) {
+    const tg_id = getTgId();
+
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ kind, tg_id, payload_json }),
+    });
+
+    const raw = await res.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch (_) {}
+
+    if (!res.ok || !data || !data.ok) {
+      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
+    }
+    return data;
+  }
+
+  // ---------------- MODALS HELPERS ----------------
+  const openModalEl = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModalEl = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  // ---------------- Dropoff choice + map (no API key) ----------------
+  const dropoffChoiceBtn = $("#openDropoffChoice");
+  const dropoffModal = $("#dropoffModal");
+  const dropoffMapModal = $("#dropoffMapModal");
+  const dropoffMapFrame = $("#dropoffMapFrame");
+  const dropoffCopyBtn = $("#dropoffCopyBtn");
+  const dropoffRouteBtn = $("#dropoffRouteBtn");
+
+  // Константы точки (один источник)
+  const DROPOFF_POINT = {
+    lat: 44.61665,
+    lon: 33.52537,
+    address: "Адрес мастерской (изменить в DROPOFF_POINT)",
+    hours: "Ежедневно 09:00–21:00",
+  };
+
+  function buildYandexMapUrl({ lat, lon, z = 14 } = {}) {
+    const ll = `${lon},${lat}`;
+    // Yandex maps embed without keys
+    return `https://yandex.ru/map-widget/v1/?ll=${encodeURIComponent(ll)}&z=${encodeURIComponent(String(z))}&l=map&pt=${encodeURIComponent(ll)},pm2rdm`;
+  }
+
+  function openDropoffModal(){
+    openModalEl(dropoffModal);
+    initRevealObserver();
+  }
+
+  dropoffChoiceBtn?.addEventListener('click', () => {
+    haptic('light');
+    openDropoffModal();
+  });
+
+  $$('[data-dropoff-close]').forEach(el => el.addEventListener('click', () => closeModalEl(dropoffModal)));
+  $$('[data-map-close]').forEach(el => el.addEventListener('click', () => closeModalEl(dropoffMapModal)));
+
+  // Open map modal + "zoom-in" steps via URL change
+  document.getElementById('openDropoffMap')?.addEventListener('click', () => {
+    haptic('light');
+    try { closeModalEl(dropoffModal); } catch(_) {}
+    if (dropoffMapFrame) {
+      dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 13 });
+      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 15 }); } catch(_){} }, 420);
+      setTimeout(() => { try { dropoffMapFrame.src = buildYandexMapUrl({ ...DROPOFF_POINT, z: 16 }); } catch(_){} }, 820);
+    }
+    const addr = document.getElementById('dropoffAddr');
+    const hrs = document.getElementById('dropoffHours');
+    if (addr) addr.textContent = DROPOFF_POINT.address;
+    if (hrs) hrs.textContent = DROPOFF_POINT.hours;
+    openModalEl(dropoffMapModal);
+  });
+
+  dropoffCopyBtn?.addEventListener('click', async () => {
+    const text = DROPOFF_POINT.address;
+    try {
+      await navigator.clipboard.writeText(text);
+      tg?.showAlert?.('Адрес скопирован');
+    } catch (_) {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(_e) {}
+      ta.remove();
+      try { tg?.showAlert?.('Адрес скопирован'); } catch(_e){}
+    }
+    haptic('light');
+  });
+
+  dropoffRouteBtn?.addEventListener('click', () => {
+    // открываем внешний маршрут (Yandex / Apple / Google) через Telegram WebApp
+    const ll = `${DROPOFF_POINT.lat},${DROPOFF_POINT.lon}`;
+    const url = `https://yandex.ru/maps/?pt=${DROPOFF_POINT.lon},${DROPOFF_POINT.lat}&z=16&l=map&rtext=~${ll}`;
+    try { tg?.openLink?.(url); } catch (_) { window.open(url, '_blank'); }
+    haptic('light');
+  });
+    
+  // ---------------- THEME ----------------
+  const themeBtn = $("#themeToggle");
+
+  const getPreferredTheme = () => {
+    const saved = localStorage.getItem("shetka_theme");
+    if (saved === "light" || saved === "dark") return saved;
+    if (tg?.colorScheme) return tg.colorScheme;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+
+  const applyTheme = (mode) => {
+    html.setAttribute("data-theme", mode);
+    localStorage.setItem("shetka_theme", mode);
+
+    if (tg) {
+      try {
+        tg.setHeaderColor(mode === "dark" ? "#0f1115" : "#ffffff");
+        tg.setBackgroundColor(mode === "dark" ? "#0b0c0f" : "#f6f7f8");
+      } catch (_) {}
+    }
+  };
+
+  const syncThemeSwitch = () => {
+    if (!themeBtn) return;
+    const cur = html.getAttribute("data-theme") || "light";
+    themeBtn.setAttribute("aria-checked", cur === "dark" ? "true" : "false");
+  };
+
+  const toggleTheme = () => {
+    const cur = html.getAttribute("data-theme") || "light";
+    const next = cur === "dark" ? "light" : "dark";
+    applyTheme(next);
+    syncThemeSwitch();
+    // pattern image depends on theme
+    setPatternEnabled(getPatternEnabled());
+    haptic("light");
+  };
+
+  // ---------------- PATTERN ----------------
+  // По ТЗ: фон всегда включен. Кнопку/тумблер убрали.
+  const patternBtn = $("#patternToggle");
+
+  const getPatternEnabled = () => true;
+
+  const syncPatternSwitch = () => {
+    if (!patternBtn) return;
+    const enabled = getPatternEnabled();
+    patternBtn.setAttribute("aria-checked", enabled ? "true" : "false");
+  };
+
+  const setPatternEnabled = (enabled) => {
+    html.classList.toggle("pattern-on", !!enabled);
+    syncPatternSwitch();
+  };
+
+  // init theme + pattern
+  applyTheme(getPreferredTheme());
+  setPatternEnabled(true);
+  syncThemeSwitch();
+
+  themeBtn?.addEventListener("click", toggleTheme);
+  // patternBtn отсутствует (фон всегда включен)
+
+  // ---------------- NAV ----------------
+  // Tab pages (bottom nav): home | orders | services | about
+  // Flow pages (push stack): estimate | courierWizard | courier_requests | photo_estimates | ...
+  let currentPage = "home";
+  const pageStack = ["home"];
+
+  const setTabActive = (page) => {
+    $$(".tab").forEach(btn => btn.classList.toggle("active", btn.dataset.nav === page));
+  };
+
+  const showPage = (page, { push = true } = {}) => {
+    if (page === currentPage) return;
+
+    const curEl = $(`.page[data-page="${currentPage}"]`);
+    const nextEl = $(`.page[data-page="${page}"]`);
+    if (!nextEl) return;
+
+    // page transition (fade + slight translateY)
+    if (curEl) {
+      curEl.classList.remove("pageActive");
+      // hide after transition
+      setTimeout(() => { try { curEl.hidden = true; } catch (_) {} }, 240);
+    }
+    nextEl.hidden = false;
+    nextEl.classList.add("pageEntering");
+    requestAnimationFrame(() => {
+      nextEl.classList.add("pageActive");
+      nextEl.classList.remove("pageEntering");
+    });
+
+    currentPage = page;
+    if (push) pageStack.push(page);
+    setTabActive(page);
+
+    // при переключении страницы сбрасываем скролл, чтобы логотип "уходил под блоки" корректно везде
+    try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+    document.body.classList.remove("logoBehind");
+    
+    document.body.classList.toggle("page-estimate", page === "estimate");
+
+    // Tab pages
+    if (page === "home") {
+      hydrateProfile();
+      syncRemoteProfileIfNewer({ force: true }).then((changed) => {
+        if (changed) hydrateProfile();
+      });
+    }
+    if (page === "orders") renderOrders();
+    if (page === "services") renderServices();
+    if (page === "about") initAboutOnce();
+    if (page === "photo_estimates") {
+      // при заходе обновляем и рисуем
+      peRefreshAll(true).catch(() => {});
+    }
+  };
+
+  const goBack = () => {
+    if (pageStack.length <= 1) return;
+    pageStack.pop();
+    const prev = pageStack[pageStack.length - 1];
+    showPage(prev, { push: false });
+    haptic("light");
+  };
+
+  $$("[data-nav]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showPage(btn.dataset.nav);
+      haptic("light");
+    });
+  });
+  $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
+
+  // ---------------- ABOUT (segmented + scroll storytelling) ----------------
+  let _aboutInited = false;
+  function initAboutOnce(){
+    if (_aboutInited) return;
+    _aboutInited = true;
+
+    const seg = document.getElementById('aboutSeg');
+    const pAbout = document.getElementById('aboutPanelAbout');
+    const pCases = document.getElementById('aboutPanelCases');
+
+    const setAboutTab = (key) => {
+      const k = String(key || 'about');
+      seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
+      if (pAbout) pAbout.hidden = (k !== 'about');
+      if (pCases) pCases.hidden = (k !== 'cases');
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
+      initRevealObserver();
+    };
+
+    seg?.addEventListener('click', (e) => {
+      const btn = e.target?.closest?.('button[data-about-tab]');
+      if (!btn) return;
+      setAboutTab(btn.getAttribute('data-about-tab'));
+      haptic('light');
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('[data-acc]')?.forEach((acc) => {
+      acc.addEventListener('click', (e) => {
+        const head = e.target?.closest?.('[data-acc-head]');
+        if (!head) return;
+        const item = head.closest('[data-acc-item]');
+        if (!item) return;
+        const open = item.classList.toggle('open');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+        haptic('light');
+      });
+    });
+
+    // reviews carousel dots
+    const track = document.getElementById('reviewsTrack');
+    const dots = document.getElementById('reviewsDots');
+    if (track && dots) {
+      const slides = Array.from(track.querySelectorAll('.reviewSlide'));
+      dots.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+      const setDot = (i) => {
+        dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+      };
+      track.addEventListener('scroll', () => {
+        const w = track.clientWidth || 1;
+        const i = Math.round(track.scrollLeft / w);
+        setDot(Math.max(0, Math.min(slides.length-1, i)));
+      }, { passive: true });
+      dots.addEventListener('click', (e) => {
+        const dot = e.target?.closest?.('[data-dot]');
+        if (!dot) return;
+        const i = Number(dot.getAttribute('data-dot') || 0);
+        track.scrollTo({ left: i * (track.clientWidth || 0), behavior: 'smooth' });
+      });
+    }
+
+    // init default
+    setAboutTab('about');
+  }
+
+  // ---------------- STATUS NORMALIZATION ----------------
+  const normalizeStatus = (raw) => {
+    if (!raw) return { label: "Принят", dot: "blue" };
+    const s = String(raw).toLowerCase();
+
+    // скрываем внутрянку/логистику: для клиента сводим
+    const internal = ["из симфера", "из муссона", "отправили", "в цех", "севастополь"];
+    if (internal.some(x => s.includes(x))) return { label: "В логистике", dot: "orange" };
+
+    if (s.includes("соглас")) return { label: "Согласование", dot: "orange" };
+    if (s.includes("готов")) return { label: "Готов", dot: "green" };
+    if (s.includes("в работе") || s.includes("работе")) return { label: "В работе", dot: "orange" };
+    if (s.includes("возврат")) return { label: "Возврат", dot: "red" };
+    if (s.includes("закрыт") || s.includes("выдан") || s.includes("заверш")) return { label: "Завершён", dot: "gray" };
+    if (s.includes("нов")) return { label: "Принят", dot: "blue" };
+    return { label: "В работе", dot: "orange" };
+  };
+
+  // ---------------- ORDERS (demo, ready for API) ----------------
+  const ordersList = $("#ordersList");
+  const searchInput = $("#orderSearchInput");
+  const searchBtn = $("#orderSearchBtn");
+  const searchResult = $("#searchResult");
+
+  const modal = $("#orderModal");
+  const modalContent = $("#modalContent");
+
+  const now = Date.now();
+  const myTgId = tg?.initDataUnsafe?.user?.id || 0;
+
+  let ORDERS = [
+    {
+      id: "10234",
+      owner_tg_id: myTgId,
+      created_ts: now - 2 * 60 * 60 * 1000,
+      item: "Обувь · кроссовки",
+      services: ["Химчистка обуви"],
+      status_raw: "В работе чистка",
+      price: 1990
+    },
+    {
+      id: "77777",
+      owner_tg_id: 999999,
+      created_ts: now - 8 * 60 * 60 * 1000,
+      item: "Обувь · ботинки",
+      services: ["Ремонт подошвы"],
+      status_raw: "Готов к выдаче",
+      price: 3500
+    }
+  ];
+
+  const isClosed = (status_raw) => {
+    const s = String(status_raw || "").toLowerCase();
+    return s.includes("закрыт") || s.includes("выдан") || s.includes("заверш");
+  };
+
+  const purgeClosedOlderThan24h = () => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    ORDERS = ORDERS.filter(o => !(isClosed(o.status_raw) && o.created_ts < cutoff));
+  };
+
+  const formatDate = (ts) => {
+    try {
+      const d = new Date(ts);
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${dd}.${mm}.${yy}`;
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatMoney = (v) => {
+    if (v === null || v === undefined || v === "" || v === "—") return "—";
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v);
+    return `${n.toLocaleString("ru-RU")} ₽`;
+  };
+
+  const escapeHtml = (str) => String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  const isMine = (o) => !!(myTgId && o.owner_tg_id === myTgId);
+
+  const orderCard = (o, limited) => {
+    const st = normalizeStatus(o.status_raw);
+    const date = formatDate(o.created_ts);
+
+    const lines = limited
+      ? `
+        <div class="orderLine"><span>Изделие:</span> ${escapeHtml(o.item || "—")}</div>
+        <div class="orderLine"><span>Статус:</span> ${escapeHtml(st.label)}</div>
+        <div class="orderLine"><span>Дата:</span> ${escapeHtml(date)}</div>
+      `
+      : `
+        <div class="orderLine"><span>Изделие:</span> ${escapeHtml(o.item || "—")}</div>
+        <div class="orderLine"><span>Услуги:</span> ${escapeHtml((o.services || []).join(", ") || "—")}</div>
+        <div class="orderLine"><span>Статус:</span> ${escapeHtml(st.label)}</div>
+        <div class="orderLine"><span>Стоимость:</span> ${escapeHtml(formatMoney(o.price))}</div>
+        <div class="orderLine"><span>Дата:</span> ${escapeHtml(date)}</div>
+      `;
+
+    const wrap = document.createElement("div");
+    wrap.className = "order glass";
+    wrap.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderId">Заказ №${escapeHtml(o.id)}</div>
+          <div class="orderMeta">${escapeHtml(date)}</div>
+        </div>
+        <div class="status"><span class="sDot ${st.dot}"></span>${escapeHtml(st.label)}</div>
+      </div>
+      <div class="orderBody">${lines}</div>
+    `;
+    wrap.addEventListener("click", () => openOrderModal(o, limited));
+    return wrap;
+  };
+
+  const renderOrders = () => {
+    purgeClosedOlderThan24h();
+    if (!ordersList) return;
+
+    const my = ORDERS.filter(o => isMine(o));
+    ordersList.innerHTML = "";
+
+    my.forEach(o => ordersList.appendChild(orderCard(o, false)));
+  };
+
+  const renderSearchResult = (order) => {
+    if (!searchResult) return;
+    searchResult.innerHTML = "";
+
+    if (!order) {
+      const box = document.createElement("div");
+      box.className = "order glass";
+      box.innerHTML = `
+        <div class="orderTop">
+          <div>
+            <div class="orderId">Ничего не найдено</div>
+            <div class="orderMeta">Проверьте номер заказа</div>
+          </div>
+        </div>
+      `;
+      searchResult.appendChild(box);
+      return;
+    }
+
+    const limited = !isMine(order);
+    searchResult.appendChild(orderCard(order, limited));
+  };
+
+  const findOrderById = (id) => {
+    const needle = String(id || "").trim();
+    if (!needle) return null;
+    return ORDERS.find(o => String(o.id) === needle) || null;
+  };
+
+  searchBtn?.addEventListener("click", () => {
+    const id = (searchInput?.value || "").trim();
+    if (!id) return;
+    renderSearchResult(findOrderById(id));
+    haptic("light");
+  });
+
+  searchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      searchBtn?.click();
+    }
+  });
+
+  // ---------------- ORDER MODAL ----------------
+  const openOrderModal = (o, limited) => {
+    if (!modal || !modalContent) return;
+    const st = normalizeStatus(o.status_raw);
+    const date = formatDate(o.created_ts);
+
+    modalContent.innerHTML = `
+      <div class="modalH">Заказ №${escapeHtml(o.id)}</div>
+      <p class="modalP">${limited ? "Показана краткая карточка заказа." : "Детали вашего заказа."}</p>
+
+      <div class="modalGrid">
+        <div class="modalRow"><span>Статус</span><b>${escapeHtml(st.label)}</b></div>
+        <div class="modalRow"><span>Изделие</span><b>${escapeHtml(o.item || "—")}</b></div>
+        ${limited ? "" : `<div class="modalRow"><span>Услуги</span><b>${escapeHtml((o.services||[]).join(", ") || "—")}</b></div>`}
+        ${limited ? "" : `<div class="modalRow"><span>Стоимость</span><b>${escapeHtml(formatMoney(o.price))}</b></div>`}
+        <div class="modalRow"><span>Дата</span><b>${escapeHtml(date)}</b></div>
+      </div>
+
+      <div style="height:12px"></div>
+      <button class="smallBtn primary" type="button" id="modalAsk">Написать в поддержку</button>
+    `;
+
+    $("#modalAsk")?.addEventListener("click", () => {
+      closeModal();
+      openChat(true);
+      haptic("light");
+    });
+
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  $$("[data-close]").forEach(el => el.addEventListener("click", closeModal));
+
+  // ---------------- SERVICES (based on PRICE data) ----------------
+  // Важно: один источник данных для витрины "Услуги" и для курьер‑формы.
+  const servicesTabs = $("#priceTabs");
+  const servicesContent = $("#priceContent");
+
+  const PRICE = [
+    { key:"clean_shoes", title:"Чистка обуви", items:[
+      ["Открытая обувь", 1690],
+      ["Кроссовки / Туфли", 1990],
+      ["Полусапоги / Ботинки", 2390],
+      ["Сапоги / Ботфорты", 2690],
+      ["Детская обувь", 1290],
+    ]},
+    { key:"bags", title:"Сумки", items:[
+      ["Сумка маленькая", 2200],
+      ["Сумка средняя", 2700],
+      ["Сумка большая", 3800],
+      ["Полный уход с покраской — маленькая", 3500],
+      ["Полный уход с покраской — средняя", 4500],
+      ["Полный уход с покраской — большая", 5000],
+    ]},
+    { key:"other", title:"Другие изделия", items:[
+      ["Колясок", 2500],
+      ["Автокресел", 2000],
+      ["Глобальная чистка кожи", 5500],
+    ]},
+    { key:"dis", title:"Дезинфекция", items:[
+      ["Устранение запаха", 500],
+    ]},
+    { key:"sole", title:"Ремонт • Подошва", items:[
+      ["Замена подошвы", 3500],
+      ["Прошивка круговая", 1500],
+      ["Переклейка подошвы", 1500],
+      ["Прошивка + проклейка", 2000],
+      ["Изготовление подошвы", 4500],
+      ["Замена наката", 2000],
+      ["Переклейка наката", 1000],
+      ["Замена супинатора", 1500],
+    ]},
+    { key:"sew", title:"Ремонт • Швейные работы", items:[
+      ["Замена молнии (10 см)", 600],
+      ["Латки", 350],
+      ["Прошивка", 500],
+      ["Замена бегунка", 500],
+      ["Ремонт задников", 1500],
+      ["Замена обувных резинок", 800],
+      ["Изготовление стелек", 1000],
+    ]},
+    { key:"color", title:"Покраска", items:[
+      ["Покраска изделий", 1000],
+      ["Реставрация — туфли/кроссовки", 4500],
+      ["Реставрация — полусапоги/ботинки", 5500],
+      ["Реставрация — сапоги", 6000],
+      ["Куртки до 50 см", 6000],
+      ["Куртки свыше 50 см", 8000],
+    ]}
+  ];
+
+  // --- Courier: услуги из прайса по категории ---
+  const PRICE_SERVICES_BY_KEY = Object.fromEntries(
+    PRICE.map(c => [c.key, (c.items || []).map(([name]) => String(name || "").trim()).filter(Boolean)])
+  );
+
+  // грубая привязка категорий курьера к разделам прайса (можно расширять)
+  const CR_CATEGORY_TO_PRICE_KEYS = {
+    "Обувь": ["clean_shoes", "sole", "sew", "color", "dis"],
+    "Сумка": ["bags", "sew", "color", "dis"],
+    "Верхняя одежда": ["color", "dis"],
+    "Аксессуар": ["other", "sew", "color", "dis"],
+  };
+
+  const crServicesForCategory = (cat) => {
+    const keys = CR_CATEGORY_TO_PRICE_KEYS[String(cat || "").trim()] || [];
+    const set = new Set();
+    keys.forEach(k => (PRICE_SERVICES_BY_KEY[k] || []).forEach(s => set.add(s)));
+    return Array.from(set);
+  };
+
+  // Верхний фильтр (segmented) — 4 витринные категории.
+  const SERVICES_SEG = [
+    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "sole", "sew", "color", "dis"] },
+    { key: "bags", title: "Сумки", price_keys: ["bags", "sew", "color", "dis"] },
+    { key: "clothes", title: "Одежда", price_keys: ["color", "dis"] },
+    { key: "other", title: "Другое/ремонт", price_keys: ["other", "sole", "sew", "dis"] },
+  ];
+  let activeServicesKey = SERVICES_SEG[0].key;
+
+  function buildServiceCardsByKeys(keys){
+    const set = new Map();
+    (keys || []).forEach(k => {
+      const cat = PRICE.find(x => x.key === k);
+      (cat?.items || []).forEach(([name, price]) => {
+        const n = String(name || "").trim();
+        if (!n) return;
+        if (!set.has(n)) set.set(n, { name: n, from: Number(price || 0) || null, source_key: k });
+        else {
+          const cur = set.get(n);
+          const v = Number(price || 0) || null;
+          if (v && (!cur.from || v < cur.from)) cur.from = v;
+        }
+      });
+    });
+    return Array.from(set.values()).sort((a,b) => String(a.name).localeCompare(String(b.name), "ru"));
+  }
+
+  const renderServicesTabs = () => {
+    if (!servicesTabs) return;
+    servicesTabs.classList.add("seg", "servicesSeg");
+    servicesTabs.innerHTML = SERVICES_SEG.map(x => {
+      const isA = x.key === activeServicesKey;
+      return `<button class="segBtn${isA ? " active" : ""}" type="button" data-svcseg="${x.key}">${escapeHtml(x.title)}</button>`;
+    }).join("");
+
+    servicesTabs.querySelectorAll("button[data-svcseg]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeServicesKey = String(btn.getAttribute("data-svcseg") || SERVICES_SEG[0].key);
+        renderServices();
+        haptic("light");
+      });
+    });
+  };
+
+  const renderServices = () => {
+    renderServicesTabs();
+    if (!servicesContent) return;
+
+    const seg = SERVICES_SEG.find(x => x.key === activeServicesKey) || SERVICES_SEG[0];
+    const cards = buildServiceCardsByKeys(seg.price_keys);
+
+    servicesContent.innerHTML = `
+      <div class="servicesHero glass reveal">
+        <div class="servicesHeroTitle">${escapeHtml(seg.title)}</div>
+        <div class="servicesHeroSub">Выберите услугу — при желании мы подставим её в «Сдать вещь».</div>
+      </div>
+      <div class="servicesGrid">
+        ${cards.map(c => {
+          const from = c.from ? `от ${escapeHtml(formatMoney(c.from))}` : "по запросу";
+          return `
+            <div class="svcCard glass reveal" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
+              <div class="svcIco" aria-hidden="true">✨</div>
+              <div class="svcBody">
+                <div class="svcTitle">${escapeHtml(c.name)}</div>
+                <div class="svcSub">Результат зависит от состояния изделия</div>
+              </div>
+              <div class="svcMeta">
+                <div class="svcPrice">${from}</div>
+                <button class="smallBtn" type="button">Выбрать</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    // tap-scale on cards + prefill courier wizard (optional)
+    servicesContent.querySelectorAll('[data-svc-pick]')?.forEach(el => {
+      el.addEventListener('click', (e) => {
+        const name = String(el.getAttribute('data-svc-name') || '').trim();
+        const catTitle = String(el.getAttribute('data-svc-cat') || '').trim();
+        const mapCat = (t) => {
+          if (t === 'Сумки') return 'Сумка';
+          if (t === 'Одежда') return 'Верхняя одежда';
+          if (t === 'Другое/ремонт') return 'Аксессуар';
+          return 'Обувь';
+        };
+        if (!name) return;
+        // Префилл: открываем выбор сдачи и затем курьера с предвыбором
+        window.__SHETKA_PREFILL = { category: mapCat(catTitle), service: name };
+        try { document.getElementById('openDropoffChoice')?.click(); } catch (_) {}
+        haptic('light');
+      });
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); el.click(); }
+      });
+    });
+
+    initRevealObserver();
+  };
+
+  // ---------------- PROFILE ----------------
+  const phoneValue = $("#tgPhoneValue");
+  const cityValue = $("#tgCityValue");
+
+  // Промокоды / достижения
+  const promoBtn = $("#promoBtn");
+  const achievementsBtn = $("#achievementsBtn");
+  const promoModal = $("#promoModal");
+  const achievementsModal = $("#achievementsModal");
+  const promoModalContent = $("#promoModalContent");
+
+  $$('[data-promo-close]').forEach(el => el.addEventListener('click', () => closeModalEl(promoModal)));
+  $$('[data-ach-close]').forEach(el => el.addEventListener('click', () => closeModalEl(achievementsModal)));
+
+  // Профиль
+  const hydrateProfile = () => {
+    const user = tg?.initDataUnsafe?.user;
+    const p = loadProfile() || {};
+
+    const nameEl = $("#tgName");
+    const imgEl = $("#tgAvatar");
+
+    const shownName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
+    const tgName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+    if (nameEl) nameEl.textContent = shownName || tgName || "Пользователь";
+
+    if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
+    if (cityValue) cityValue.textContent = (p.city || "").trim() || "—";
+
+    // Аватар: ТОЛЬКО PNG (по полу). Никаких рамок/букв/фоллбеков.
+    const g = (p.gender || "").toUpperCase();
+    const avatar = (p.avatar_url || "").trim() || genderToAvatar(g) || "ava_m_1.png";
+    if (imgEl) imgEl.src = avatar;
+
+    // Кнопка "Промокод" показывается только если промокоды реально есть
+    // Поддерживаем 2 формата:
+    // - p.promo_code (старый)
+    // - p.promo_codes: string[] (если когда-то появятся несколько)
+    const codes = Array.isArray(p.promo_codes)
+      ? p.promo_codes.map(x => String(x || "").trim()).filter(Boolean)
+      : (p.promo_code ? [String(p.promo_code).trim()] : []);
+
+    if (promoBtn) promoBtn.hidden = false;
+
+    if (promoBtn) {
+      promoBtn.onclick = () => {
+        haptic("light");
+        const list = (Array.isArray(codes) ? codes : []).filter(Boolean);
+        if (!list.length) {
+          promoModalContent.innerHTML = `<div class="modalP">У вас нет активных промокодов и акций.</div>`;
+        } else {
+          promoModalContent.innerHTML = list.map(c => {
+            const code = (typeof c === "string") ? String(c).trim() : String(c?.promo_code || c?.code || "").trim();
+            const pct = c?.promo_percent != null ? Number(c.promo_percent) : null;
+            const used = !!c?.promo_used;
+            const line = pct ? `Скидка: ${pct}%` : `Акция`;
+            return `<div class="order glass" style="padding:12px; margin-bottom:10px;">
+              <div class="orderTop">
+                <div><div class="orderId">${escapeHtml(code || "Промокод")}</div></div>
+                <div class="status">${used ? "Использован" : "Активен"}</div>
+              </div>
+              <div class="orderMeta" style="margin-top:6px;">${escapeHtml(line)}</div>
+            </div>`;
+          }).join("");
+        }
+        promoModal.classList.add("show");
+        promoModal.setAttribute("aria-hidden", "false");
+      };
+    }
+    
+    if (achievementsBtn) {
+      achievementsBtn.onclick = () => {
+        openModalEl(achievementsModal);
+        haptic("light");
+      };
+    }
+
+
+    // обновляем блок заявок по фото в профиле
+    peRefreshAll(false).catch(() => {
+      if (peTile) peTile.hidden = true;
+    });
+
+    // обновляем блок курьерских заявок в профиле
+    crRefreshAll(false).catch(() => {
+      if (crTile) crTile.hidden = true;
+    });
+  };
+
+  // ---------------- REGISTRATION / PROFILE via SUPABASE ----------------
+  const LS_REGISTERED = "shetka_registered_v1";
+  const LS_PROFILE = "shetka_profile_v1";
+
+  const registerModal = $("#registerModal");
+  const giftModal = $("#giftModal");
+  const profileEditModal = $("#profileEditModal");
+
+  const regCitySeg = $("#regCitySeg");
+  const regGenderSeg = $("#regGenderSeg");
+  const regFirstName = $("#regFirstName");
+  const regLastName = $("#regLastName");
+  const regPhone = $("#regPhone");
+  const regAvatarGrid = $("#regAvatarGrid");
+  const regAvatarFile = $("#regAvatarFile");
+  const regSubmitBtn = $("#regSubmitBtn");
+  const regError = $("#regError");
+
+  const giftText = $("#giftText");
+  const giftCodeBox = $("#giftCodeBox");
+
+  const editProfileBtn = $("#editProfileBtn");
+  const profCitySeg = $("#profCitySeg");
+  const profGenderSeg = $("#profGenderSeg");
+  const profFirstName = $("#profFirstName");
+  const profLastName = $("#profLastName");
+  const profPhone = $("#profPhone");
+  const profSaveBtn = $("#profSaveBtn");
+
+  // Размер подарка за регистрацию (скидка %)
+
+  function loadProfile() {
+    try {
+      const raw = localStorage.getItem(LS_PROFILE);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveProfile(p) {
+    localStorage.setItem(LS_PROFILE, JSON.stringify(p));
+  }
+
+  const setFormError = (msg) => {
+    if (!regError) return;
+    regError.hidden = !msg;
+    regError.textContent = msg || "";
+  };
+
+  const normalizePhone = (v) => String(v || "").trim();
+
+  const makeGiftCode = () => {
+    // короткий читаемый код
+    const s = Math.random().toString(16).slice(2, 6).toUpperCase();
+    const t = Math.random().toString(16).slice(2, 6).toUpperCase();
+    return `SHETKA-${s}${t}`;
+  };
+
+  let selectedCity = "";
+  let selectedGender = "";
+
+  const genderToAvatar = (g) => {
+    const gg = String(g || "").toUpperCase();
+    if (gg === "M") return "ava_m_1.png";
+    if (gg === "W" || gg === "Ж") return "ava_w_1.png";
+    return "";
+  };
+  let selectedAvatarKind = "preset_1";
+  let uploadedAvatarDataUrl = ""; // хранится локально, в бот не шлём
+
+  // В регистрации не показываем красные ошибки/подсветки.
+  // Вместо этого делаем кнопку "Завершить регистрацию" неактивной,
+  // пока не заполнено всё обязательное.
+    
+  function applyPhoneAutoprefix(inputEl) {
+    if (!inputEl) return;
+  
+    inputEl.addEventListener("input", () => {
+      let v = inputEl.value || "";
+      if (!v) return;
+  
+      // если первым символом пользователь ввёл '+' — не мешаем, он вводит полностью
+      if (v[0] === "+") return;
+  
+      // только цифры в начале проверяем по первому символу
+      const first = v[0];
+  
+      // если первый символ не цифра — ничего не делаем
+      if (first < "0" || first > "9") return;
+  
+      if (first === "7") {
+        // 7 -> +7...
+        inputEl.value = "+" + v;
+        return;
+      }
+  
+      if (first === "8") {
+        // 8 -> ничего не вставляем
+        return;
+      }
+  
+      // любая другая цифра -> +7<digit>...
+      inputEl.value = "+7" + v;
+    });
+  }
+  
+  function isValidRuPhone(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return false;
+  
+    // оставляем только цифры и плюс
+    const cleaned = s.replace(/[^\d+]/g, "");
+  
+    // варианты:
+    // +7XXXXXXXXXX (12 символов с +)
+    if (/^\+7\d{10}$/.test(cleaned)) return true;
+  
+    // 8XXXXXXXXXX (11 цифр)
+    if (/^8\d{10}$/.test(cleaned)) return true;
+  
+    // 7XXXXXXXXXX (11 цифр) — бывает когда без плюса
+    if (/^7\d{10}$/.test(cleaned)) return true;
+  
+    return false;
+  }
+
+  function isRegFormReady() {
+    const city = selectedCity;
+    const gender = selectedGender;
+    const first = (regFirstName?.value || "").trim();
+    const phone = (regPhone?.value || "").trim();
+    return !!city && !!gender && !!first && isValidRuPhone(phone);
+  }
+
+  function syncRegSubmitState() {
+    if (!regSubmitBtn) return;
+    regSubmitBtn.disabled = !isRegFormReady();
+    // ошибки скрываем всегда (по ТЗ)
+    if (regError) regError.hidden = true;
+  }
+
+  // Профиль: валидация телефона как при регистрации
+  function isProfileFormReady() {
+    const p = loadProfile() || {};
+    const cityBtn = $("#profCitySeg .segBtn.active");
+    const city = cityBtn?.dataset?.city || p.city || "";
+    const genderBtn = $("#profGenderSeg .segBtn.active");
+    const gender = genderBtn?.dataset?.gender || p.gender || "";
+    const first = (profFirstName?.value || "").trim();
+    const phone = (profPhone?.value || "").trim();
+    return !!city && !!gender && !!first && isValidRuPhone(phone);
+  }
+
+  function syncProfSaveState() {
+    if (!profSaveBtn) return;
+    profSaveBtn.disabled = !isProfileFormReady();
+  }
+
+
+  applyPhoneAutoprefix(regPhone);
+  applyPhoneAutoprefix(profPhone);
+
+  // реактивная валидация профиля
+  [profFirstName, profLastName, profPhone].forEach(el => el?.addEventListener?.("input", syncProfSaveState));
+  profCitySeg?.addEventListener?.("click", syncProfSaveState);
+  profGenderSeg?.addEventListener?.("click", syncProfSaveState);
+    
+  // --- reset через URL: ?reset=1
+  try {
+    if (new URLSearchParams(location.search).get("reset") === "1") {
+      localStorage.removeItem(LS_REGISTERED);
+      localStorage.removeItem(LS_PROFILE);
+      // телефон/прочее оставляем как было, если хочешь — можно тоже чистить
+    }
+  } catch (_) {}
+
+  // --- город сегмент (регистрация)
+  regCitySeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-city]");
+    if (!btn) return;
+    selectedCity = btn.dataset.city || "";
+    $$("#regCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    haptic("light");
+    syncRegSubmitState();
+  });
+
+  // --- пол сегмент (регистрация)
+  regGenderSeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-gender]");
+    if (!btn) return;
+    selectedGender = btn.dataset.gender || "";
+    $$("#regGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    haptic("light");
+    syncRegSubmitState();
+  });
+
+  regFirstName?.addEventListener("input", syncRegSubmitState);
+  regPhone?.addEventListener("input", syncRegSubmitState);
+
+  // --- подарок модалка: закрытие
+  $$("[data-gift-close]").forEach(el => el.addEventListener("click", () => closeModalEl(giftModal)));
+
+
+  // --- показать модалку регистрации если не зарегистрирован
+  const ensureRegistration = async () => {
+    const p = loadProfile() || {};
+    const isReg = localStorage.getItem(LS_REGISTERED) === "1";
+    const hasRequired = !!(p.city && p.first_name && p.phone && isValidRuPhone(p.phone));
+    if (isReg && hasRequired) return;
+
+    // 1) Если пользователь уже регистрировался на другом устройстве — подтягиваем профиль из Supabase
+    try {
+      const tg_id = getTgId();
+      if (tg_id) {
+        const rp = await getRemoteProfile(tg_id);
+        if (rp?.city && rp?.first_name && rp?.phone) {
+          const rg = (rp.gender || rp.avatar_kind || "").toString().toUpperCase();
+          const remoteAvatar = (rp.avatar_url || "").toString().trim();
+          saveProfile({
+            city: rp.city,
+            first_name: rp.first_name,
+            last_name: rp.last_name || "",
+            phone: rp.phone,
+            gender: rg === "M" || rg === "W" ? rg : "",
+            avatar_url: remoteAvatar || genderToAvatar(rg),
+            avatar_kind: (rp.avatar_kind || ((rg === "M") ? "ava_m" : "ava_w")),
+            promo_code: rp.promo_code || null,
+            promo_percent: rp.promo_percent || null,
+            promo_used: !!rp.promo_used,
+          });
+          localStorage.setItem(LS_REGISTERED, "1");
+          hydrateProfile?.();
+          return;
+        }
+      }
+    } catch (e) {
+      console.log("getRemoteProfile error:", e);
+    }
+
+    // 2) Иначе показываем модалку регистрации
+    // НЕЛЬЗЯ закрыть — поэтому не вешаем close на backdrop
+    openModalEl(registerModal);
+    // на старте делаем кнопку неактивной
+    syncRegSubmitState();
+  };
+
+  // --- заполнить настройки профиля из localStorage
+  const fillProfileEdit = () => {
+    const p = loadProfile() || {};
+    // город
+    const city = p.city || "";
+    selectedCity = city; // чтобы не сбить выбор
+    $$("#profCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+
+    if (profFirstName) profFirstName.value = p.first_name || "";
+    if (profLastName) profLastName.value = p.last_name || "";
+    if (profPhone) profPhone.value = p.phone || "";
+
+    // пол
+    const g = (p.gender || "").toUpperCase();
+    selectedGender = g;
+    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.gender || "").toUpperCase() === g));
+  };
+
+  // --- профиль: открыть модалку настроек
+  editProfileBtn?.addEventListener("click", () => {
+    fillProfileEdit();
+    syncProfSaveState();
+    openModalEl(profileEditModal);
+    haptic("light");
+  });
+
+  $$("[data-prof-close]").forEach(el => el.addEventListener("click", () => closeModalEl(profileEditModal)));
+
+  // --- профиль: выбор города (настройки)
+  profCitySeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-city]");
+    if (!btn) return;
+    const city = btn.dataset.city || "";
+    $$("#profCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+    haptic("light");
+  });
+
+  // --- профиль: выбор пола (настройки)
+  profGenderSeg?.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button[data-gender]");
+    if (!btn) return;
+  
+    selectedGender = (btn.dataset.gender || "").toUpperCase();
+  
+    // ВАЖНО: как и с городом — ставим active на выбранную кнопку
+    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+  
+    haptic("light");
+    syncProfSaveState();
+  });
+
+  // --- регистрация: submit
+  const GIFT_PERCENT = 20;
+
+  regSubmitBtn?.addEventListener("click", async () => {
+    try {
+      const city = selectedCity;
+      const gender = selectedGender;
+      const first = (regFirstName?.value || "").trim();
+      const last = (regLastName?.value || "").trim();
+      const phone = (regPhone?.value || "").trim();
+
+      // По ТЗ: без красных ошибок. Просто не даём отправить.
+      if (!city || !gender || !first || !isValidRuPhone(phone)) return;
+  
+      // 1) берём уникальный промокод из Supabase
+      const promo_code = await reservePromoCode();
+  
+      // 2) кладём регистрацию в очередь Supabase -> бот заберёт
+      await supaEnqueue("register", {
+        city,
+        gender,
+        first_name: first,
+        last_name: last || null,
+        phone,
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        avatar_url: genderToAvatar(gender),
+        promo_percent: GIFT_PERCENT,
+        promo_code,
+      });
+  
+      // 3) сохраняем локально и закрываем модалку
+      saveProfile({
+        city,
+        gender,
+        first_name: first,
+        last_name: last || "",
+        phone,
+        avatar_url: genderToAvatar(gender),
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        promo_code,
+        promo_percent: GIFT_PERCENT,
+        promo_used: false,
+      });
+      localStorage.setItem(LS_REGISTERED, "1");
+  
+      closeModalEl(registerModal);
+  
+      // 4) подарок
+      if (giftText) {
+        giftText.textContent =
+          `Вам доступна единоразовая скидка ${GIFT_PERCENT}%.\n` +
+          `Покажите этот код администратору в мастерской или в пункте приёма — он будет применён один раз.`;
+      }
+      if (giftCodeBox) giftCodeBox.textContent = promo_code;
+  
+      openModalEl(giftModal);
+  
+      hydrateProfile?.();
+      haptic("light");
+    } catch (e) {
+      console.log("registration error:", e);
+    }
+  });
+
+  // --- профиль: сохранить изменения
+  profSaveBtn?.addEventListener("click", async () => {
+    try {
+      const p = loadProfile() || {};
+      const cityBtn = $("#profCitySeg .segBtn.active");
+      const city = cityBtn?.dataset?.city || p.city || "";
+
+      const genderBtn = $("#profGenderSeg .segBtn.active");
+      const gender = genderBtn?.dataset?.gender || p.gender || "";
+
+      const first = (profFirstName?.value || "").trim();
+      const last = (profLastName?.value || "").trim();
+      const phone = normalizePhone(profPhone?.value || "");
+
+      // валидация телефона — как в регистрации
+      if (!city || !gender || !first || !isValidRuPhone(phone)) {
+        // без изменения визуала — просто не даём сохранить
+        return;
+      }
+
+      await supaEnqueue("profile_update", {
+        city,
+        gender,
+        first_name: first,
+        last_name: last || null,
+        phone,
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        avatar_url: genderToAvatar(gender),
+      });
+
+      saveProfile({
+        ...p,
+        city,
+        gender,
+        avatar_url: genderToAvatar(gender),
+        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
+        first_name: first,
+        last_name: last,
+        phone,
+      });
+
+      hydrateProfile();
+      
+      closeModalEl(profileEditModal);
+      haptic("light");
+    } catch (e) {
+      console.log("profile_update error:", e);
+    }
+  });
+
+  // запуск проверки регистрации
+  // + дотягиваем свежий профиль из Supabase (важно для 2-го устройства)
+  ensureRegistration().then(() => {
+    syncRemoteProfileIfNewer({ force: false }).then((changed) => {
+      if (changed) hydrateProfile();
+    });
+  });
+    
+  // ---------------- CHAT (persist) ----------------
+  const chat = $("#chat");
+  const chatFab = $("#chatFab");
+  const chatForm = $("#chatForm");
+  const chatInput = $("#chatInput");
+  const chatBody = $("#chatBody");
+
+  const supportOpenFromHome = $("#supportOpenFromHome");
+  const supportOpenFromProfile = $("#supportOpenFromProfile");
+
+  const CHAT_KEY = "shetka_chat_v1";
+
+  const loadChat = () => {
+    try {
+      const raw = localStorage.getItem(CHAT_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveChat = (arr) => {
+    try { localStorage.setItem(CHAT_KEY, JSON.stringify(arr)); } catch {}
+  };
+
+  let chatMessages = loadChat();
+
+  const renderChat = () => {
+    if (!chatBody) return;
+    chatBody.innerHTML = "";
+    if (!chatMessages.length) {
+      chatMessages = [{ who:"bot", text:"Привет! 👋 Напишите, что нужно сделать — мы поможем." }];
+      saveChat(chatMessages);
+    }
+    chatMessages.forEach(m => {
+      const b = document.createElement("div");
+      b.className = `bubble ${m.who === "me" ? "me" : "bot"}`;
+      b.textContent = m.text;
+      chatBody.appendChild(b);
+    });
+    chatBody.scrollTop = chatBody.scrollHeight;
+  };
+
+  const isChatOpen = () => chat?.classList.contains("show");
+
+  const flashChatFab = () => {
+    if (!chatFab) return;
+    chatFab.classList.remove("flash");
+    void chatFab.offsetWidth;
+    chatFab.classList.add("flash");
+    setTimeout(() => chatFab.classList.remove("flash"), 650);
+  };
+
+  const openChat = (fromInside = false) => {
+    if (!chat) return;
+    if (isChatOpen()) {
+      flashChatFab();
+      return;
+    }
+    renderChat();
+    chat.classList.add("show");
+    chat.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => chatInput?.focus(), 80);
+    if (!fromInside) haptic("light");
+  };
+
+  const closeChat = () => {
+    if (!chat) return;
+    chat.classList.remove("show");
+    chat.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  chatFab?.addEventListener("click", () => openChat());
+  supportOpenFromHome?.addEventListener("click", () => openChat());
+  supportOpenFromProfile?.addEventListener("click", () => openChat());
+
+  $$("[data-chat-close]").forEach(el => el.addEventListener("click", closeChat));
+
+  // =====================
+  // PHOTO ESTIMATES (page + modal)
+  // =====================
+  const peTile = $("#photoEstimatesTile");
+  const peCount = $("#photoEstimatesCount");
+  const pePulse = $("#photoEstimatesPulse");
+  
+  const peActiveCount = $("#peActiveCount");
+  const peSummary = $("#peSummary");
+  const peActiveTitle = $("#peActiveTitle");
+  const peActiveList = $("#peActiveList");
+  
+  const peCardModal = $("#peCardModal");
+  const peCardContent = $("#peCardContent");
+  
+  let PE_CACHE = { active: [] };
+  
+  const fmtDt = (iso) => {
+    try{
+      const d = new Date(iso);
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const mo = String(d.getMonth()+1).padStart(2,"0");
+      const yy = d.getFullYear();
+      return `${hh}:${mm} ${dd}.${mo}.${yy}`;
+    }catch{ return "—"; }
+  };
+  
+  const statusLabel = (s) => {
+    if (s === "waiting_media") return "Ждём фото/видео в боте";
+    if (s === "waiting_admin") return "На оценке у мастера";
+    if (s === "answered") return "Есть ответ";
+    return s || "—";
+  };
+  
+  async function peFetchList() {
+    const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+    if (!tg_id) return { active: [] };
+  
+    const res = await fetch(SUPABASE_ESTIMATES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ action: "list_for_user", tg_id }),
+    });
+  
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  
+    return { active: data.active || [] };
+  }
+  
+  const PE_READ_KEY = "shetka_pe_read_ids_v1";
+  
+  function peLoadReadSet(){
+    try{
+      const raw = localStorage.getItem(PE_READ_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    }catch{
+      return new Set();
+    }
+  }
+  function peSaveReadSet(set){
+    try{
+      localStorage.setItem(PE_READ_KEY, JSON.stringify(Array.from(set)));
+    }catch{}
+  }
+  
+  let peReadSet = peLoadReadSet();
+  
+  function peIsUnread(x){
+    // НОВОЕ (синхронизация между устройствами):
+    // если Supabase возвращает user_read_at — считаем непрочитанным, когда admin_reply есть, а user_read_at пустой.
+    // если поля ещё нет (старый бэкенд) — используем локальный fallback через localStorage.
+    const hasReply = !!(x && x.admin_reply);
+    const hasServerFlag = x && ("user_read_at" in x);
+    if (hasReply && hasServerFlag) return !x.user_read_at;
+
+    // Fallback (пока Supabase не обновлён):
+    return !!(hasReply && !peReadSet.has(Number(x.id)));
+  }
+  
+  async function peMarkRead(id){
+    const n = Number(id);
+    if (!n) return;
+
+    // 1) пробуем записать read в Supabase (чтобы синхронизировалось между устройствами)
+    try{
+      const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+      if (tg_id){
+        await fetch(SUPABASE_ESTIMATES_URL, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ action: "mark_read", tg_id, id: n }),
+        }).catch(() => null);
+      }
+    }catch{}
+
+    // 2) локальный fallback (если бэкенд ещё не обновлён)
+    if (peReadSet.has(n)) return;
+    peReadSet.add(n);
+    peSaveReadSet(peReadSet);
+  }
+  
+  function peUpdateProfileTile(active) {
+    const list = Array.isArray(active) ? active : [];
+    const activeCount = list.length;
+  
+    if (!peTile) return;
+  
+    const subText = $("#photoEstimatesSubText");
+    const unreadEl = $("#photoEstimatesUnread"); // цифра внутри зелёной точки
+  
+    // helper: жёстко скрыть плитку
+    const hideTile = () => {
+      peTile.hidden = true;
+      peTile.setAttribute("hidden", "");
+      peTile.style.display = "none";
+  
+      // сброс хвостов
+      if (peCount) {
+        peCount.textContent = "0";
+        peCount.style.display = "inline";
+      }
+      if (subText) subText.textContent = "активных";
+  
+      if (pePulse) { pePulse.style.display = "none"; pePulse.classList.remove("hasUnread"); }
+      if (unreadEl) { unreadEl.hidden = true; unreadEl.textContent = ""; }
+  
+      peTile.classList.remove("peGreen", "peBlue");
+    };
+  
+    // helper: показать плитку
+    const showTile = () => {
+      peTile.hidden = false;
+      peTile.removeAttribute("hidden");
+      peTile.style.display = "";
+    };
+  
+    // === 0 активных -> плитки НЕТ вообще ===
+    if (activeCount < 1) {
+      hideTile();
+      return;
+    }
+  
+    // === есть активные -> плитка есть ===
+    showTile();
+  
+    // считаем непрочитанные (есть admin_reply и ещё не отмечено прочитанным)
+    const unreadCount = list.filter(peIsUnread).length;
+  
+    // всегда зелёный режим (синюю кнопку убрали)
+    peTile.classList.remove("peBlue");
+    peTile.classList.add("peGreen");
+  
+    // зелёная точка всегда есть, когда есть активные
+    if (pePulse) pePulse.style.display = "flex";
+    // если есть непрочитанные — делаем точку синей и усиливаем пульсацию
+    if (pePulse) pePulse.classList.toggle("hasUnread", unreadCount > 0);
+
+    // ТРЕБОВАНИЕ:
+    // - если есть непрочитанные ответы админов: вместо "N активных" пишем "Непрочитанные ответы администрации"
+    //   и число показываем ТОЛЬКО в зелёной кнопке.
+    // - если непрочитанных нет: показываем "N активных", а в зелёной кнопке цифры нет.
+    if (unreadCount > 0){
+      if (peCount) {
+        peCount.textContent = "";
+        peCount.style.display = "none";
+      }
+      if (subText) subText.textContent = "Непрочитанные ответы администрации";
+    } else {
+      if (peCount) {
+        peCount.textContent = String(activeCount);
+        peCount.style.display = "inline";
+      }
+      if (subText) subText.textContent = "активных";
+    }
+  
+    // цифра ВНУТРИ зелёной точки = ТОЛЬКО непрочитанные
+    if (unreadEl) {
+      if (unreadCount > 0) {
+        unreadEl.hidden = false;
+        unreadEl.textContent = String(unreadCount);
+      } else {
+        unreadEl.hidden = true;
+        unreadEl.textContent = "";
+      }
+    }
+}
+  
+  function peOpenCardModal(html) {
+    if (!peCardModal || !peCardContent) return;
+    peCardContent.innerHTML = html;
+    peCardModal.classList.add("show");
+    peCardModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+  
+  function peCloseCardModal() {
+    if (!peCardModal) return;
+    peCardModal.classList.remove("show");
+    peCardModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+  
+  $$("[data-pec-close]").forEach(el => el.addEventListener("click", peCloseCardModal));
+  
+  async function peDelete(id) {
+    const estId = Number(id) || 0;
+    if (!estId) return;
+
+    // 0) локально убираем «прочитано» (чтобы не копились id)
+    try {
+      if (peReadSet && peReadSet.has(estId)) {
+        peReadSet.delete(estId);
+        peSaveReadSet(peReadSet);
+      }
+    } catch (_) {}
+
+    // 1) удаляем в Supabase (мини‑апп должен исчезнуть сразу)
+    try {
+      const res = await fetch(SUPABASE_ESTIMATES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ action: "delete", id: estId }),
+      });
+      const raw = await res.text();
+      let data = null;
+      try { data = JSON.parse(raw); } catch (_) {}
+      // даже если тут не ок — всё равно шлём в бота для гарантии
+      if (!res.ok || (data && data.ok === false)) {
+        console.log("peDelete supabase not ok:", res.status, raw);
+      }
+    } catch (e) {
+      console.log("peDelete supabase error:", e);
+    }
+
+    // 2) дублируем в бота — чтобы гарантированно удалилось «отовсюду» (Supabase + внутренняя БД бота)
+    sendToBot("estimate_delete", { estimate_id: estId });
+  }
+  
+  async function peRateAndDelete(id, rating, comment) {
+    const estId = Number(id) || 0;
+    const r = Number(rating) || 0;
+    const c = String(comment || "").trim();
+    if (!estId || !(r >= 1 && r <= 5)) return;
+
+    // 1) отправляем оценку в Supabase
+    try {
+      const res = await fetch(SUPABASE_ESTIMATES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ action: "rate", id: estId, rating: r, rating_comment: c }),
+      });
+      const raw = await res.text();
+      let data = null;
+      try { data = JSON.parse(raw); } catch (_) {}
+      if (!res.ok || (data && data.ok === false)) {
+        console.log("peRate supabase not ok:", res.status, raw);
+      }
+    } catch (e) {
+      console.log("peRate supabase error:", e);
+    }
+
+    // 2) сразу шлём админам в бота (реал‑тайм) + бот удалит заявку из Supabase и архива в своей БД
+    //    Прикладываем максимум контекста по заявке и ответу мастера.
+    const cur = (PE_CACHE && Array.isArray(PE_CACHE.active))
+      ? (PE_CACHE.active.find(x => Number(x.id) === estId) || null)
+      : null;
+
+    sendToBot("estimate_rate", {
+      estimate_id: estId,
+      rating: r,
+      comment: c,
+      // контекст для админов
+      payload_json: cur?.payload_json || null,
+      admin_reply: cur?.admin_reply || null,
+      status: cur?.status || null,
+      created_at: cur?.created_at || null,
+    });
+
+    // 3) на всякий случай удаляем и здесь (чтобы мгновенно пропало из профиля)
+    await peDelete(estId);
+  }
+  
+  function peBuildCard(x) {
+    const payload = x.payload_json || {};
+    const title = `Оценка по фото №${x.id}`;
+    const dt = fmtDt(x.created_at);
+    const st = x.status || "";
+    const reply = x.admin_reply ? String(x.admin_reply) : "";
+  
+    const itemVal = (payload.item || "").trim();
+    const itemRow = itemVal ? `<div class="modalRow"><span>Вещь</span><b>${itemVal}</b></div>` : ``;
+
+    const html = `
+      <div class="modalH">${title}</div>
+      <p class="modalP">${dt} • ${statusLabel(st)}</p>
+
+      <div class="modalGrid peInfo">
+        <div class="modalRow peInfoRow"><span>Категория</span><b>${payload.category || "—"}</b></div>
+        ${itemRow}
+        <div class="modalRow peInfoRow"><span>Описание</span><b>${payload.problem || "—"}</b></div>
+      </div>
+
+      ${reply ? `
+        <div class="peReplyBox">
+          <div class="peReplyTitle">Ответ мастера</div>
+          <div class="peReplyText" style="white-space:pre-wrap">${reply}</div>
+        </div>
+      ` : ""}
+
+      <div class="peActions">
+        ${reply ? `<button class="smallBtn primary" type="button" id="peRateBtn">Оценить ответ</button>` : ``}
+        ${reply ? `<button class="smallBtn" type="button" id="peReplyBtn">Ответить</button>` : ``}
+        <button class="smallBtn danger" type="button" id="peDeleteBtn">Удалить</button>
+      </div>
+    `;
+  
+    return { html, title, id: x.id, hasReply: !!reply, status: st };
+  }
+  
+  function peRenderPage(active) {
+    // summary
+    if (peSummary) peSummary.style.display = (active.length) ? "block" : "none";
+    if (peActiveCount) peActiveCount.textContent = String(active.length);
+  
+    // active list
+    if (peActiveTitle) peActiveTitle.style.display = active.length ? "block" : "none";
+    if (peActiveList) peActiveList.innerHTML = "";
+    active.forEach(x => {
+      const payload = x.payload_json || {};
+      const title = `Оценка по фото №${x.id}`;
+      const dt = fmtDt(x.created_at);
+      const st = x.status || "";
+  
+      const el = document.createElement("div");
+      el.className = "order glass peItem";
+      const itemVal = (payload.item || "").trim();
+      const itemLine = itemVal ? `Вещь: ${itemVal}<br/>` : ``;
+
+      el.innerHTML = `
+        <div class="peTop">
+          <div>
+            <div class="peTitle">${title}</div>
+            <div class="peMeta">${dt}</div>
+          </div>
+          <div class="peStatus"><span class="peDot ${st}"></span>${statusLabel(st)}</div>
+        </div>
+        <div class="peBody">
+          Категория: ${payload.category || "—"}<br/>
+          ${itemLine}
+          Описание: ${payload.problem || "—"}
+          ${""}
+        </div>
+      `;
+      el.addEventListener("click", () => {
+        const card = peBuildCard(x);
+      
+        // если есть ответ — считаем прочитанным в момент открытия карточки
+        if (x.admin_reply) {
+          peMarkRead(x.id);
+          // если бэкенд уже отдаёт server-flag — обновим локально, чтобы UI сразу перестроился
+          if (x && ("user_read_at" in x)) {
+            x.user_read_at = x.user_read_at || new Date().toISOString();
+          }
+        }
+      
+        const bindCardButtons = () => {
+          // Ответить
+          $("#peReplyBtn")?.addEventListener("click", () => {
+            peCloseCardModal();
+            openChat(true);
+            const inp = $("#chatInput");
+            if (inp) inp.value = `По заявке ${card.title}: `;
+          });
+      
+          // Удалить
+          $("#peDeleteBtn")?.addEventListener("click", async () => {
+            if (!confirm("Удалить заявку?")) return;
+            await peDelete(card.id);
+            await peRefreshAll(true);
+            peCloseCardModal();
+          });
+      
+          // Оценить ответ
+          $("#peRateBtn")?.addEventListener("click", () => {
+            const formHtml = `
+              <div class="modalH">Оценить ответ</div>
+              <p class="modalP">Выберите оценку и добавьте комментарий (по желанию).</p>
+      
+              <div class="rateStars" id="rateStars">
+                ${[1,2,3,4,5].map(n => `<button type="button" class="rateStar" data-star="${n}">★</button>`).join("")}
+              </div>
+      
+              <label class="field" style="margin-top:12px;">
+                <div class="fieldLabel">Комментарий (необязательно)</div>
+                <input id="rateComment" class="fieldInput" placeholder="Например: всё понятно" />
+              </label>
+      
+              <div style="height:12px"></div>
+              <button class="cta primary" type="button" id="rateSendBtn" disabled>Отправить оценку</button>
+              <div style="height:10px"></div>
+              <button class="smallBtn" type="button" id="rateBackBtn">Назад</button>
+            `;
+      
+            peOpenCardModal(formHtml);
+      
+            let picked = 0;
+      
+            const syncStars = () => {
+              $$(".rateStar").forEach(btn => {
+                const n = Number(btn.dataset.star || 0);
+                btn.classList.toggle("on", n <= picked);
+              });
+              $("#rateSendBtn")?.toggleAttribute("disabled", !(picked >= 1 && picked <= 5));
+            };
+      
+            $$(".rateStar").forEach(btn => btn.addEventListener("click", () => {
+              picked = Number(btn.dataset.star || 0);
+              syncStars();
+              haptic("light");
+            }));
+      
+            syncStars();
+      
+            $("#rateBackBtn")?.addEventListener("click", () => {
+              peOpenCardModal(card.html);
+              bindCardButtons();
+            });
+      
+            $("#rateSendBtn")?.addEventListener("click", async () => {
+              if (!(picked >= 1 && picked <= 5)) return;
+              if (!confirm("После оценки заявка будет удалена из профиля. Продолжить?") ) return;
+              const comment = ($("#rateComment")?.value || "").trim();
+              await peRateAndDelete(card.id, picked, comment);
+              await peRefreshAll(true);
+              peCloseCardModal();
+              try { tg?.showAlert?.("Спасибо! Оценка отправлена."); } catch(_){ }
+            });
+          });
+        };
+      
+        peOpenCardModal(card.html);
+        bindCardButtons();
+      
+        // обновляем UI сразу
+        peUpdateProfileTile(PE_CACHE.active || []);
+        // и перерисуем список, чтобы поменялась пометка (прочитан/непрочитан)
+        peRenderPage(PE_CACHE.active || []);
+      });
+  
+      peActiveList?.appendChild(el);
+    });
+  
+  }
+  
+  async function peRefreshAll(refreshPageIfOpened=false) {
+    const { active } = await peFetchList();
+    PE_CACHE = { active };
+
+    peUpdateProfileTile(active);
+
+    // если юзер сейчас на странице photo_estimates — обновим список
+    if (refreshPageIfOpened && currentPage === "photo_estimates") {
+      peRenderPage(active);
+    }
+  }
+  
+  // переход из профиля на страницу
+  peTile?.addEventListener("click", async () => {
+    try{
+      await peRefreshAll(true);
+    }catch{}
+    showPage("photo_estimates");
+    // рендер страницы
+    peRenderPage(PE_CACHE.active);
+    haptic("light");
+  });
+
+  // =====================
+  // COURIER REQUESTS (profile tile + page)
+  // =====================
+  const crTile = $("#courierRequestsTile");
+  const crCount = $("#courierRequestsCount");
+  const crPulse = $("#courierRequestsPulse");
+  const crListEl = $("#crList");
+
+  let CR_CACHE = { list: [] };
+
+  const crStatusLabel = (s) => {
+    if (s === "waiting_media") return "Ожидаем фото";
+    if (s === "waiting_confirm") return "Ожидает подтверждения";
+    if (s === "confirmed") return "Подтверждено";
+    if (s === "in_route") return "Курьер в пути";
+    if (s === "picked_up") return "Забрано";
+    if (s === "done") return "Завершено";
+    if (s === "cancelled") return "Отменено";
+    return s || "—";
+  };
+
+  const crStatusDot = (s) => {
+    // используем существующие классы цветов
+    if (s === "done") return "green";
+    if (s === "cancelled") return "red";
+    if (s === "in_route" || s === "picked_up") return "orange";
+    if (s === "confirmed") return "blue";
+    return "gray";
+  };
+
+  async function crFetchList() {
+    const tg_id = getTgId();
+    if (!tg_id) return [];
+
+    // читаем напрямую из Supabase REST (минимально, как fallback)
+    const url = `${SUPABASE_REST_URL}/courier_requests?tg_id=eq.${encodeURIComponent(tg_id)}&select=id,date,slot,address_json,items_json,status,cancel_reason,created_at,updated_at&order=created_at.desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "accept": "application/json",
+      },
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) {
+      const msg = (data && data.message) ? data.message : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data;
+  }
+
+  function crUpdateProfileTile(list) {
+    const arr = Array.isArray(list) ? list : [];
+    const activeCount = arr.length;
+
+    if (!crTile) return;
+
+    const hideTile = () => {
+      crTile.hidden = true;
+      crTile.setAttribute("hidden", "");
+      crTile.style.display = "none";
+      if (crCount) crCount.textContent = "0";
+      if (crPulse) crPulse.style.display = "none";
+    };
+
+    const showTile = () => {
+      crTile.hidden = false;
+      crTile.removeAttribute("hidden");
+      crTile.style.display = "";
+      if (crPulse) crPulse.style.display = "none"; // без пульсации (требований нет)
+    };
+
+    if (activeCount < 1) {
+      hideTile();
+      return;
+    }
+
+    showTile();
+    if (crCount) crCount.textContent = String(activeCount);
+  }
+
+  function crCard(x) {
+    const id = Number(x?.id || 0);
+    const date = String(x?.date || "");
+    const slot = String(x?.slot || "");
+    const addr = x?.address_json || {};
+    const items = Array.isArray(x?.items_json) ? x.items_json : [];
+    const st = String(x?.status || "");
+
+    const addrLine = [addr.city, addr.street, addr.house, addr.apartment].filter(Boolean).join(", ") || "—";
+    const dtLine = [date, slot].filter(Boolean).join(" ") || "—";
+
+    const wrap = document.createElement("div");
+    wrap.className = "order glass";
+    wrap.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderId">Заявка №${escapeHtml(String(id))}</div>
+          <div class="orderMeta">${escapeHtml(dtLine)}</div>
+        </div>
+        <div class="status"><span class="sDot ${escapeHtml(crStatusDot(st))}"></span>${escapeHtml(crStatusLabel(st))}</div>
+      </div>
+      <div class="orderBody">
+        <div class="orderLine"><span>Адрес:</span> ${escapeHtml(addrLine)}</div>
+        <div class="orderLine"><span>Вещей:</span> ${escapeHtml(String(items.length || 0))}</div>
+      </div>
+    `;
+
+    wrap.addEventListener("click", () => crOpenDetailsModal(x));
+    return wrap;
+  }
+
+  function crOpenDetailsModal(x) {
+    const id = Number(x?.id || 0);
+    if (!id) return;
+    const date = String(x?.date || "");
+    const slot = String(x?.slot || "");
+    const addr = x?.address_json || {};
+    const items = Array.isArray(x?.items_json) ? x.items_json : [];
+    const st = String(x?.status || "");
+    const reason = String(x?.cancel_reason || "").trim();
+
+    const addrLine = [addr.city, addr.street, addr.house, addr.apartment].filter(Boolean).join(", ") || "—";
+    const dtLine = [date, slot].filter(Boolean).join(" ") || "—";
+
+    const canEdit = (st !== "in_route" && st !== "picked_up" && st !== "done" && st !== "cancelled");
+    const canAddMedia = (st === "waiting_media");
+    const canCancel = canEdit;
+
+    const itemsHtml = items.map((it, idx) => {
+      const cat = escapeHtml(String(it?.category || "—"));
+      const svc = escapeHtml(String(it?.service || "—"));
+      const prob = escapeHtml(String(it?.problem || "—"));
+      return `<div class="orderLine"><span>${idx + 1}.</span> ${cat} • ${svc}<br/><span style="color:var(--muted)">${prob}</span></div>`;
+    }).join("") || `<div class="orderLine"><span>Вещи:</span> —</div>`;
+
+    const html = `
+      <div class="modalH">Заявка курьера №${escapeHtml(String(id))}</div>
+      <p class="modalP">
+        <b>${escapeHtml(crStatusLabel(st))}</b><br/>
+        ${escapeHtml(dtLine)}<br/>
+        ${escapeHtml(addrLine)}
+        ${reason ? `<br/><span style="color:var(--muted)">Причина отмены: ${escapeHtml(reason)}</span>` : ""}
+      </p>
+      <div style="height:8px"></div>
+      ${itemsHtml}
+      <div style="height:12px"></div>
+      <div class="modalGrid">
+        <button class="smallBtn primary" type="button" id="crWriteBtn">Написать</button>
+        ${canAddMedia ? `<button class="smallBtn" type="button" id="crAddMediaBtn">Добавить медиа</button>` : ""}
+        ${canEdit ? `<button class="smallBtn" type="button" id="crEditBtn">Редактировать вещи</button>` : ""}
+        ${canCancel ? `<button class="smallBtn" type="button" id="crCancelBtn">Отменить</button>` : ""}
+      </div>
+    `;
+
+    openOrderModal({ id: `courier_${id}`, item: "", services: [], status_raw: crStatusLabel(st), price: "—", created_ts: Date.now() }, true);
+    // подменяем контент существующей модалки (не трогаем визуал)
+    const mc = $("#modalContent");
+    if (mc) mc.innerHTML = html;
+
+    $("#crWriteBtn")?.addEventListener("click", () => {
+      closeModal();
+      openChat();
+    });
+
+    $("#crAddMediaBtn")?.addEventListener("click", () => {
+      // Через очередь в бота: бот переведёт клиента в режим ожидания медиа по заявке
+      showLoading();
+      crUserAddMedia(id)
+        .then(() => { try { tg?.close?.(); } catch (_) {} })
+        .catch((e) => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ } })
+        .finally(() => hideLoading());
+    });
+
+    $("#crEditBtn")?.addEventListener("click", () => {
+      closeModal();
+      crStartWizard({ mode: "edit", request: x });
+      showPage("courier");
+      haptic("light");
+    });
+
+    $("#crCancelBtn")?.addEventListener("click", async () => {
+      if (!confirm("Отменить курьерскую заявку?")) return;
+      try {
+        await crUserCancel(id);
+        await crRefreshAll(true);
+        closeModal();
+        try { tg?.showAlert?.("Заявка отменена"); } catch(_){ }
+      } catch (e) {
+        try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ }
+      }
+    });
+  }
+
+  async function crUserCancel(id) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "courier_cancel_user",
+        tg_id,
+        payload_json: { request_id: reqId },
+      }),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
+  }
+
+  async function crUserUpdateItems(id, items) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "courier_update_items",
+        tg_id,
+        payload_json: {
+          request_id: reqId,
+          items_json: Array.isArray(items) ? items.map(it => {
+            const cat = String(it?.category || "").trim();
+            const other = String(it?.category_other || "").trim();
+            return {
+              category: (cat === "Другое" && other) ? other : cat,
+              service: String(it?.service || ""),
+              problem: String(it?.problem || ""),
+            };
+          }) : [],
+        },
+      }),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
+  }
+
+  async function crUserAddMedia(id) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "courier_add_media",
+        tg_id,
+        payload_json: { request_id: reqId },
+      }),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
+  }
+
+  function crRenderPage(list) {
+    if (!crListEl) return;
+    const arr = Array.isArray(list) ? list : [];
+    crListEl.innerHTML = "";
+    arr.forEach(x => crListEl.appendChild(crCard(x)));
+  }
+
+  async function crRefreshAll(refreshPageIfOpened = false) {
+    const list = await crFetchList();
+    CR_CACHE = { list };
+    crUpdateProfileTile(list);
+    if (refreshPageIfOpened && currentPage === "courier_requests") {
+      crRenderPage(list);
+    }
+  }
+
+  crTile?.addEventListener("click", async () => {
+    try { await crRefreshAll(true); } catch (_) {}
+    showPage("courier_requests");
+    crRenderPage(CR_CACHE.list || []);
+    haptic("light");
+  });
+  
+  const addBubble = (text, who = "me") => {
+    chatMessages.push({ who, text });
+    saveChat(chatMessages);
+    renderChat();
+  };
+
+  chatForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = (chatInput?.value || "").trim();
+    if (!text) return;
+
+    addBubble(text, "me");
+    chatInput.value = "";
+
+    sendToBot("support_message", { text });
+    haptic("light");
+
+    setTimeout(() => {
+      addBubble("✅ Сообщение принято. Администратор скоро ответит.", "bot");
+    }, 450);
+  });
+
+  const openSheet = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  
+  const closeSheet = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  // ---------------- SHEETS: courier / estimate ----------------
+  const courierSheet = $("#courierSheet");
+
+  const openCourierSheetBtn = $("#openCourierSheet");
+  const estimateBackBtn = $("#estimateBackBtn");
+
+  const openEstimateSheetBtn = $("#openEstimateSheet");
+  
+  openEstimateSheetBtn?.addEventListener("click", () => {
+    resetEstimate();
+    showPage("estimate");
+    haptic("light");
+  });
+
+  // Новый модуль: курьерская доставка (многошаговая форма)
+  openCourierSheetBtn?.addEventListener("click", () => {
+    try { closeModalEl(dropoffModal); } catch (_) {}
+    crStartWizard({ mode: "create" });
+    // optional prefill from Services screen
+    try {
+      const p = window.__SHETKA_PREFILL;
+      if (p && CR_WIZ && Array.isArray(CR_WIZ.items) && CR_WIZ.items[0]) {
+        CR_WIZ.items[0].category = String(p.category || CR_WIZ.items[0].category || "Обувь");
+        CR_WIZ.items[0].service = String(p.service || "");
+      }
+      window.__SHETKA_PREFILL = null;
+    } catch (_) {}
+    showPage("courier");
+    haptic("light");
+  });
+
+  const estimateSendModal = $("#estimateSendModal");
+  const estimateSubmitBtn = $("#estimateSubmitBtn");
+
+  const openAnyModal = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  const closeAnyModal = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  $$("[data-est-send-close]").forEach(el =>
+    el.addEventListener("click", () => closeAnyModal(estimateSendModal))
+  );
+  
+  const courierAddress = $("#courierAddress");
+  const courierComment = $("#courierComment");
+  const courierSendBtn = $("#courierSendBtn");
+
+  // --- ESTIMATE 2-STEP ---
+
+  const estimateCategory = $("#estimateCategory");
+  const estimateOtherWrap = $("#estimateOtherWrap");
+  const estimateOtherItem = $("#estimateOtherItem");
+  const estimateProblem = $("#estimateProblem");
+  
+  const estimateNextBtn = $("#estimateNextBtn");
+  
+  // leave confirm
+  const leaveEstimateModal = $("#leaveEstimateModal");
+  const leaveStayBtn = $("#leaveStayBtn");
+  const leaveExitBtn = $("#leaveExitBtn");
+  
+  // loading
+  const globalLoading = $("#globalLoading");
+  const dots = $("#dots");
+  let dotsTimer = null;
+  
+  const showLoading = () => {
+    globalLoading?.classList.add("show");
+    globalLoading?.setAttribute("aria-hidden", "false");
+    let n = 0;
+    dotsTimer = setInterval(() => {
+      n = (n + 1) % 4;
+      if (dots) dots.textContent = ".".repeat(n || 1);
+    }, 320);
+  };
+  const hideLoading = () => {
+    globalLoading?.classList.remove("show");
+    globalLoading?.setAttribute("aria-hidden", "true");
+    if (dotsTimer) clearInterval(dotsTimer);
+    dotsTimer = null;
+  };
+
+  // =====================
+  // COURIER WIZARD (new screens)
+  // =====================
+  const courierWizardEl = $("#courierWizard");
+  const courierStepSub = $("#courierStepSub");
+  const courierBackBtn = $("#courierBackBtn");
+
+  const COURIER_SLOTS = [
+    "10:00-12:00",
+    "12:00-14:00",
+    "14:00-16:00",
+    "16:00-18:00",
+    "18:00-20:00",
+  ];
+
+  let CR_WIZ = null;
+
+  function crStartWizard({ mode = "create", request = null } = {}) {
+    const p = loadProfile() || {};
+    const baseCity = String(p.city || "").trim();
+
+    const items = (() => {
+      const src = request && Array.isArray(request.items_json) ? request.items_json : null;
+      if (src && src.length) {
+        return src.map(it => ({
+          category: String(it?.category || "Обувь"),
+          service: String(it?.service || ""),
+          problem: String(it?.problem || ""),
+        }));
+      }
+      return [{ category: "Обувь", service: "", problem: "" }];
+    })();
+
+    const addr = request?.address_json || {};
+    CR_WIZ = {
+      mode,
+      request_id: request ? Number(request.id || 0) : 0,
+      status: String(request?.status || "").trim(),
+      step: "items",
+      items,
+      address: {
+        city: String(addr.city || baseCity || "").trim(),
+        street: String(addr.street || "").trim(),
+        house: String(addr.house || "").trim(),
+        apartment: String(addr.apartment || "").trim(),
+        entrance: String(addr.entrance || "").trim(),
+        floor: String(addr.floor || "").trim(),
+        intercom: String(addr.intercom || "").trim(),
+        comment: String(addr.comment || "").trim(),
+      },
+      date: String(request?.date || "").trim(),
+      slot: String(request?.slot || "").trim(),
+      need_media: (mode === "edit") ? (String(request?.status || "") === "waiting_media") : false,
+      slotBlocks: {},
+    };
+
+    crRenderWizard();
+  }
+
+  function crSetStepSub(text) {
+    if (courierStepSub) courierStepSub.textContent = text || "";
+  }
+
+  function crIsBeforeVisitMinus2h(dateStr, slotStr) {
+    // правило: "+ Добавить вещь" доступно до (время визита − 2 часа)
+    try {
+      const slotStart = String(slotStr || "").split("-")[0] || "";
+      const [hh, mm] = slotStart.split(":").map(x => Number(x));
+      const d = new Date(`${dateStr}T${String(hh).padStart(2,"0")}:${String(mm||0).padStart(2,"0")}:00`);
+      const cutoff = new Date(d.getTime() - 2 * 60 * 60 * 1000);
+      return Date.now() < cutoff.getTime();
+    } catch {
+      return false;
+    }
+  }
+
+  function crCanMutateItems() {
+    if (!CR_WIZ) return false;
+    // удаление: пока статус < "В пути" (для create статус ещё не установлен)
+    if (CR_WIZ.mode === "create") return true;
+    const st = String(CR_WIZ.request?.status || CR_WIZ._status || "");
+    return !(st === "in_route" || st === "picked_up" || st === "done" || st === "cancelled");
+  }
+
+  async function crFetchSlotBlocks(dateStr, city) {
+    if (!dateStr || !city) return [];
+    const url = `${SUPABASE_REST_URL}/courier_slot_blocks?date=eq.${encodeURIComponent(dateStr)}&city=eq.${encodeURIComponent(city)}&active=eq.true&select=slot,reason`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "accept": "application/json",
+      },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) return [];
+    return data
+      .map(x => ({
+        slot: String(x?.slot || "").trim(),
+        reason: String(x?.reason || "").trim(),
+      }))
+      .filter(x => x.slot);
+  }
+
+  function crValidateItems(items) {
+    const arr = Array.isArray(items) ? items : [];
+    if (arr.length < 1) return false;
+    for (const it of arr) {
+      const cat = String(it?.category || "").trim();
+      const catOther = String(it?.category_other || "").trim();
+      const prob = String(it?.problem || "").trim();
+      // обязательные: категория, описание; если категория=Другое — доп. поле
+      if (!cat || !prob) return false;
+      if (cat === "Другое" && !catOther) return false;
+    }
+    return true;
+  }
+
+  function crValidateAddress(a) {
+    const city = String(a?.city || '').trim();
+    const street = String(a?.street || '').trim();
+    const house = String(a?.house || '').trim();
+    const apartment = String(a?.apartment || '').trim();
+    return !!(city && street && house && apartment);
+  }
+
+  function crValidateTime(dateStr, timeStr) {
+    const d = String(dateStr || "").trim();
+    const t = String(timeStr || "").trim();
+    if (!d || !t) return false;
+    // нельзя выбрать прошедшее время; минимум — через час от текущего момента
+    try {
+      const chosen = new Date(`${d}T${t}:00`);
+      const min = new Date(Date.now() + 60 * 60 * 1000);
+      return chosen.getTime() >= min.getTime();
+    } catch {
+      return false;
+    }
+  }
+
+  function crRenderWizard() {
+    if (!CR_WIZ || !courierWizardEl) return;
+
+    const CITY_OPTIONS = ["Севастополь", "Симферополь"];
+    const WORK_HOURS = {
+      "Севастополь": { start: "09:00", end: "21:00" },
+      "Симферополь": { start: "09:00", end: "21:00" },
+      default: { start: "09:00", end: "21:00" },
+    };
+
+    const step = CR_WIZ.step;
+
+    const formatDt = (dateStr, timeStr) => {
+      try {
+        const dt = new Date(`${dateStr}T${timeStr}:00`);
+        if (!isFinite(dt.getTime())) return "—";
+        const d = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(dt);
+        const t = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(dt);
+        return `${d} — ${t}`;
+      } catch {
+        return "—";
+      }
+    };
+
+    const roundUpTo5 = (d) => {
+      const ms = d.getTime();
+      const step = 10 * 60 * 1000;
+      return new Date(Math.ceil(ms / step) * step);
+    };
+
+    const _unused_hmToMin = (hm) => {
+      const [h, m] = String(hm || "").split(":").map(n => Number(n));
+      if (!isFinite(h) || !isFinite(m)) return null
+    };
+
+    const parseHM = (hm) => {
+      try {
+        const [h, m] = String(hm || "").split(":");
+        const hh = Number(h);
+        const mm = Number(m);
+        if (!isFinite(hh) || !isFinite(mm)) return null;
+        return hh * 60 + mm;
+      } catch {
+        return null;
+      }
+    };
+
+    const inRange = (t, a, b) => {
+      const tt = parseHM(t);
+      const aa = parseHM(a);
+      const bb = parseHM(b);
+      if (tt === null || aa === null || bb === null) return true;
+      return tt >= aa && tt <= bb;
+    };
+
+    const getSavedKey = () => `cr_saved_addrs_${getTgId() || 0}`;
+    const loadSavedAddrs = () => {
+      try {
+        const raw = localStorage.getItem(getSavedKey());
+        const arr = JSON.parse(raw || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const saveAddrIfNeeded = () => {
+      if (!CR_WIZ?.remember_address) return;
+      const a = CR_WIZ.address || {};
+      const entry = {
+        city: String(a.city || "").trim(),
+        street: String(a.street || "").trim(),
+        house: String(a.house || "").trim(),
+        apartment: String(a.apartment || "").trim(),
+        entrance: String(a.entrance || "").trim(),
+        floor: String(a.floor || "").trim(),
+        intercom: String(a.intercom || "").trim(),
+        comment: String(a.comment || "").trim(),
+      };
+      if (!crValidateAddress(entry)) return;
+      const list = loadSavedAddrs();
+      const fingerprint = `${entry.city}|${entry.street}|${entry.house}|${entry.apartment}`.toLowerCase();
+      const exists = list.some(x => `${x.city}|${x.street}|${x.house}|${x.apartment}`.toLowerCase() == fingerprint);
+      if (!exists) {
+        list.unshift(entry);
+        localStorage.setItem(getSavedKey(), JSON.stringify(list.slice(0, 5)));
+      }
+    };
+
+    const isBlockedTime = (timeStr) => {
+      const blocks = Array.isArray(CR_WIZ.slotBlocks) ? CR_WIZ.slotBlocks : [];
+      for (const b of blocks) {
+        const slot = String(b?.slot || "").trim();
+        const reason = String(b?.reason || "").trim();
+        if (!slot) continue;
+        if (slot === "*" || slot.toUpperCase() === "ALL") return reason || "Недоступно";
+        if (slot.includes("-")) {
+          const [a, c] = slot.split("-", 2);
+          if (inRange(timeStr, a.trim(), c.trim())) return reason || "Недоступно";
+        }
+        if (slot === timeStr) return reason || "Недоступно";
+      }
+      return null;
+    };
+
+    if (step === "items") {
+      crSetStepSub("Что забрать");
+
+      const st = String(CR_WIZ.status || "");
+      const canMutateByStatus = !(st === "in_route" || st === "picked_up" || st === "done" || st === "cancelled");
+      const canDelete = (CR_WIZ.mode === "create") ? true : canMutateByStatus;
+      const canAdd = (CR_WIZ.mode === "create") ? true : (canMutateByStatus && crIsBeforeVisitMinus2h(CR_WIZ.date, CR_WIZ.slot));
+
+      courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Вещи</div>
+        <div class="crSectionSub">Укажите, что именно нужно будет забрать курьеру.</div>
+        <div id="crItems" class="crItemsList"></div>
+        <div class="crActionsRow">
+          <button class="smallBtn" type="button" id="crAddItemBtn" ${canAdd ? "" : "disabled"}>+ Добавить вещь</button>
+          <button class="smallBtn primary" type="button" id="crItemsNextBtn" disabled>${CR_WIZ.mode === "edit" ? "Сохранить" : "Далее"}</button>
+        </div>
+      `;
+
+      const itemsWrap = $("#crItems");
+
+      const renderItems = () => {
+        if (!itemsWrap) return;
+        itemsWrap.innerHTML = "";
+        CR_WIZ.items.forEach((it, idx) => {
+          const card = document.createElement("div");
+          card.className = "crItemCard glass";
+          card.innerHTML = `
+            <div class="crItemHead">
+              <div class="crItemTitle">Вещь №${idx + 1}</div>
+              ${(CR_WIZ.items.length > 1 && canDelete) ? `<button class="smallBtn" type="button" data-cr-del="${idx}">Удалить</button>` : ``}
+            </div>
+
+            <label class="field">
+              <div class="fieldLabel">Категория *</div>
+              <select class="fieldSelect" data-cr-cat="${idx}">
+                <option value="Обувь" ${it.category === "Обувь" ? "selected" : ""}>Обувь</option>
+                <option value="Сумка" ${it.category === "Сумка" ? "selected" : ""}>Сумка</option>
+                <option value="Верхняя одежда" ${it.category === "Верхняя одежда" ? "selected" : ""}>Верхняя одежда</option>
+                <option value="Аксессуар" ${it.category === "Аксессуар" ? "selected" : ""}>Аксессуар</option>
+                <option value="Другое" ${it.category === "Другое" ? "selected" : ""}>Другое</option>
+              </select>
+            </label>
+
+            <label class="field" data-cr-cat-other-wrap="${idx}" style="${it.category === "Другое" ? "" : "display:none;"}">
+              <div class="fieldLabel">Укажите категорию *</div>
+              <input class="fieldInput" data-cr-cat-other="${idx}" value="${escapeHtml(it.category_other || "")}" />
+            </label>
+
+            ${(() => {
+              const cat = String(it.category || "");
+              // если категория "Другое" — услуга текстом (необязательно)
+              if (cat === "Другое") {
+                return `
+                  <label class="field">
+                    <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                    <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service || "")}" placeholder="Например: чистка / ремонт" />
+                  </label>
+                `;
+              }
+
+              const services = crServicesForCategory(cat);
+              if (!services.length) {
+                return `
+                  <label class="field">
+                    <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                    <input class="fieldInput" data-cr-svc="${idx}" value="${escapeHtml(it.service || "")}" placeholder="Например: чистка / ремонт" />
+                  </label>
+                `;
+              }
+
+              const cur = String(it.service || "");
+              const isOther = cur && !services.includes(cur);
+              const selectVal = isOther ? "Другое" : (cur || "");
+              return `
+                <label class="field">
+                  <div class="fieldLabel">Услуга <span class="hint">(необязательно)</span></div>
+                  <select class="fieldSelect" data-cr-svcsel="${idx}">
+                    <option value="">Не выбирать</option>
+                    ${services.map(s => `<option value="${escapeHtml(s)}" ${selectVal === s ? "selected" : ""}>${escapeHtml(s)}</option>`).join("")}
+                    <option value="Другое" ${selectVal === "Другое" ? "selected" : ""}>Другое</option>
+                  </select>
+                </label>
+
+                <label class="field" data-cr-svc-other-wrap="${idx}" style="${selectVal === "Другое" ? "" : "display:none;"}">
+                  <div class="fieldLabel">Укажите услугу <span class="hint">(необязательно)</span></div>
+                  <input class="fieldInput" data-cr-svc-other="${idx}" value="${escapeHtml(isOther ? cur : (it.service_other || ""))}" />
+                </label>
+              `;
+            })()}
+
+            <label class="field">
+              <div class="fieldLabel">Описание проблемы *</div>
+              <input class="fieldInput" data-cr-prob="${idx}" value="${escapeHtml(it.problem)}" />
+            </label>
+          `;
+          itemsWrap.appendChild(card);
+        });
+      };
+
+      const syncNext = () => {
+        const btn = $("#crItemsNextBtn");
+        if (btn) btn.disabled = !crValidateItems(CR_WIZ.items);
+      };
+
+      renderItems();
+      syncNext();
+
+      itemsWrap?.addEventListener("input", (e) => {
+        const t = e.target;
+        if (!t) return;
+        const idx = Number(
+          t.getAttribute("data-cr-svc") ||
+          t.getAttribute("data-cr-prob") ||
+          t.getAttribute("data-cr-cat-other") ||
+          t.getAttribute("data-cr-svc-other") ||
+          0
+        );
+        if (!CR_WIZ.items[idx]) return;
+        if (t.hasAttribute("data-cr-svc")) CR_WIZ.items[idx].service = String(t.value || "");
+        if (t.hasAttribute("data-cr-prob")) CR_WIZ.items[idx].problem = String(t.value || "");
+        if (t.hasAttribute("data-cr-svc-other")) CR_WIZ.items[idx].service_other = String(t.value || "");
+        if (t.hasAttribute("data-cr-cat-other")) CR_WIZ.items[idx].category_other = String(t.value || "");
+        syncNext();
+      });
+
+      itemsWrap?.addEventListener("change", (e) => {
+        const t = e.target;
+        if (!t) return;
+
+        if (t.hasAttribute("data-cr-svcsel")) {
+          const idx = Number(t.getAttribute("data-cr-svcsel") || 0);
+          if (!CR_WIZ.items[idx]) return;
+          const v = String(t.value || "");
+          const wrap = itemsWrap.querySelector(`[data-cr-svc-other-wrap="${idx}"]`);
+          if (wrap) wrap.style.display = (v === "Другое") ? "" : "none";
+          if (!v) {
+            CR_WIZ.items[idx].service = "";
+          } else if (v === "Другое") {
+            CR_WIZ.items[idx].service = String(CR_WIZ.items[idx].service_other || "").trim();
+          } else {
+            CR_WIZ.items[idx].service = v;
+          }
+          syncNext();
+          return;
+        }
+
+        const idx = Number(t.getAttribute("data-cr-cat") || 0);
+        if (!CR_WIZ.items[idx]) return;
+        CR_WIZ.items[idx].category = String(t.value || "Обувь");
+        const wrap = itemsWrap.querySelector(`[data-cr-cat-other-wrap="${idx}"]`);
+        if (wrap) wrap.style.display = (CR_WIZ.items[idx].category === "Другое") ? "" : "none";
+        syncNext();
+      });
+
+      itemsWrap?.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("button[data-cr-del]");
+        if (!btn) return;
+        const idx = Number(btn.getAttribute("data-cr-del") || 0);
+        if (CR_WIZ.items.length <= 1) return;
+        CR_WIZ.items.splice(idx, 1);
+        renderItems();
+        syncNext();
+        haptic("light");
+      });
+
+      $("#crAddItemBtn")?.addEventListener("click", () => {
+        CR_WIZ.items.push({ category: "Обувь", service: "", problem: "" });
+        renderItems();
+        syncNext();
+        haptic("light");
+      });
+
+      $("#crItemsNextBtn")?.addEventListener("click", async () => {
+        haptic("light");
+        if (CR_WIZ.mode === "edit") {
+          const rid = Number(CR_WIZ.request_id || 0);
+          if (!rid) return;
+          try {
+            showLoading();
+            await crUserUpdateItems(rid, CR_WIZ.items);
+            CR_WIZ = null;
+            hideLoading();
+            await crRefreshAll(true).catch(() => null);
+            showPage("courier_requests");
+            crRenderPage(CR_CACHE.list || []);
+            try { tg?.showAlert?.("Сохранено"); } catch(_){}
+          } catch (e) {
+            hideLoading();
+            try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){}
+          }
+          return;
+        }
+        CR_WIZ.step = "address";
+        crRenderWizard();
+      });
+      return;
+    }
+
+    if (step === "address") {
+      crSetStepSub("Адрес");
+      const a = CR_WIZ.address || {};
+      const saved = loadSavedAddrs();
+
+      courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Адрес забора</div>
+        <div class="crSectionSub">Обязательные поля отмечены *</div>
+
+        <div class="modalRowCol">
+          <span>Город *</span>
+          <div class="seg" id="crCitySeg">
+            ${CITY_OPTIONS.map(c => `<button class="segBtn" type="button" data-city="${c}">${c}</button>`).join('')}
+          </div>
+        </div>
+
+        ${saved.length ? `
+          <div class="crSavedBlock">
+            <div class="crSavedTitle">Сохранённые адреса</div>
+            <div class="crSavedList">
+              ${saved.map((x, i) => {
+                const line = [x.city, x.street, x.house, x.apartment ? ('кв ' + x.apartment) : ''].filter(Boolean).join(', ');
+                return `<button class="smallBtn" type="button" data-cr-saved="${i}">${escapeHtml(line)}</button>`;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <label class="field">
+          <div class="fieldLabel">Улица *</div>
+          <input class="fieldInput" id="crStreet" value="${escapeHtml(a.street)}" />
+        </label>
+
+        <div class="crTwoCols">
+          <label class="field">
+            <div class="fieldLabel">Дом *</div>
+            <input class="fieldInput" id="crHouse" value="${escapeHtml(a.house)}" />
+          </label>
+          <label class="field">
+            <div class="fieldLabel">Квартира *</div>
+            <input class="fieldInput" id="crApartment" value="${escapeHtml(a.apartment)}" />
+          </label>
+        </div>
+
+        <div class="crTwoCols">
+          <label class="field">
+            <div class="fieldLabel">Подъезд</div>
+            <input class="fieldInput" id="crEntrance" value="${escapeHtml(a.entrance)}" />
+          </label>
+          <label class="field">
+            <div class="fieldLabel">Этаж</div>
+            <input class="fieldInput" id="crFloor" value="${escapeHtml(a.floor)}" />
+          </label>
+        </div>
+
+        <label class="field">
+          <div class="fieldLabel">Домофон</div>
+          <input class="fieldInput" id="crIntercom" value="${escapeHtml(a.intercom)}" />
+        </label>
+
+        <label class="field">
+          <div class="fieldLabel">Комментарий</div>
+          <input class="fieldInput" id="crComment" value="${escapeHtml(a.comment)}" />
+        </label>
+
+        <label class="crRemember">
+          <input type="checkbox" id="crRememberAddr" ${CR_WIZ.remember_address ? "checked" : ""} />
+          Запомнить адрес
+        </label>
+
+        <div class="crActionsRow">
+          <button class="smallBtn" type="button" id="crAddrBackBtn">Назад</button>
+          <button class="smallBtn primary" type="button" id="crAddrNextBtn" disabled>Далее</button>
+        </div>
+      `;
+
+      const applyCityActive = (city) => {
+        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+      };
+
+      const sync = () => {
+        const cityBtn = $("#crCitySeg .segBtn.active");
+        CR_WIZ.address = {
+          city: String(cityBtn?.dataset?.city || a.city || "").trim(),
+          street: String($("#crStreet")?.value || "").trim(),
+          house: String($("#crHouse")?.value || "").trim(),
+          apartment: String($("#crApartment")?.value || "").trim(),
+          entrance: String($("#crEntrance")?.value || "").trim(),
+          floor: String($("#crFloor")?.value || "").trim(),
+          intercom: String($("#crIntercom")?.value || "").trim(),
+          comment: String($("#crComment")?.value || "").trim(),
+        };
+        CR_WIZ.remember_address = !!$("#crRememberAddr")?.checked;
+        const ok = crValidateAddress(CR_WIZ.address);
+        const btn = $("#crAddrNextBtn");
+        if (btn) btn.disabled = !ok;
+      };
+
+      // init city
+      const initCity = String(a.city || CITY_OPTIONS[0]).trim();
+      applyCityActive(initCity);
+
+      $$("#crCitySeg .segBtn").forEach(btn => btn.addEventListener("click", () => {
+        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
+        sync();
+        haptic("light");
+      }));
+
+      $$("[data-cr-saved]").forEach(btn => btn.addEventListener("click", () => {
+        const i = Number(btn.getAttribute("data-cr-saved") || 0);
+        const sel = saved[i];
+        if (!sel) return;
+        // подставляем
+        $("#crStreet").value = sel.street || "";
+        $("#crHouse").value = sel.house || "";
+        $("#crApartment").value = sel.apartment || "";
+        $("#crEntrance").value = sel.entrance || "";
+        $("#crFloor").value = sel.floor || "";
+        $("#crIntercom").value = sel.intercom || "";
+        $("#crComment").value = sel.comment || "";
+        applyCityActive(sel.city || initCity);
+        sync();
+        haptic("light");
+      }));
+
+      courierWizardEl.querySelectorAll("input").forEach(el => el.addEventListener("input", sync));
+      $("#crRememberAddr")?.addEventListener("change", sync);
+      sync();
+
+      $("#crAddrBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "items";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crAddrNextBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "time";
+        crRenderWizard();
+        haptic("light");
+      });
+      return;
+    }
+
+    if (step === "time") {
+      crSetStepSub("Дата и время");
+      const city = String(CR_WIZ.address?.city || "").trim();
+      const wh = WORK_HOURS[city] || WORK_HOURS.default;
+
+      const today = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      })();
+
+      courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Когда приехать</div>
+        <div class="crSectionSub">Рабочие часы: ${wh.start}–${wh.end}. Время можно выбрать не раньше, чем через 1 час.</div>
+
+        <label class="field">
+          <div class="fieldLabel">Дата</div>
+          <input class="fieldInput" id="crDate" type="date" min="${today}" value="${escapeHtml(CR_WIZ.date || '')}" />
+        </label>
+
+        <label class="field">
+          <div class="fieldLabel">Время</div>
+          <input class="fieldInput" id="crTime" type="time" step="600" value="${escapeHtml(CR_WIZ.slot || '')}" />
+        </label>
+
+        <div id="crTimeErr" class="crErr" style="display:none"></div>
+
+        <div class="crActionsRow">
+          <button class="smallBtn" type="button" id="crTimeBackBtn">Назад</button>
+          <button class="smallBtn primary" type="button" id="crTimeNextBtn" disabled>Далее</button>
+        </div>
+      `;
+
+      const dateInput = $("#crDate");
+      const timeInput = $("#crTime");
+      const errEl = $("#crTimeErr");
+      const nextBtn = $("#crTimeNextBtn");
+
+      const showErr = (msg) => {
+        if (!errEl) return;
+        if (!msg) {
+          errEl.style.display = "none";
+          errEl.textContent = "";
+          return;
+        }
+        errEl.style.display = "block";
+        errEl.textContent = msg;
+      };
+
+      const minAllowed = () => {
+        const d = new Date(Date.now() + 60 * 60 * 1000);
+        return roundUpTo5(d);
+      };
+
+      const applyMinMax = () => {
+        if (!timeInput) return;
+        const d = String(CR_WIZ.date || "").trim();
+        // базовый min/max — рабочие часы
+        timeInput.min = wh.start;
+        timeInput.max = wh.end;
+
+        if (d === today) {
+          const m = minAllowed();
+          const hh = String(m.getHours()).padStart(2, "0");
+          const mm = String(m.getMinutes()).padStart(2, "0");
+          const minHm = `${hh}:${mm}`;
+          // минимум = max(рабочее начало, now+1h)
+          const startOk = inRange(minHm, wh.start, wh.end) ? minHm : wh.start;
+          timeInput.min = startOk;
+        }
+      };
+
+      const validate = () => {
+        const d = String(CR_WIZ.date || "").trim();
+        const t = String(CR_WIZ.slot || "").trim();
+        showErr("");
+        if (!d || !t) return false;
+
+        // дата не может быть прошлой (iOS иногда позволяет выбрать, поэтому показываем ошибку)
+        if (d < today) {
+          showErr("Дата уже прошла. Выберите актуальную дату.");
+          return false;
+        }
+
+        // рабочие часы
+        if (!inRange(t, wh.start, wh.end)) {
+          showErr(`Время вне рабочих часов. Доступно: ${wh.start}–${wh.end}`);
+          return false;
+        }
+
+        // блокировки
+        const br = isBlockedTime(t);
+        if (br) {
+          showErr(`Время недоступно: ${br}`);
+          return false;
+        }
+
+        // минимум: +1 час от текущего момента
+        try {
+          const dt = new Date(`${d}T${t}:00`);
+          const minDt = minAllowed();
+          if (!isFinite(dt.getTime())) return false;
+          if (dt.getTime() < minDt.getTime()) {
+            showErr("Можно выбрать время не раньше, чем через 1 час от текущего момента.");
+            return false;
+          }
+        } catch {
+          showErr("Некорректная дата или время");
+          return false;
+        }
+
+        return true;
+      };
+
+      const syncNext = () => {
+        const ok = validate();
+        if (nextBtn) nextBtn.disabled = !ok;
+      };
+
+      const refreshBlocks = async () => {
+        const d = String(CR_WIZ.date || "").trim();
+        if (!d || !city) {
+          CR_WIZ.slotBlocks = [];
+          syncNext();
+          return;
+        }
+        CR_WIZ.slotBlocks = await crFetchSlotBlocks(d, city);
+        if (CR_WIZ.slot && isBlockedTime(CR_WIZ.slot)) CR_WIZ.slot = "";
+        syncNext();
+      };
+
+      dateInput?.addEventListener("change", async () => {
+        CR_WIZ.date = String(dateInput.value || "").trim();
+        applyMinMax();
+        await refreshBlocks();
+        syncNext();
+        haptic("light");
+      });
+
+      timeInput?.addEventListener("change", () => {
+        CR_WIZ.slot = String(timeInput.value || "").trim();
+        syncNext();
+        haptic("light");
+      });
+
+      // init
+      applyMinMax();
+      refreshBlocks().catch(() => null);
+      syncNext();
+
+      $("#crTimeBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "address";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crTimeNextBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "confirm";
+        crRenderWizard();
+        haptic("light");
+      });
+      return;
+    }
+
+    if (step === "confirm") {
+      crSetStepSub("Подтверждение");
+
+      const a = CR_WIZ.address || {};
+      const addrLine = [a.city, a.street, a.house, a.apartment ? ('кв ' + a.apartment) : ""].filter(Boolean).join(", ") || "—";
+      const dtPretty = (CR_WIZ.date && CR_WIZ.slot) ? formatDt(CR_WIZ.date, CR_WIZ.slot) : "—";
+
+      const items = CR_WIZ.items || [];
+      const itemsHtml = (() => {
+        if (items.length <= 1) {
+          const it = items[0] || {};
+          const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
+          return `
+            <div class="crPreviewItemSingle">
+              <div class="crPreviewItemTitle">${escapeHtml(cat)} • ${escapeHtml(String(it.service||''))}</div>
+              <div class="crPreviewItemProblem">${escapeHtml(String(it.problem||''))}</div>
+            </div>
+          `;
+        }
+        return `
+          <div class="crPreviewCount">Вещей: ${items.length}</div>
+          ${items.map((it, i) => {
+            const cat = (String(it?.category || "") === "Другое" && String(it?.category_other || "").trim()) ? String(it.category_other) : String(it?.category || "");
+            return `
+              <div class="crPreviewItem">
+                <div class="crPreviewItemTitle">${i+1}. ${escapeHtml(cat)} • ${escapeHtml(String(it.service||''))}</div>
+                <div class="crPreviewItemProblem">${escapeHtml(String(it.problem||''))}</div>
+              </div>
+            `;
+          }).join('')}
+        `;
+      })();
+
+      courierWizardEl.innerHTML = `
+        <div class="crSectionTitle">Проверьте данные</div>
+
+        <div class="crPreview glass">
+          <div class="crPreviewRow"><span>Дата</span><b>${escapeHtml(dtPretty)}</b></div>
+          <div class="crPreviewRow"><span>Адрес</span><b>${escapeHtml(addrLine)}</b></div>
+        </div>
+
+        <div class="crPreviewItems">
+          ${itemsHtml}
+        </div>
+
+        <div class="crSectionTitle" style="margin-top:10px;">Прикрепить фото?</div>
+        <div class="crSectionSub">Если да — откроется бот, и вы отправите фото/видео.</div>
+
+        <div class="crActionsRow crActionsRow3">
+          <button class="smallBtn primary" type="button" id="crSendYes">Да</button>
+          <button class="smallBtn" type="button" id="crSendNo">Нет</button>
+          <button class="smallBtn" type="button" id="crConfirmBackBtn">Назад</button>
+        </div>
+      `;
+
+      const doSend = async (needMedia) => {
+        const tg_id = getTgId();
+        if (!tg_id) throw new Error("Нет tg_id");
+        const p = loadProfile() || {};
+        const user = tg?.initDataUnsafe?.user || {};
+        if (!crValidateItems(CR_WIZ.items)) throw new Error("Заполните все вещи");
+        if (!crValidateAddress(CR_WIZ.address)) throw new Error("Заполните обязательные поля адреса");
+        if (!crValidateTime(CR_WIZ.date, CR_WIZ.slot)) throw new Error("Выберите дату и время");
+
+        showLoading();
+        try {
+          const res = await fetch(SUPABASE_FUNCTION_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "content-type": "application/json",
+              "apikey": SUPABASE_ANON_KEY,
+              "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              kind: "courier_create",
+              tg_id,
+              payload_json: {
+                username: user?.username || "",
+                city: CR_WIZ.address.city,
+                phone: String(p.phone || "").trim(),
+                address_json: CR_WIZ.address,
+                items_json: CR_WIZ.items.map(it => {
+                  const cat = String(it?.category || "").trim();
+                  const other = String(it?.category_other || "").trim();
+                  return {
+                    category: (cat === "Другое" && other) ? other : cat,
+                    service: String(it?.service || ""),
+                    problem: String(it?.problem || ""),
+                  };
+                }),
+                date: CR_WIZ.date,
+                slot: CR_WIZ.slot,
+                need_media: !!needMedia,
+              },
+            }),
+          });
+
+          const raw = await res.text();
+          let data = null;
+          try { data = JSON.parse(raw); } catch(_) {}
+          if (!res.ok || !data || !data.ok) {
+            const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${raw.slice(0, 160)}`;
+            throw new Error(err);
+          }
+        } finally {
+          hideLoading();
+        }
+
+        saveAddrIfNeeded();
+        CR_WIZ = null;
+
+        if (needMedia) {
+          try { tg?.close(); } catch(_) {}
+          return;
+        }
+
+        try { tg?.showAlert?.("Заявка отправлена"); } catch(_) {}
+        await crRefreshAll(true).catch(() => null);
+        showPage("profile");
+      };
+
+      $("#crConfirmBackBtn")?.addEventListener("click", () => {
+        CR_WIZ.step = "time";
+        crRenderWizard();
+        haptic("light");
+      });
+      $("#crSendYes")?.addEventListener("click", () => { haptic("light"); doSend(true).catch(e => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){} }); });
+      $("#crSendNo")?.addEventListener("click", () => { haptic("light"); doSend(false).catch(e => { try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){} }); });
+      return;
+    }
+  }
+
+  // back button in wizard header
+
+  // back button in wizard header
+  courierBackBtn?.addEventListener("click", () => {
+    if (!CR_WIZ) { goBack(); return; }
+    const step = CR_WIZ.step;
+    if (step === "items") { goBack(); return; }
+    if (step === "address") CR_WIZ.step = "items";
+    else if (step === "time") CR_WIZ.step = "address";
+    else if (step === "confirm") CR_WIZ.step = "time";
+    crRenderWizard();
+    haptic("light");
+  });
+  
+  let estimateDirty = false;
+  let leaveAction = null;
+  
+  const openLeaveEstimateModal = (el) => {
+    if (!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+  };
+  const closeLeaveEstimateModal = (el) => {
+    if (!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+  };
+  
+  $$("[data-leave-close]").forEach(el => el.addEventListener("click", () => closeLeaveEstimateModal(leaveEstimateModal)));
+  
+  leaveStayBtn?.addEventListener("click", () => {
+    closeLeaveEstimateModal(leaveEstimateModal);
+    leaveAction = null;
+    haptic("light");
+  });
+  leaveExitBtn?.addEventListener("click", () => {
+    closeLeaveEstimateModal(leaveEstimateModal);
+    const fn = leaveAction;
+    leaveAction = null;
+    if (typeof fn === "function") fn();
+    haptic("light");
+  });
+  
+  const resetEstimate = () => {
+    estimateDirty = false;
+    if (estimateCategory) estimateCategory.value = "Обувь";
+    if (estimateOtherItem) estimateOtherItem.value = "";
+    if (estimateProblem) estimateProblem.value = "";
+  
+    estimateOtherWrap?.classList.remove("show");
+    estimateOtherWrap?.setAttribute("aria-hidden", "true");
+  
+    syncEstimate();
+  };
+  
+  const getEstimate = () => {
+    const category = (estimateCategory?.value || "").trim();
+    const item = (estimateOtherItem?.value || "").trim();
+    const problem = (estimateProblem?.value || "").trim();
+    return { category, item, problem };
+  };
+  
+  const isValid = () => {
+    const { category, item, problem } = getEstimate();
+    if (!category) return false;
+    if (category === "Другое" && !item) return false;
+    if (!problem) return false;
+    return true;
+  };
+  
+  const syncEstimate = () => {
+    const { category, item, problem } = getEstimate();
+  
+    const needOther = category === "Другое";
+    if (estimateOtherWrap) {
+      estimateOtherWrap.classList.toggle("show", needOther);
+      estimateOtherWrap.setAttribute("aria-hidden", needOther ? "false" : "true");
+    }
+  
+    if (estimateNextBtn) estimateNextBtn.disabled = !isValid();
+  };
+  
+  const markDirty = () => {
+    const { item, problem } = getEstimate();
+    const cat = (estimateCategory?.value || "").trim();
+    // считаем "грязным", если юзер реально что-то заполнял:
+    estimateDirty = !!(problem || (cat === "Другое" && item));
+  };
+  
+  estimateCategory?.addEventListener("change", () => { markDirty(); syncEstimate(); });
+  estimateOtherItem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
+  estimateProblem?.addEventListener("input", () => { markDirty(); syncEstimate(); });
+
+  estimateBackBtn?.addEventListener("click", () => {
+    const doExit = () => {
+      closeAnyModal(estimateSendModal);
+      resetEstimate();
+      goBack();
+    };
+  
+    if (estimateDirty) {
+      leaveAction = doExit;
+      openLeaveEstimateModal(leaveEstimateModal);
+    } else {
+      doExit();
+    }
+  });
+  
+  // Далее / Назад
+  estimateNextBtn?.addEventListener("click", () => {
+    if (!isValid()) return;
+    openAnyModal(estimateSendModal);
+    haptic("light");
+  });
+  
+  // Финал: отправка в бота
+estimateSubmitBtn?.addEventListener("click", async () => {
+  if (!isValid()) return;
+
+  const { category, item, problem } = getEstimate();
+  const tg_id = tg?.initDataUnsafe?.user?.id || 0;
+
+  showLoading();
+  haptic("light");
+
+  try {
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "estimate_photo",
+        tg_id,
+        payload_json: {
+          category,
+          item: category === "Другое" ? item : "",
+          problem,
+        },
+      }),
+    });
+
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
+
+    hideLoading();
+    try { tg?.close(); } catch (_) {}
+  } catch (e) {
+    hideLoading();
+    const msg = String(e?.message || e);
+    try { tg?.showAlert?.("Ошибка записи: " + msg); } catch (_) {}
+    console.error(e);
+  }
+});
+  
+  syncEstimate();
+
+  // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
+  const headerLogoFade = () => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.classList.toggle("logoBehind", y > 12); // порог можно менять (12..30)
+  };
+
+  window.addEventListener("scroll", headerLogoFade, { passive: true });
+  headerLogoFade(); // сразу применяем состояние при загрузке
+  
+  // ---------------- INIT ----------------
+  setTabActive("home");
+  // mark first page as active for CSS transitions
+  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
+  hydrateProfile();
+  initRevealObserver();
+  renderChat();
+  } catch (e) {
+    _showFatal(e);
+  }
+
+})();
+
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="color-scheme" content="light dark">
+  <title>ЩЁТКА</title>
+
+  <link rel="stylesheet" href="app.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+  <div class="app" id="app">
+
+    <!-- FIXED HEADER -->
+    <header class="topbar" role="banner">
+      <div class="brandSlot" aria-hidden="true">
+        <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
+      </div>
+    </header>
+
+    <!-- STAGE -->
+    <main class="stage" role="main">
+
+      <!-- HOME -->
+      <section class="page" data-page="home">
+        <div class="profile glass homeProfile reveal">
+          <div class="profileRow">
+            <div class="avatarWrap">
+              <img id="tgAvatar" class="avatarImg" alt="" />
+            </div>
+
+            <div class="profileMeta">
+              <div class="profileTopLine">
+                <div id="tgName" class="profileName">—</div>
+                <button class="iconBtn" id="editProfileBtn" type="button" aria-label="Настройки профиля">⚙️</button>
+              </div>
+              <div class="profileHint">Телефон: <span id="tgPhoneValue">—</span></div>
+              <div class="profileHint">Город: <span id="tgCityValue">—</span></div>
+
+              <div class="profileQuickBtns">
+                <button class="supportBtn glass" id="promoBtn" type="button">🎟 Промокоды</button>
+                <button class="supportBtn glass" id="achievementsBtn" type="button">🏆 Достижения</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="homeCtas">
+          <button class="cta primary reveal" type="button" id="openDropoffChoice">
+            <div class="ctaIco">✨</div>
+            <div class="ctaText">
+              <div class="ctaTitle">Сдать вещь</div>
+              <div class="ctaSub">Выберите способ: курьер или принести самому</div>
+            </div>
+          </button>
+
+          <button class="cta secondary reveal" type="button" id="openEstimateSheet">
+            <div class="ctaIco">📸</div>
+            <div class="ctaText">
+              <div class="ctaTitle">Консультация по фото/видео</div>
+              <div class="ctaSub">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки.</div>
+            </div>
+          </button>
+        </div>
+
+        <button class="supportBtn glass reveal" id="supportOpenFromHome" type="button">💬 Написать менеджеру</button>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="page" data-page="orders" hidden>
+        <div class="pageHead noBack">
+          <div>
+            <div class="pageTitle">Заказы</div>
+            <div class="pageSub">Все заявки и заказы в одном месте</div>
+          </div>
+        </div>
+
+        <!-- Search by order id -->
+        <div class="glass searchBar">
+          <div class="searchIco">🔎</div>
+          <input id="orderSearchInput" class="searchInput" inputmode="numeric" placeholder="Введите номер заказа" />
+          <button id="orderSearchBtn" class="searchBtn" type="button">Найти</button>
+        </div>
+        <div id="searchResult" class="searchResult"></div>
+
+        <div class="sectionTitle">Ваши заказы</div>
+        <div id="ordersList" class="orders"></div>
+
+        <div class="sectionTitle">Заявки</div>
+
+        <button class="tile glass" id="photoEstimatesTile" type="button" hidden>
+          <div class="tileIco">📸</div>
+          <div class="tileTxt">
+            <div class="tileTitle">Консультации по фото/видео</div>
+            <div class="tileSub" id="photoEstimatesSub">
+              <span id="photoEstimatesCount">0</span>
+              <span id="photoEstimatesSubText">активных</span>
+            </div>
+          </div>
+          <div class="pulseDot" id="photoEstimatesPulse" aria-hidden="true">
+            <span class="pulseNum" id="photoEstimatesUnread" hidden>0</span>
+          </div>
+        </button>
+
+        <button class="tile glass" id="courierRequestsTile" type="button" hidden>
+          <div class="tileIco">🚚</div>
+          <div class="tileTxt">
+            <div class="tileTitle">Курьерские заявки</div>
+            <div class="tileSub" id="courierRequestsSub">
+              <span id="courierRequestsCount">0</span>
+              <span id="courierRequestsSubText">активных</span>
+            </div>
+          </div>
+          <div class="pulseDot" id="courierRequestsPulse" aria-hidden="true" style="display:none"></div>
+        </button>
+
+        <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
+          💬 Написать в поддержку
+        </button>
+      </section>
+
+      <!-- SERVICES -->
+      <section class="page" data-page="services" hidden>
+        <div class="pageHead noBack">
+          <div>
+            <div class="pageTitle">Услуги</div>
+            <div class="pageSub">Витрина услуг и ориентировочные цены</div>
+          </div>
+        </div>
+
+        <div class="priceTabs glass" id="priceTabs"></div>
+        <div id="priceContent" class="price"></div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="page" data-page="about" hidden>
+        <div class="pageHead noBack">
+          <div>
+            <div class="pageTitle">О нас</div>
+            <div class="pageSub">Коротко, по делу — и с примерами работ</div>
+          </div>
+        </div>
+
+        <div class="seg glass" id="aboutSeg">
+          <button class="segBtn active" type="button" data-about-tab="about">О нас</button>
+          <button class="segBtn" type="button" data-about-tab="cases">До/После</button>
+        </div>
+
+        <!-- TAB: ABOUT -->
+        <div id="aboutPanelAbout">
+          <div class="glass aboutCard reveal">
+            <div class="aboutTitle">Щётка — мастерская ухода за вещами</div>
+            <div class="aboutText">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки. Дальше — либо курьер, либо приём в мастерской.</div>
+          </div>
+
+          <div class="glass aboutCard reveal" data-acc>
+            <div class="aboutTitle">FAQ</div>
+            <div class="acc">
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Сколько занимает чистка/ремонт?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Обычно 2–7 дней. Точные сроки зависят от состояния и загруженности.</div>
+              </div>
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Можно ли понять цену по фото?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Да, дадим диапазон и варианты работ. Финальная цена — после осмотра.</div>
+              </div>
+              <div class="accItem" data-acc-item aria-expanded="false">
+                <button class="accHead" type="button" data-acc-head>
+                  <span>Что делать, если вещь дорогая?</span>
+                  <span class="accIco" aria-hidden="true">⌄</span>
+                </button>
+                <div class="accBody">Расскажем про риски и согласуем работы до старта. Ничего не делаем без подтверждения.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass aboutCard reveal">
+            <div class="aboutTitle">Отзывы</div>
+            <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
+              <div class="reviewSlide">🖼️ Слайд 1</div>
+              <div class="reviewSlide">🖼️ Слайд 2</div>
+              <div class="reviewSlide">🖼️ Слайд 3</div>
+            </div>
+            <div class="dots" id="reviewsDots" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <!-- TAB: CASES -->
+        <div id="aboutPanelCases" hidden>
+          <div class="story">
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 1</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 2</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 3</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 4</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 5</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 6</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 7</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+            <section class="storySection" data-reveal>
+              <div class="storySticky glass">
+                <div class="storyTitle">Кейс 8</div>
+                <div class="storyGrid">
+                  <div class="storyImg">ДО</div>
+                  <div class="storyImg">ПОСЛЕ</div>
+                </div>
+                <div class="storySub">Плейсхолдеры под фото. Заменим на реальные изображения.</div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="estimate" hidden>
+        <div class="pageHead">
+          <button class="backBtn" id="estimateBackBtn" type="button" aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Консультация</div>
+            <div class="pageSub">По фото/видео подскажем варианты, примерную стоимость и сроки</div>
+          </div>
+        </div>
+      
+        <div class="pageBody">
+          <div class="estimateCard glass">
+            <label class="field">
+              <div class="fieldLabel">Категория</div>
+              <select id="estimateCategory" class="fieldSelect">
+                <option value="Обувь">Обувь</option>
+                <option value="Сумка">Сумка</option>
+                <option value="Верхняя одежда">Верхняя одежда</option>
+                <option value="Аксессуар">Аксессуар</option>
+                <option value="Другое">Другое</option>
+              </select>
+            </label>
+      
+            <div class="reveal" id="estimateOtherWrap" aria-hidden="true" style="margin-top:12px;">
+              <label class="field">
+                <div class="fieldLabel">Что за вещь?</div>
+                <input id="estimateOtherItem" class="fieldInput" />
+              </label>
+            </div>
+      
+            <label class="field" style="margin-top:12px;">
+              <div class="fieldHint">Опишите вещь и проблему — что нужно сделать?</div>
+              <input id="estimateProblem" class="fieldInput" />
+            </label>
+      
+            <div style="height:14px"></div>
+      
+            <div style="display:flex; justify-content:center;">
+              <button id="estimateNextBtn" class="cta primary" type="button" disabled style="max-width:340px; width:100%;">
+                Далее
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHOTO ESTIMATES PAGE -->
+      <section class="page" data-page="photo_estimates" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Оценка по фото</div>
+            <div class="pageSub">Активные заявки</div>
+          </div>
+        </div>
+      
+        <div id="peActiveList" class="orders"></div>
+      
+      </section>
+
+      <!-- COURIER WIZARD PAGE -->
+      <section class="page" data-page="courier" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" id="courierBackBtn" aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Вызвать курьера</div>
+            <div class="pageSub" id="courierStepSub">Заполните данные</div>
+          </div>
+        </div>
+
+        <div class="pageBody">
+          <div id="courierWizard" class="estimateCard glass"></div>
+        </div>
+      </section>
+
+      <!-- COURIER REQUESTS PAGE -->
+      <section class="page" data-page="courier_requests" hidden>
+        <div class="pageHead">
+          <button class="backBtn" type="button" data-back aria-label="Назад">‹</button>
+          <div>
+            <div class="pageTitle">Курьерские заявки</div>
+            <div class="pageSub">История и статусы</div>
+          </div>
+        </div>
+
+        <div id="crList" class="orders"></div>
+      </section>
+
+
+      
+    </main>
+
+    <!-- TABBAR -->
+    <nav class="tabbar glass" role="navigation" aria-label="Навигация">
+      <button class="tab active" type="button" data-nav="home" aria-label="Главная">
+        <span class="tIco" aria-hidden="true">🏠</span>
+        <span class="tTxt">Главная</span>
+      </button>
+
+      <button class="tab" type="button" data-nav="orders" aria-label="Заказы">
+        <span class="tIco" aria-hidden="true">📦</span>
+        <span class="tTxt">Заказы</span>
+      </button>
+
+      <button class="tab" type="button" data-nav="services" aria-label="Услуги">
+        <span class="tIco" aria-hidden="true">✨</span>
+        <span class="tTxt">Услуги</span>
+      </button>
+
+      <button class="tab" type="button" data-nav="about" aria-label="О нас">
+        <span class="tIco" aria-hidden="true">ℹ️</span>
+        <span class="tTxt">О нас</span>
+      </button>
+    </nav>
+
+    <!-- CHAT FAB -->
+    <button class="chatFab" id="chatFab" type="button" aria-label="Поддержка">
+      💬
+      <span class="chatFabDot" id="chatDot" hidden></span>
+    </button>
+
+    <!-- CHAT PANEL -->
+    <section class="chat" id="chat" aria-hidden="true">
+      <div class="chatBackdrop" data-chat-close></div>
+
+      <div class="chatPanel" role="dialog" aria-label="Поддержка">
+        <div class="chatHead">
+          <div>
+            <div class="chatTitle">Поддержка</div>
+            <div class="chatSub">Мы на связи</div>
+          </div>
+          <button class="chatClose" type="button" data-chat-close aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="chatBody" id="chatBody"></div>
+
+        <form class="chatForm" id="chatForm">
+          <input class="chatInput" id="chatInput" placeholder="Напишите сообщение…" autocomplete="off" />
+          <button class="chatSend" type="submit" aria-label="Отправить">➤</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ORDER MODAL (center) -->
+    <!-- DROP-OFF CHOICE MODAL -->
+    <section class="modal" id="dropoffModal" aria-hidden="true">
+      <div class="modalBackdrop" data-dropoff-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-dropoff-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Сдать вещь</div>
+        <div class="modalP">Выберите удобный способ.</div>
+        <div style="height:10px"></div>
+        <button class="cta primary" type="button" id="openCourierSheet">
+          <div class="ctaIco">🚚</div>
+          <div class="ctaText">
+            <div class="ctaTitle">Вызвать курьера</div>
+            <div class="ctaSub">Заберём и привезём обратно</div>
+          </div>
+        </button>
+        <div style="height:10px"></div>
+        <button class="cta secondary" type="button" id="openDropoffMap">
+          <div class="ctaIco">🏬</div>
+          <div class="ctaText">
+            <div class="ctaTitle">Принести самому</div>
+            <div class="ctaSub">Покажем адрес и построим маршрут</div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- DROP-OFF MAP MODAL -->
+    <section class="modal" id="dropoffMapModal" aria-hidden="true">
+      <div class="modalBackdrop" data-map-close></div>
+      <div class="modalCard modalCardWide">
+        <button class="modalClose" type="button" data-map-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Пункт приёма</div>
+        <div class="mapFrameWrap">
+          <iframe id="dropoffMapFrame" title="Карта" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="mapMeta">
+          <div class="mapLine" id="dropoffAddr">—</div>
+          <div class="mapLine hint" id="dropoffHours">—</div>
+          <div class="mapBtns">
+            <button class="smallBtn primary" type="button" id="dropoffRouteBtn">Маршрут</button>
+            <button class="smallBtn" type="button" id="dropoffCopyBtn">Скопировать адрес</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal" id="orderModal" aria-hidden="true">
+      <div class="modalBackdrop" data-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-close aria-label="Закрыть">✕</button>
+        <div id="modalContent"></div>
+      </div>
+    </section>
+
+    <!-- PHOTO ESTIMATE CARD MODAL -->
+    <section class="modal" id="peCardModal" aria-hidden="true">
+      <div class="modalBackdrop" data-pec-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-pec-close aria-label="Закрыть">✕</button>
+        <div id="peCardContent"></div>
+      </div>
+    </section>
+
+    <!-- REGISTRATION (LOCK) -->
+    <section class="modal modalLock" id="registerModal" aria-hidden="true">
+      <div class="modalBackdrop" aria-hidden="true"></div>
+      <div class="modalCard">
+        <div class="modalTitle modalTitleReg">Регистрация</div>
+
+        <div class="modalGrid">
+          <div class="modalRowCol">
+            <span>Город</span>
+            <div class="seg" id="regCitySeg">
+              <button class="segBtn" type="button" data-city="Севастополь">Севастополь</button>
+              <button class="segBtn" type="button" data-city="Симферополь">Симферополь</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
+            <span>Имя</span>
+            <input id="regFirstName" class="fieldInput" />
+          </div>
+
+          <div class="modalRowCol">
+            <span>Фамилия (опционально)</span>
+            <input id="regLastName" class="fieldInput" />
+          </div>
+
+          <div class="modalRowCol">
+            <span>Пол</span>
+            <div class="seg" id="regGenderSeg">
+              <button class="segBtn" type="button" data-gender="M">М</button>
+              <button class="segBtn" type="button" data-gender="W">Ж</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
+            <span>Номер телефона</span>
+            <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
+          </div>
+
+          <button id="regSubmitBtn" class="smallBtn primary" type="button">Завершить регистрацию</button>
+          <div class="formError" id="regError" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GIFT AFTER REGISTRATION -->
+    <section class="modal" id="giftModal" aria-hidden="true">
+      <div class="modalBackdrop" data-gift-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-gift-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Подарок за регистрацию 🎁</div>
+        <p class="modalP" id="giftText">—</p>
+        <div class="modalGrid">
+          <div class="giftCode" id="giftCodeBox">—</div>
+          <button class="smallBtn primary" type="button" data-gift-close>Понятно</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE EDIT MODAL -->
+    <section class="modal" id="profileEditModal" aria-hidden="true">
+      <div class="modalBackdrop" data-prof-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-prof-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Настройки профиля</div>
+        <div class="modalGrid">
+          <div class="modalRowCol">
+            <span>Город</span>
+            <div class="seg" id="profCitySeg">
+              <button class="segBtn" type="button" data-city="Севастополь">Севастополь</button>
+              <button class="segBtn" type="button" data-city="Симферополь">Симферополь</button>
+            </div>
+          </div>
+          <div class="modalRowCol">
+            <span>Имя</span>
+            <input id="profFirstName" class="fieldInput" placeholder="Имя" />
+          </div>
+          <div class="modalRowCol">
+            <span>Фамилия</span>
+            <input id="profLastName" class="fieldInput" placeholder="Фамилия" />
+          </div>
+
+          <div class="modalRowCol">
+            <span>Пол</span>
+            <div class="seg" id="profGenderSeg">
+              <button class="segBtn" type="button" data-gender="M">М</button>
+              <button class="segBtn" type="button" data-gender="W">Ж</button>
+            </div>
+          </div>
+
+          <div class="modalRowCol">
+            <span>Номер телефона</span>
+            <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
+          </div>
+          <button id="profSaveBtn" class="smallBtn primary" type="button">Сохранить</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROMO CODES MODAL -->
+    <section class="modal" id="promoModal" aria-hidden="true">
+      <div class="modalBackdrop" data-promo-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-promo-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Промокоды</div>
+        <div id="promoModalContent"></div>
+        <div style="height:12px"></div>
+        <button class="smallBtn primary" type="button" data-promo-close>Понятно</button>
+      </div>
+    </section>
+
+    <!-- ACHIEVEMENTS MODAL (пока пустая) -->
+    <section class="modal" id="achievementsModal" aria-hidden="true">
+      <div class="modalBackdrop" data-ach-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-ach-close aria-label="Закрыть">✕</button>
+        <div class="modalH modalHBig">Достижения</div>
+        <p class="modalP">Скоро здесь появятся достижения.</p>
+        <button class="smallBtn primary" type="button" data-ach-close>Понятно</button>
+      </div>
+    </section>
+    
+    <!-- OCENKA PO PHOTO MODAL -->
+
+    <section class="modal" id="estimateSendModal" aria-hidden="true">
+      <div class="modalBackdrop" data-est-send-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-est-send-close aria-label="Закрыть">✕</button>
+    
+        <div class="modalH">Дальше нужно фото/видео</div>
+        <p class="modalP">
+          Для заверешения нужно будет перейти в бота и в ответ на сообщение отправить фото или видео вещи.
+        </p>
+    
+        <div class="modalGrid">
+          <button id="estimateSubmitBtn" class="smallBtn primary" type="button">
+            Перейти к отправке фото
+          </button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- PHONE MODAL удалён: телефон вводится только вручную в регистрации/настройках -->
+
+    <!-- COURIER SHEET -->
+    <section class="sheet" id="courierSheet" aria-hidden="true">
+      <div class="sheetBackdrop" data-courier-close></div>
+      <div class="sheetCard">
+        <div class="sheetHead">
+          <div>
+            <div class="sheetTitle">Вызвать курьера</div>
+            <div class="sheetSub">Укажите адрес и комментарий</div>
+          </div>
+          <button class="sheetClose" type="button" data-courier-close aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="sheetBody">
+          <label class="field">
+            <div class="fieldLabel">Адрес</div>
+            <input id="courierAddress" class="fieldInput" placeholder="Город, улица, дом, подъезд" />
+          </label>
+
+          <label class="field">
+            <div class="fieldLabel">Комментарий</div>
+            <input id="courierComment" class="fieldInput" placeholder="Удобное время, ориентиры" />
+          </label>
+
+          <button id="courierSendBtn" class="cta primary sheetBtn" type="button">
+            Отправить заявку
+          </button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- CONFIRM MODAL: leave estimate -->
+    <section class="modal" id="leaveEstimateModal" aria-hidden="true">
+      <div class="modalBackdrop" data-leave-close></div>
+      <div class="modalCard">
+        <button class="modalClose" type="button" data-leave-close aria-label="Закрыть">✕</button>
+        <div class="modalH">Выйти из заполнения?</div>
+        <p class="modalP">
+          Вы уже начали заполнять заявку. Если выйти сейчас — введённые данные не сохранятся.
+        </p>
+        <div class="modalGrid">
+          <button id="leaveStayBtn" class="smallBtn primary" type="button">Остаться</button>
+          <button id="leaveExitBtn" class="smallBtn" type="button">Выйти</button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- LOADING OVERLAY -->
+    <div class="globalLoading" id="globalLoading" aria-hidden="true">
+      <div class="globalLoadingCard glass">
+        <div class="spinner"></div>
+        <div class="globalLoadingText">Записываем вашу заявку<span id="dots">...</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
