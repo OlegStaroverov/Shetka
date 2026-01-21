@@ -2022,3 +2022,53 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   font-size: 15px !important;
   line-height: 1.2;
 }
+
+/* =========================
+   REVIEWS: solid card + edges off-screen + tight vertical paddings
+   ========================= */
+
+/* сама карточка (закруглённый квадрат) — НЕ прозрачная */
+.aboutReviewsCard{
+  background: var(--bg1);        /* непрозрачный белый */
+  box-shadow: var(--shadow);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+
+  /* убираем лишние отступы сверху/снизу */
+  padding: 10px 0 8px;
+}
+
+/* заголовок "Отзывы": чуть больше расстояние до картинки */
+.aboutReviewsTitle{
+  padding: 0 14px;
+  margin-bottom: 10px; /* расстояние от заголовка до карусели */
+}
+
+/* точки снизу: небольшой отступ от картинки */
+.aboutReviewsDots{
+  padding: 8px 0 0;
+}
+
+/* ВАЖНО: делаем карточку шириной 100vw,
+   чтобы её левый/правый край уходил за экран и не был виден */
+.aboutReviewsCard{
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+/* карусель тоже full-bleed (как у тебя уже сделано) */
+.reviewsBleed{
+  width: 100%;
+}
+
+/* чтобы ничего не резало внутри */
+.aboutReviewsCard .reviewsTrack{
+  border: 0;
+  border-radius: 0;
+}
+
+/* сами слайды остаются 100vw как у тебя */
+.aboutReviewsCard .reviewSlide{
+  height: clamp(260px, 54vh, 500px);  /* чуть компактнее по высоте */
+}
