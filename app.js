@@ -3856,14 +3856,22 @@ haptic("light");
       goBack();
     };
   
-    if (estimateDirty) {
-      leaveAction = doExit;
-      openLeaveEstimateModal(leaveEstimateModal);
-    } else {
-      doExit();
-    }
-  });
+    if (!estimateDirty) { doExit(); return; }
   
+    // ТОЧЬ-В-ТОЧЬ как в курьере
+    try {
+      if (tg?.showConfirm) {
+        tg.showConfirm("Выйти из формы? Данные не сохранятся.", (ok) => {
+          if (ok) doExit();
+        });
+        return;
+      }
+    } catch(_) {}
+  
+    // fallback
+    confirmDialog("Выйти из формы? Данные не сохранятся.").then((ok) => { if (ok) doExit(); });
+  });
+
   // Далее / Назад
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
