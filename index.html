@@ -65,7 +65,7 @@
 
       <!-- ORDERS -->
       <section class="page" data-page="orders" hidden>
-        <div class="pageHead noBack">
+        <div class="pageHead noBack pageIntro" data-intro="up">
           <div>
             <div class="pageTitle">Заказы</div>
             <div class="pageSub">Все заявки и заказы в одном месте</div>
@@ -73,19 +73,19 @@
         </div>
 
         <!-- Search by order id -->
-        <div class="glass searchBar">
+        <div class="glass searchBar pageIntro" data-intro="left">
           <div class="searchIco">🔎</div>
           <input id="orderSearchInput" class="searchInput" inputmode="numeric" placeholder="Введите номер заказа" />
           <button id="orderSearchBtn" class="searchBtn" type="button">Найти</button>
         </div>
         <div id="searchResult" class="searchResult"></div>
 
-        <div class="sectionTitle">Ваши заказы</div>
+        <div class="sectionTitle pageIntro" data-intro="up">Ваши заказы</div>
         <div id="ordersList" class="orders"></div>
 
-        <div class="sectionTitle">Заявки</div>
+        <div class="sectionTitle pageIntro" data-intro="up">Заявки</div>
 
-        <button class="tile glass" id="photoEstimatesTile" type="button" hidden>
+        <button class="tile glass pageIntro" data-intro="left" id="photoEstimatesTile" type="button" hidden>
           <div class="tileIco">📸</div>
           <div class="tileTxt">
             <div class="tileTitle">Консультации по фото/видео</div>
@@ -99,7 +99,7 @@
           </div>
         </button>
 
-        <button class="tile glass" id="courierRequestsTile" type="button" hidden>
+        <button class="tile glass pageIntro" data-intro="right" id="courierRequestsTile" type="button" hidden>
           <div class="tileIco">🚚</div>
           <div class="tileTxt">
             <div class="tileTitle">Курьерские заявки</div>
@@ -112,46 +112,46 @@
             <span class="pulseNum" id="courierRequestsUnread" hidden>0</span></div>
         </button>
 
-        <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
+        <button class="supportBtn glass pageIntro" data-intro="up" id="supportOpenFromProfile" type="button">
           💬 Написать в поддержку
         </button>
       </section>
 
       <!-- SERVICES -->
       <section class="page" data-page="services" hidden>
-        <div class="pageHead noBack">
+        <div class="pageHead noBack pageIntro" data-intro="up">
           <div>
             <div class="pageTitle">Услуги</div>
             <div class="pageSub">Витрина услуг и ориентировочные цены</div>
           </div>
         </div>
 
-        <div class="priceTabs glass" id="priceTabs"></div>
+        <div class="priceTabs glass pageIntro" data-intro="left" id="priceTabs"></div>
         <div id="priceContent" class="price"></div>
       </section>
 
       <!-- ABOUT -->
       <section class="page" data-page="about" hidden>
-        <div class="pageHead noBack">
+        <div class="pageHead noBack pageIntro" data-intro="up">
           <div>
             <div class="pageTitle">О нас</div>
             <div class="pageSub">Коротко, по делу — и с примерами работ</div>
           </div>
         </div>
 
-        <div class="aboutTabs" id="aboutSeg">
+        <div class="aboutTabs pageIntro" data-intro="up" id="aboutSeg">
           <button class="segBtn glass active" type="button" data-about-tab="about">О нас</button>
           <button class="segBtn glass" type="button" data-about-tab="cases">До/После</button>
         </div>
 
         <!-- TAB: ABOUT -->
         <div id="aboutPanelAbout">
-          <div class="glass aboutCard reveal">
+          <div class="glass aboutCard reveal pageIntro" data-intro="up">
             <div class="aboutTitle">Щётка — мастерская ухода за вещами</div>
             <div class="aboutText">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки. Дальше — либо курьер, либо приём в мастерской.</div>
           </div>
 
-          <div class="glass aboutCard reveal" data-acc>
+          <div class="glass aboutCard reveal pageIntro" data-acc data-intro="up">
             <div class="aboutTitle">FAQ</div>
             <div class="acc">
               <div class="accItem" data-acc-item aria-expanded="false">
@@ -178,7 +178,7 @@
             </div>
           </div>
 
-          <div class="glass aboutCard aboutReviewsCard reveal">
+          <div class="glass aboutCard aboutReviewsCard reveal pageIntro" data-intro="up">
             <div class="aboutTitle aboutReviewsTitle">Отзывы</div>
           
             <div class="reviewsBleed">
