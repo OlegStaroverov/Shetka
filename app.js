@@ -438,11 +438,24 @@ const closeModalEl = (el) => {
     try {
       const theme = html.getAttribute('data-theme') || 'light';
       const suffix = theme === 'dark' ? 'b' : 'l';
+    
       document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
         const i = Number(img.getAttribute('data-review') || '1');
         img.src = `o${i}${suffix}.png`;
+    
+        const fit = () => {
+          const w = img.naturalWidth || 0;
+          const h = img.naturalHeight || 0;
+          if (!w || !h) return;
+          const slide = img.closest?.('.reviewSlide');
+          if (slide) slide.style.aspectRatio = `${w} / ${h}`;
+        };
+    
+        if (img.complete) fit();
+        else img.addEventListener('load', fit, { once: true });
       });
     } catch (_) {}
+
 
     haptic("light");
   };
@@ -631,9 +644,11 @@ const closeModalEl = (el) => {
     
         // если уже ниже последнего — фиксируем последний, пока не пошли вверх
         const last = sections[sections.length - 1];
-        if (bestIdx === -1 && last) {
+        if (last) {
           const lr = last.getBoundingClientRect();
-          if (lr.top < centerY) return sections.length - 1;
+          const lastCenter = lr.top + lr.height * 0.5;
+          // как только центр экрана прошёл центр последней секции — фиксируем последний
+          if (centerY >= lastCenter) return sections.length - 1;
         }
     
         // если выше первого — фиксируем первый
