@@ -16,16 +16,10 @@
 
     <!-- FIXED HEADER -->
     <header class="topbar" role="banner">
-  <div class="brandSlot" aria-hidden="true">
-    <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
-  </div>
-  <button class="themeSwitch glass" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Сменить тему">
-    <span class="themeKnob" aria-hidden="true">
-      <span class="themeIcon sun">☀️</span>
-      <span class="themeIcon moon">🌙</span>
-    </span>
-  </button>
-</header>
+      <div class="brandSlot" aria-hidden="true">
+        <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
+      </div>
+    </header>
 
     <!-- STAGE -->
     <main class="stage" role="main">
@@ -33,38 +27,40 @@
       <!-- HOME -->
       <section class="page" data-page="home">
         <div class="profile glass homeProfile reveal">
-          <div class="profileRow">
-            <div class="avatarWrap">
-              <img id="tgAvatar" class="avatarImg" alt="" />
-            </div>
+          <!-- corner controls: settings + theme -->
+          <div class="profileCorner">
+            <button class="iconBtn" id="editProfileBtn" type="button" aria-label="Настройки">⚙️</button>
+            <button class="themeMini glass" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Сменить тему">
+              <span class="themeMiniIcon sun" aria-hidden="true">☀️</span>
+              <span class="themeMiniIcon moon" aria-hidden="true">🌙</span>
+            </button>
+          </div>
 
-            <div class="profileMeta">
-              <div class="profileTopLine">
-                <div id="tgName" class="profileName">—</div>
-                <button class="iconBtn" id="editProfileBtn" type="button" aria-label="Настройки профиля">⚙️</button>
-              </div>
-              <div class="profileHint">Телефон: <span id="tgPhoneValue">—</span></div>
-              <div class="profileHint">Город: <span id="tgCityValue">—</span></div>
+          <div class="profileMetaCentered">
+            <div id="tgName" class="profileName">—</div>
+            <div class="profileHint">Телефон: <span id="tgPhoneValue">—</span></div>
+            <div class="profileHint">Город: <span id="tgCityValue">—</span></div>
 
-              <div class="profileQuickBtns">
-                <button class="supportBtn glass" id="promoBtn" type="button">🎟 Промокоды</button>
-                <button class="supportBtn glass" id="achievementsBtn" type="button">🏆 Достижения</button>
-              </div>
+            <div class="profileQuickBtnsRow">
+              <button class="supportBtn glass" id="promoBtn" type="button">🎟 Промокоды</button>
+              <button class="supportBtn glass" id="achievementsBtn" type="button">🏆 Достижения</button>
             </div>
           </div>
         </div>
 
         <div class="homeCtasRow">
-  <button class="ctaMini ctaDropoff reveal" type="button" id="openDropoffChoice">
+  <button class="ctaMini ctaDropoff homeAnim" type="button" id="openDropoffChoice">
+    <span class="ctaMiniIco" aria-hidden="true">📦</span>
     <span class="ctaMiniTxt">Сдать вещь</span>
   </button>
 
-  <button class="ctaMini ctaConsult reveal" type="button" id="openEstimateSheet">
+  <button class="ctaMini ctaConsult homeAnim" type="button" id="openEstimateSheet">
+    <span class="ctaMiniIco" aria-hidden="true">🧑‍🔧</span>
     <span class="ctaMiniTxt">Консультация</span>
   </button>
 </div>
 
-<button class="supportBtn glass reveal supportCenter" id="supportOpenFromHome" type="button">💬 Написать администратору</button>
+<button class="supportBtn glass homeAnim supportCenter" id="supportOpenFromHome" type="button">💬 Написать администратору</button>
       </section>
 
       <!-- ORDERS -->
@@ -185,7 +181,7 @@
           <div class="glass aboutCard reveal">
             <div class="aboutTitle">Отзывы</div>
             <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
-                            <div class="reviewSlide">🖼️ Слайд 1</div>
+              <div class="reviewSlide">🖼️ Слайд 1</div>
               <div class="reviewSlide">🖼️ Слайд 2</div>
               <div class="reviewSlide">🖼️ Слайд 3</div>
               <div class="reviewSlide">🖼️ Слайд 4</div>
@@ -194,9 +190,7 @@
               <div class="reviewSlide">🖼️ Слайд 7</div>
               <div class="reviewSlide">🖼️ Слайд 8</div>
               <div class="reviewSlide">🖼️ Слайд 9</div>
-              <div class="reviewSlide">🖼️ Слайд 10</div></div>
-              <div class="reviewSlide">🖼️ Слайд 2</div>
-              <div class="reviewSlide">🖼️ Слайд 3</div>
+              <div class="reviewSlide">🖼️ Слайд 10</div>
             </div>
             <div class="dots" id="reviewsDots" aria-hidden="true"></div>
           </div>
