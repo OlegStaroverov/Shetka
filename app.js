@@ -638,6 +638,10 @@ haptic("light");
       const resetToHint = () => {
         started = false;
         story.classList.remove('baStarted');
+        if (hint) {
+          hint.style.opacity = "1";
+          hint.style.transform = "translateY(-50%)";
+        }
         if (hint) hint.setAttribute('aria-hidden', 'false');
         // снимаем активность — плейсхолдеры уедут в бок (CSS transition)
         sections.forEach(s => s.classList.remove('baActive'));
@@ -654,8 +658,8 @@ haptic("light");
       const canStartNow = () => {
         const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
         const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
-        // стартуем ТОЛЬКО когда оба блока полностью ушли вверх
-        return headBottom <= 0 && segBottom <= 0;
+      
+        return headBottom <= -28 && segBottom <= -28;
       };
 
       const pickIndexByCenter = () => {
@@ -727,7 +731,7 @@ haptic("light");
     };
 
     // ====== BEFORE/AFTER assets (do1.png / posle1.png ...) ======
-    const BA_CASES = Array.from({ length: 10 }, (_, i) => ({
+    const BA_CASES = Array.from({ length: 6 }, (_, i) => ({
       before: `do${i + 1}.png`,
       after: `posle${i + 1}.png`,
     }));
