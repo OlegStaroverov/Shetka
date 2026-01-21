@@ -3910,9 +3910,17 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   
   // ---------------- INIT ----------------
   setTabActive("home");
-  // mark first page as active for CSS transitions
-  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
+  
+  try {
+    const home = document.querySelector('.page[data-page="home"]');
+    if (home) {
+      home.hidden = false;              // ВАЖНО: показать страницу
+      home.classList.add('pageActive'); // анимации
+    }
+  } catch (_) {}
+  
   hydrateProfile();
+
   try { runHomeIntro(); } catch(_) {}
   initRevealObserver();
   renderChat();
