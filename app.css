@@ -744,14 +744,12 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .reviewsTrack{
   border:1px dashed var(--hair);
   border-radius:18px;
-  min-height:130px;
   display:flex;
-  align-items:center;
-  justify-content:center;
-  opacity:.85;
-  position:relative;
-  overflow:hidden;
-  max-height: min(70vh, 560px);
+  gap: 12px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling: touch;
 }
 
 .reviewsTrack .reviewSlide{
@@ -763,21 +761,6 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   height: clamp(340px, 66vh, 600px);
   border:0;
   opacity:1;
-}
-
-  border:1px dashed var(--hair);
-  border-radius:18px;
-  min-height:130px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  opacity:.85;
-
-  position:relative;
-  overflow:hidden;
-
-  /* безопасность на маленьких экранах */
-  max-height: min(70vh, 560px);
 }
 
 .dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
