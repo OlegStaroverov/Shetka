@@ -666,6 +666,16 @@ html[data-theme="dark"] .themeKnob .moon{
 .reveal, [data-reveal]{opacity:0; transform: translateY(12px); transition: opacity 600ms cubic-bezier(0.25,1,0.33,1), transform 600ms cubic-bezier(0.25,1,0.33,1);}
 .reveal.is-revealed, [data-reveal].is-revealed{opacity:1; transform: translateY(0);} 
 
+/* reveal directions (как у home кнопок: выезд с разных сторон) */
+[data-reveal="left"]{ transform: translateX(-14px); }
+[data-reveal="right"]{ transform: translateX(14px); }
+[data-reveal="up"]{ transform: translateY(16px); }
+[data-reveal="down"]{ transform: translateY(-16px); }
+[data-reveal="left"].is-revealed,
+[data-reveal="right"].is-revealed,
+[data-reveal="up"].is-revealed,
+[data-reveal="down"].is-revealed{ transform: translate3d(0,0,0); }
+
 /* Tap scale (cards/buttons) */
 .svcCard:active, .tile:active, .cta:active{transform: scale(.98);} 
 
@@ -686,6 +696,16 @@ html[data-theme="dark"] .cta.secondary{background: rgba(15,17,21,.55);}
 .servicesHeroTitle{font-weight:700; font-size:18px;}
 .servicesHeroSub{opacity:.75; margin-top:4px;}
 .servicesGrid{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+.svcSection{
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px dashed var(--hair);
+  background: rgba(255,255,255,.24);
+}
+html[data-theme="dark"] .svcSection{ background: rgba(255,255,255,.06); }
+.svcSectionTitle{ font-weight: 950; letter-spacing:-.2px; }
+.svcSectionSub{ opacity:.75; margin-top:4px; font-size:13px; }
+.svcNote{ opacity:.75; font-size:13px; margin-top:2px; }
 .svcCard{display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:18px;}
 .svcIco{width:42px; height:42px; border-radius:16px; display:flex; align-items:center; justify-content:center; background: rgba(215,255,0,.18);} 
 .svcBody{flex:1; min-width:0;}
@@ -698,6 +718,20 @@ html[data-theme="dark"] .cta.secondary{background: rgba(15,17,21,.55);}
 .aboutCard{padding:14px; margin-top:12px;}
 .aboutTitle{font-weight:800; font-size:18px;}
 .aboutText{opacity:.8; margin-top:6px;}
+
+/* About tabs: отдельные кнопки (без общего контейнера) */
+.aboutTabs{
+  display:flex;
+  gap: 10px;
+  padding: 0 14px;
+  margin-top: 12px;
+}
+.aboutTabs .segBtn{
+  border-radius: 18px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.35);
+}
+html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
 .acc{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
 .accItem{border:1px solid var(--hair); border-radius:16px; overflow:hidden; background: rgba(255,255,255,.5);} 
 html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);} 
@@ -969,12 +1003,10 @@ html[data-theme="dark"] .modalClose{ background: rgba(255,255,255,.06); }
 html[data-theme="light"] .segBtn{ border-color: rgba(0,0,0,.08); background: rgba(0,0,0,.03); }
 .segBtn.active{
   outline: none;
-  border-color: color-mix(in oklab, var(--txt) 14%, var(--hair));
-  background: rgba(255,255,255,.10);
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
-html[data-theme="light"] .segBtn.active{
-  background: rgba(0,0,0,.04);
-}
+html[data-theme="light"] .segBtn.active{ background: var(--accentBg); }
 
 .avatarPick{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .avatarOpt{
@@ -1462,18 +1494,39 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .tgIconBtn svg{ opacity:.9; }
 .tgIconBtn svg path{ fill: currentColor; }
 
-/* --- City active: тем же цветом, что и кнопка primary (Оценка по фото) --- */
-#regCitySeg .segBtn.active,
-#profCitySeg .segBtn.active{
-  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+/* City/Gender active now use the same unified active style as everywhere (.segBtn.active). */
+
+/* Generic unified active style (for any tappable UI state) */
+.is-active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
 }
 
-/* --- Gender active: так же, как выбор города --- */
-#regGenderSeg .segBtn.active,
-#profGenderSeg .segBtn.active{
-  border-color: color-mix(in oklab, var(--lime) 55%, var(--hair));
-  background: linear-gradient(180deg, rgba(215,255,0,.26), rgba(215,255,0,.10));
+/* About top tabs: buttons are standalone (no shared glass container) */
+.aboutTabs{ display:flex; gap:10px; padding: 0 var(--pad); margin-top: 10px; }
+.aboutTabs .segBtn{ border-radius: 18px; border:1px solid var(--hair); background: rgba(255,255,255,.30); }
+html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+
+/* Center loader (used e.g. for Before/After image loading) */
+.centerLoader{
+  position: fixed;
+  inset: 0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 120;
+  background: rgba(0,0,0,.08);
+  backdrop-filter: blur(6px);
+}
+html[data-theme="dark"] .centerLoader{ background: rgba(0,0,0,.25); }
+.centerLoader.show{ display:flex; }
+.loaderPill{
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 900;
 }
 
 /* --- Registration submit: компактная кнопка по ширине текста и по центру --- */
