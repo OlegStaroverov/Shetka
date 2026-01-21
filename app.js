@@ -680,23 +680,10 @@ haptic("light");
       };
 
       window.addEventListener('scroll', onScroll, { passive: true });
-
+      window.addEventListener('touchmove', onScroll, { passive: true });
+      
       // init
       resetToHint();
-      onScroll();
-    };
-    
-      // момент старта: первый реальный свайп/скролл
-      const onFirstTouchMove = () => {
-        start();
-        window.removeEventListener('touchmove', onFirstTouchMove);
-      };
-    
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('touchmove', onFirstTouchMove, { passive: true });
-    
-      // если пользователь уже не в самом верху — считаем что он "начал"
-      if ((window.scrollY || 0) > 8) start();
       onScroll();
     };
 
