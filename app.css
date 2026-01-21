@@ -2022,3 +2022,79 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   font-size: 15px !important;
   line-height: 1.2;
 }
+
+/* =========================
+   REVIEWS — как ты просишь
+   ========================= */
+
+/* 1) сама карточка — тёмная, без скруглений, края за экран */
+.aboutReviewsCard{
+  background: #1c1c1c !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  /* делаем карточку шире экрана, чтобы её боковые края не было видно */
+  width: 112vw;
+  margin-left: calc(50% - 56vw);
+  margin-right: calc(50% - 56vw);
+
+  /* вертикальные отступы */
+  padding: 10px 0 10px;
+}
+
+/* 2) заголовок: чуть больше воздуха до картинки */
+.aboutReviewsTitle{
+  padding: 0 14px;
+  margin-bottom: 14px;  /* больше от заголовка до картинки */
+}
+
+/* 3) обёртка: тоже на всю ширину карточки */
+.reviewsBleed{
+  width: 100%;
+}
+
+/* 4) трек: без рамок/скруглений */
+.reviewsTrack{
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* 5) “рамка” слайда: НЕ гигантская, подстраивается под картинку */
+.reviewSlide{
+  flex: 0 0 100vw;
+  scroll-snap-align: center;
+  border-radius: 0 !important;
+  overflow: visible;          /* важно: не режем */
+  background: transparent !important;
+
+  /* вместо огромной фикс-высоты — нормальная “под картинку” */
+  height: auto !important;
+  padding: 0 0 10px;          /* небольшой отступ снизу до низа блока */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 6) сама картинка: чётко, не режется, размер адекватный */
+.reviewImg{
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+
+  /* чтобы не было “слишком высокой рамки” — ограничиваем максимум */
+  max-height: min(58vh, 520px);
+
+  object-fit: contain;
+  object-position: center;
+
+  image-rendering: -webkit-optimize-contrast;
+  transform: translateZ(0);
+}
+
+/* 7) точки снизу — компактно */
+.aboutReviewsDots{
+  padding: 6px 0 0;
+}
+
