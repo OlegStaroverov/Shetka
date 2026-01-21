@@ -20,7 +20,6 @@
     color-mix(in oklab, var(--accent) 10%, transparent)
   );
 
-  );
 
   --lime: #d7ff00;
   --lime2:#b9ff00;
@@ -1614,7 +1613,7 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .topbar{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   gap:12px;
 }
 .themeSwitch{
@@ -1631,35 +1630,139 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .profileRowNoAvatar .profileMeta{width:100%;}
 .profileName{line-height:1.15;}
 
-/* Home CTAs: 2 compact buttons sliding to center */
+/* ---------------- HOME (profile + CTAs) ---------------- */
+
+.homeProfile{
+  position: relative;
+  padding: 16px;
+}
+
+.profileCorner{
+  position:absolute;
+  top: 12px;
+  right: 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap: 10px;
+}
+
+.profileCorner .iconBtn{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid var(--hair);
+  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+}
+
+.themeMini{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid var(--hair);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+}
+
+.themeMiniIcon{font-size: 18px; line-height: 1;}
+html[data-theme="light"] .themeMiniIcon.moon{display:none;}
+html[data-theme="dark"] .themeMiniIcon.sun{display:none;}
+
+.profileMetaCentered{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.profileMetaCentered .profileName{
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -.2px;
+  margin-top: 2px;
+}
+
+.profileQuickBtnsRow{
+  width: 100%;
+  margin-top: 10px;
+  display:flex;
+  flex-direction: row-reverse; /* визуально справа-налево */
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+.profileQuickBtnsRow .supportBtn{
+  flex: 1;
+  height: 46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 850;
+}
+
+/* Home CTAs: compact, emoji, smooth slide to center (replays on each home open) */
 .homeCtasRow{
   display:flex;
   gap:12px;
   margin-top: 12px;
 }
+
 .ctaMini{
   flex:1;
-  height: 54px;
-  border-radius: 18px;
+  height: 68px;
+  border-radius: 20px;
   border: 1px solid var(--hair);
-  background: rgba(255,255,255,.62);
+  background: color-mix(in oklab, var(--glass) 92%, transparent);
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  font-weight:800;
+  gap: 6px;
+  font-weight: 900;
   letter-spacing: .01em;
   position: relative;
   overflow:hidden;
   will-change: transform, opacity;
   transform: translate3d(0,0,0);
-  transition: transform 420ms cubic-bezier(0.25,1,0.33,1), opacity 420ms cubic-bezier(0.25,1,0.33,1);
 }
-html[data-theme="dark"] .ctaMini{background: rgba(15,17,21,.55);}
+
+.ctaMini::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: var(--accentBg);
+  opacity: .70;
+  pointer-events:none;
+}
+
+html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
+
+.ctaMini > *{ position: relative; z-index: 1; }
 .ctaMini:active{transform: scale(.985);}
-.ctaMiniTxt{font-size: 15px;}
-.ctaDropoff{opacity:0; transform: translate3d(-14vw,0,0);}
-.ctaConsult{opacity:0; transform: translate3d( 14vw,0,0);}
-.ctaDropoff.is-revealed, .ctaConsult.is-revealed{opacity:1; transform: translate3d(0,0,0);}
+
+.ctaMiniIco{font-size: 20px; line-height: 1;}
+.ctaMiniTxt{font-size: 14px;}
+
+/* animation states */
+.homeAnim{
+  opacity: 0;
+  transition: transform 560ms cubic-bezier(0.22,1,0.36,1), opacity 560ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.ctaDropoff.homeAnim{ transform: translate3d(-18vw, 0, 0); }
+.ctaConsult.homeAnim{ transform: translate3d( 18vw, 0, 0); }
+.supportCenter.homeAnim{ transform: translate3d(0, 10px, 0); }
+
+.homeAnim.in{ opacity: 1; transform: translate3d(0,0,0); }
+
+.homeAnim.in{ transition-delay: 40ms; }
+.ctaConsult.homeAnim.in{ transition-delay: 90ms; }
+.supportCenter.homeAnim.in{ transition-delay: 140ms; }
 
 /* Centered support button */
 .supportCenter{
