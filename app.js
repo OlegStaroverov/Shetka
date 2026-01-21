@@ -433,6 +433,17 @@ const closeModalEl = (el) => {
     syncThemeSwitch();
     // pattern image depends on theme
     setPatternEnabled(getPatternEnabled());
+
+    // обновляем отзывы под тему
+    try {
+      const theme = html.getAttribute('data-theme') || 'light';
+      const suffix = theme === 'dark' ? 'b' : 'l';
+      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+        const i = Number(img.getAttribute('data-review') || '1');
+        img.src = `o${i}${suffix}.png`;
+      });
+    } catch (_) {}
+
     haptic("light");
   };
 
@@ -578,15 +589,41 @@ const closeModalEl = (el) => {
       try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
       if (k === 'cases') {
-        // restart BA placeholders animation on each open
+        applyBaImages();
+
+        // restart BA animation on each open
         document.querySelectorAll('[data-ba]').forEach(el => el.classList.remove('baActive'));
         requestAnimationFrame(() => {
           document.querySelectorAll('[data-ba]').forEach(el => {
-            // class will be re-added by observer when intersecting; force reflow fallback
             void el.offsetHeight;
           });
         });
       }
+    };
+
+    // ====== BEFORE/AFTER assets (do1.png / posle1.png ...) ======
+    const BA_CASES = Array.from({ length: 10 }, (_, i) => ({
+      before: `do${i + 1}.png`,
+      after: `posle${i + 1}.png`,
+    }));
+
+    const applyBaImages = () => {
+      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
+      sections.forEach((sec, idx) => {
+        const pair = BA_CASES[idx];
+        if (!pair) return;
+
+        const beforeEl = sec.querySelector('.baBefore');
+        const afterEl  = sec.querySelector('.baAfter');
+        if (beforeEl) {
+          beforeEl.style.backgroundImage = `url('${pair.before}')`;
+          beforeEl.classList.add('hasImg');
+        }
+        if (afterEl) {
+          afterEl.style.backgroundImage = `url('${pair.after}')`;
+          afterEl.classList.add('hasImg');
+        }
+      });
     };
 
     // Before/After: slide-in placeholders from edges (10 cases)
@@ -645,6 +682,18 @@ const closeModalEl = (el) => {
       });
     }
 
+    // ====== Reviews assets (o1b.png / o1l.png ...) ======
+    const applyReviewImages = () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      const suffix = theme === 'dark' ? 'b' : 'l';
+      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+        const i = Number(img.getAttribute('data-review') || '1');
+        img.src = `o${i}${suffix}.png`;
+      });
+    };
+
+    applyReviewImages();
+    
     // init default
     setAboutTab('about');
   }
