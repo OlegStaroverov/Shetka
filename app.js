@@ -686,70 +686,6 @@ haptic("light");
       onScroll();
     };
     
-      // до старта — ничего не показываем (только стрелку)
-      sections.forEach(s => s.classList.remove('baActive'));
-    
-      const start = () => {
-        if (started) return;
-        started = true;
-        story.classList.add('baStarted');
-        if (hint) hint.setAttribute('aria-hidden', 'true');
-        setActive(0);
-      };
-    
-      const pickIndexByCenter = () => {
-        const vh = window.innerHeight || 1;
-        const centerY = vh * 0.5;
-        let bestIdx = -1;
-        let bestDist = Infinity;
-    
-        for (let i = 0; i < sections.length; i++) {
-          const r = sections[i].getBoundingClientRect();
-          // берём секции вокруг экрана, чтобы не дёргалось
-          if (r.bottom < -vh * 0.25 || r.top > vh * 1.25) continue;
-          const secCenter = r.top + r.height * 0.5;
-          const dist = Math.abs(secCenter - centerY);
-          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
-        }
-    
-        // если уже ниже последнего — фиксируем последний, пока не пошли вверх
-        const last = sections[sections.length - 1];
-        if (last) {
-          const lr = last.getBoundingClientRect();
-          const lastCenter = lr.top + lr.height * 0.5;
-          // как только центр экрана прошёл центр последней секции — фиксируем последний
-          if (centerY >= lastCenter) return sections.length - 1;
-        }
-    
-        // если выше первого — фиксируем первый
-        const first = sections[0];
-        if (bestIdx === -1 && first) {
-          const fr = first.getBoundingClientRect();
-          if (fr.bottom > centerY) return 0;
-        }
-    
-        return bestIdx === -1 ? current : bestIdx;
-      };
-    
-      const onScroll = () => {
-        if (raf) return;
-        raf = requestAnimationFrame(() => {
-          raf = 0;
-          const y = window.scrollY || 0;
-          const dir = y > lastY ? 1 : (y < lastY ? -1 : 0);
-          lastY = y;
-    
-          if (!started && dir !== 0) start();
-          if (!started) return;
-    
-          const next = pickIndexByCenter();
-          if (next !== current) {
-            // уходят в бок (за счёт снятия .baActive с transition в CSS)
-            setActive(next);
-          }
-        });
-      };
-    
       // момент старта: первый реальный свайп/скролл
       const onFirstTouchMove = () => {
         start();
@@ -859,14 +795,8 @@ haptic("light");
         if (slide) slide.style.aspectRatio = '';
       });
     };
-    
-        if (img.complete) fit();
-        else img.addEventListener('load', fit, { once: true });
-      });
-    };
 
     window.__SHETKA_APPLY_REVIEW_IMAGES = applyReviewImages;
-
     applyReviewImages();
     
     // init default
