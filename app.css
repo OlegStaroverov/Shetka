@@ -2012,3 +2012,13 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   width: 100%;
   max-width: 420px;
 }
+
+/* Courier time inputs: never overflow, slightly smaller */
+#crDate, #crTime{
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px 12px !important;
+  font-size: 15px !important;
+  line-height: 1.2;
+}
