@@ -191,6 +191,22 @@ return true;
     $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
   }
 
+  // Home intro animation (CTA buttons slide in every time Home opens)
+  const runHomeIntro = () => {
+    const home = document.querySelector('.page[data-page="home"]');
+    if (!home || home.hidden) return;
+    const nodes = Array.from(home.querySelectorAll('.homeAnim'));
+    if (!nodes.length) return;
+    // reset
+    nodes.forEach(n => n.classList.remove('in'));
+    // force reflow so transitions replay
+    // eslint-disable-next-line no-unused-expressions
+    home.offsetHeight;
+    requestAnimationFrame(() => {
+      nodes.forEach(n => n.classList.add('in'));
+    });
+  };
+
   const html = document.documentElement;
 
   // sendData bridge
@@ -447,7 +463,10 @@ const closeModalEl = (el) => {
   };
 
   const showPage = (page, { push = true } = {}) => {
-    if (page === currentPage) return;
+    if (page === currentPage) {
+      if (page === "home") { try { runHomeIntro(); } catch(_) {} }
+      return;
+    }
 
     const curEl = $(`.page[data-page="${currentPage}"]`);
     const nextEl = $(`.page[data-page="${page}"]`);
@@ -482,6 +501,8 @@ const closeModalEl = (el) => {
       syncRemoteProfileIfNewer({ force: true }).then((changed) => {
         if (changed) hydrateProfile();
       });
+      // replay CTA entrance each time
+      try { runHomeIntro(); } catch(_) {}
     }
     if (page === "orders") renderOrders();
     if (page === "services") renderServices();
@@ -3603,6 +3624,7 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   // mark first page as active for CSS transitions
   try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
   hydrateProfile();
+  try { runHomeIntro(); } catch(_) {}
   initRevealObserver();
   renderChat();
   } catch (e) {
