@@ -581,36 +581,102 @@ const closeModalEl = (el) => {
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER: активный слайд по центру (вход/выход только вбок) ======
-    let baObserver = null;
+    // ====== BEFORE/AFTER ======
+    let _baInited = false;
+    const initBaStory = () => {
+      if (_baInited) return;
+      _baInited = true;
     
-    const initBaObserver = () => {
-      if (baObserver) return;
-    
+      const story = document.querySelector('.baStory');
+      const hint = document.getElementById('baSwipeHint');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      if (!sections.length) return;
+      if (!story || !sections.length) return;
     
-      const setActive = (el) => {
-        sections.forEach(s => s.classList.toggle('baActive', s === el));
+      let started = false;
+      let current = 0;
+      let lastY = window.scrollY || 0;
+      let raf = 0;
+    
+      const setActive = (idx) => {
+        const i = Math.max(0, Math.min(sections.length - 1, idx|0));
+        current = i;
+        sections.forEach((s, k) => s.classList.toggle('baActive', k === i));
       };
     
-      // включаем первый сразу
-      setActive(sections[0]);
+      // до старта — ничего не показываем (только стрелку)
+      sections.forEach(s => s.classList.remove('baActive'));
     
-      baObserver = new IntersectionObserver((entries) => {
-        let best = null;
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+      const start = () => {
+        if (started) return;
+        started = true;
+        story.classList.add('baStarted');
+        if (hint) hint.setAttribute('aria-hidden', 'true');
+        setActive(0);
+      };
+    
+      const pickIndexByCenter = () => {
+        const vh = window.innerHeight || 1;
+        const centerY = vh * 0.5;
+        let bestIdx = -1;
+        let bestDist = Infinity;
+    
+        for (let i = 0; i < sections.length; i++) {
+          const r = sections[i].getBoundingClientRect();
+          // берём секции вокруг экрана, чтобы не дёргалось
+          if (r.bottom < -vh * 0.25 || r.top > vh * 1.25) continue;
+          const secCenter = r.top + r.height * 0.5;
+          const dist = Math.abs(secCenter - centerY);
+          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
         }
-        if (best) setActive(best.target);
-      }, {
-        root: null,
-        rootMargin: "-40% 0px -40% 0px",
-        threshold: [0.01, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95],
-      });
     
-      sections.forEach(sec => baObserver.observe(sec));
+        // если уже ниже последнего — фиксируем последний, пока не пошли вверх
+        const last = sections[sections.length - 1];
+        if (bestIdx === -1 && last) {
+          const lr = last.getBoundingClientRect();
+          if (lr.top < centerY) return sections.length - 1;
+        }
+    
+        // если выше первого — фиксируем первый
+        const first = sections[0];
+        if (bestIdx === -1 && first) {
+          const fr = first.getBoundingClientRect();
+          if (fr.bottom > centerY) return 0;
+        }
+    
+        return bestIdx === -1 ? current : bestIdx;
+      };
+    
+      const onScroll = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const y = window.scrollY || 0;
+          const dir = y > lastY ? 1 : (y < lastY ? -1 : 0);
+          lastY = y;
+    
+          if (!started && dir !== 0) start();
+          if (!started) return;
+    
+          const next = pickIndexByCenter();
+          if (next !== current) {
+            // уходят в бок (за счёт снятия .baActive с transition в CSS)
+            setActive(next);
+          }
+        });
+      };
+    
+      // момент старта: первый реальный свайп/скролл
+      const onFirstTouchMove = () => {
+        start();
+        window.removeEventListener('touchmove', onFirstTouchMove);
+      };
+    
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('touchmove', onFirstTouchMove, { passive: true });
+    
+      // если пользователь уже не в самом верху — считаем что он "начал"
+      if ((window.scrollY || 0) > 8) start();
+      onScroll();
     };
 
     const setAboutTab = (key) => {
@@ -622,7 +688,7 @@ const closeModalEl = (el) => {
       initRevealObserver();
       if (k === 'cases') {
         applyBaImages();
-        initBaObserver();
+        initBaStory();
       }
     };
 
@@ -697,9 +763,27 @@ const closeModalEl = (el) => {
     const applyReviewImages = () => {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
       const suffix = theme === 'dark' ? 'b' : 'l';
+    
       document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
         const i = Number(img.getAttribute('data-review') || '1');
+        // подставляем картинку под тему
         img.src = `o${i}${suffix}.png`;
+    
+        // НЕ обрезаем: подгоняем контейнер под реальный aspect ratio
+        // (работает на любых устройствах/разрешениях)
+        const fit = () => {
+          const w = img.naturalWidth || 0;
+          const h = img.naturalHeight || 0;
+          if (!w || !h) return;
+          const slide = img.closest?.('.reviewSlide');
+          if (slide) {
+            // CSS поддерживает aspect-ratio — будет авто-высота по ширине
+            slide.style.aspectRatio = `${w} / ${h}`;
+          }
+        };
+    
+        if (img.complete) fit();
+        else img.addEventListener('load', fit, { once: true });
       });
     };
 
