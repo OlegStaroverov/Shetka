@@ -216,6 +216,29 @@ return true;
     });
   };
 
+  // Page intro animation (like Home CTAs) for any page
+  const runPageIntro = (page) => {
+    const root = document.querySelector(`.page[data-page="${page}"]`);
+    if (!root || root.hidden) return;
+  
+    const nodes = Array.from(root.querySelectorAll('.pageIntro'));
+    if (!nodes.length) return;
+  
+    nodes.forEach(n => n.classList.remove('in'));
+    // reflow to replay
+    // eslint-disable-next-line no-unused-expressions
+    root.offsetHeight;
+  
+    requestAnimationFrame(() => {
+      nodes.forEach((n, i) => {
+        // ступенчатая задержка как на Home
+        n.style.transitionDelay = `${40 + i * 50}ms`;
+        n.classList.add('in');
+      });
+    });
+  };
+
+    
   const html = document.documentElement;
 
   // sendData bridge
@@ -487,6 +510,8 @@ haptic("light");
       if (page === "photo_estimates") { try { peRefreshAll(true).catch(() => {}); } catch(_) {} }
       if (page === "courier_requests") { try { crRefreshAll(true).catch(() => {}); } catch(_) {} }
 
+      try { runPageIntro(page); } catch(_) {}
+      
       return;
     }
 
@@ -508,6 +533,7 @@ haptic("light");
     });
 
     currentPage = page;
+    try { runPageIntro(page); } catch(_) {}
     if (push) pageStack.push(page);
     setTabActive(page);
 
