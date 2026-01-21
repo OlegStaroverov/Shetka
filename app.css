@@ -1206,16 +1206,16 @@ section.page[data-page="courier"] .fieldLabel{ font-size: 13px; }
 section.page[data-page="courier"] .orderLine{ font-size: 14px; }
 section.page[data-page="courier"] .field{ min-width: 0; }
 
-.reveal{
-  max-height:0;
-  opacity:0;
+#estimateOtherWrap{
+  max-height: 0;
+  opacity: 0;
   transform: translateY(-6px);
-  overflow:hidden;
+  overflow: hidden;
   transition: max-height .24s ease, opacity .24s ease, transform .24s ease;
 }
-.reveal.show{
-  max-height:140px;
-  opacity:1;
+#estimateOtherWrap.show{
+  max-height: 260px;
+  opacity: 1;
   transform: translateY(0);
 }
 
