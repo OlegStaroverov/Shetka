@@ -435,29 +435,8 @@ const closeModalEl = (el) => {
     setPatternEnabled(getPatternEnabled());
 
     // обновляем отзывы под тему
-    try {
-      const theme = html.getAttribute('data-theme') || 'light';
-      const suffix = theme === 'dark' ? 'b' : 'l';
-    
-      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
-        const i = Number(img.getAttribute('data-review') || '1');
-        img.src = `o${i}${suffix}.png`;
-    
-        const fit = () => {
-          const w = img.naturalWidth || 0;
-          const h = img.naturalHeight || 0;
-          if (!w || !h) return;
-          const slide = img.closest?.('.reviewSlide');
-          if (slide) slide.style.aspectRatio = `${w} / ${h}`;
-        };
-    
-        if (img.complete) fit();
-        else img.addEventListener('load', fit, { once: true });
-      });
-    } catch (_) {}
-
-
-    haptic("light");
+    try { window.__SHETKA_APPLY_REVIEW_IMAGES?.(); } catch (_) {}
+haptic("light");
   };
 
   // ---------------- PATTERN ----------------
@@ -497,7 +476,17 @@ const closeModalEl = (el) => {
 
   const showPage = (page, { push = true } = {}) => {
     if (page === currentPage) {
-      if (page === "home") { try { runHomeIntro(); } catch(_) {} }
+      // каждый переход/тап по вкладке начинается с начала страницы + перерисовка
+      try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+
+      // обновляем контент текущей страницы
+      if (page === "home") { try { hydrateProfile(); } catch(_) {} try { runHomeIntro(); } catch(_) {} }
+      if (page === "orders") { try { renderOrders(); } catch(_) {} }
+      if (page === "services") { try { renderServices(); } catch(_) {} }
+      if (page === "about") { try { initAboutOnce(); } catch(_) {} try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
+      if (page === "photo_estimates") { try { peRefreshAll(true).catch(() => {}); } catch(_) {} }
+      if (page === "courier_requests") { try { crRefreshAll(true).catch(() => {}); } catch(_) {} }
+
       return;
     }
 
@@ -539,7 +528,7 @@ const closeModalEl = (el) => {
     }
     if (page === "orders") renderOrders();
     if (page === "services") renderServices();
-    if (page === "about") initAboutOnce();
+    if (page === "about") { initAboutOnce(); try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
     if (page === "photo_estimates") {
       // при заходе обновляем и рисуем
       peRefreshAll(true).catch(() => {});
@@ -599,22 +588,103 @@ const closeModalEl = (el) => {
     const initBaStory = () => {
       if (_baInited) return;
       _baInited = true;
-    
+
       const story = document.querySelector('.baStory');
       const hint = document.getElementById('baSwipeHint');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
       if (!story || !sections.length) return;
-    
+
+      // Триггер старта: стрелка остаётся, пока полностью не уйдут за экран
+      // заголовок "О нас..." + кнопки "О нас / До‑после"
+      const pageHead = document.querySelector('.page[data-page="about"] .pageHead');
+      const aboutSeg = document.getElementById('aboutSeg');
+
       let started = false;
       let current = 0;
-      let lastY = window.scrollY || 0;
       let raf = 0;
-    
+
       const setActive = (idx) => {
-        const i = Math.max(0, Math.min(sections.length - 1, idx|0));
+        const i = Math.max(0, Math.min(sections.length - 1, idx | 0));
         current = i;
         sections.forEach((s, k) => s.classList.toggle('baActive', k === i));
       };
+
+      const resetToHint = () => {
+        started = false;
+        story.classList.remove('baStarted');
+        if (hint) hint.setAttribute('aria-hidden', 'false');
+        // снимаем активность — плейсхолдеры уедут в бок (CSS transition)
+        sections.forEach(s => s.classList.remove('baActive'));
+      };
+
+      const startStory = () => {
+        if (started) return;
+        started = true;
+        story.classList.add('baStarted');
+        if (hint) hint.setAttribute('aria-hidden', 'true');
+        setActive(0);
+      };
+
+      const canStartNow = () => {
+        const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
+        const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
+        // стартуем ТОЛЬКО когда оба блока полностью ушли вверх
+        return headBottom <= 0 && segBottom <= 0;
+      };
+
+      const pickIndexByCenter = () => {
+        const vh = window.innerHeight || 1;
+        const centerY = vh * 0.5;
+
+        let bestIdx = 0;
+        let bestDist = Infinity;
+
+        for (let i = 0; i < sections.length; i++) {
+          const r = sections[i].getBoundingClientRect();
+          // игнорируем слишком далёкие, но даём небольшой запас
+          if (r.bottom < -vh * 0.6 || r.top > vh * 1.6) continue;
+          const secCenter = r.top + r.height * 0.5;
+          const dist = Math.abs(secCenter - centerY);
+          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        }
+
+        // фиксируем последний, когда центр экрана прошёл центр последней секции
+        const last = sections[sections.length - 1];
+        if (last) {
+          const lr = last.getBoundingClientRect();
+          const lastCenter = lr.top + lr.height * 0.5;
+          if (centerY >= lastCenter) return sections.length - 1;
+        }
+
+        return bestIdx;
+      };
+
+      const onScroll = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+
+          // До старта держим стрелку, пока не ушли заголовок и кнопки
+          if (!started) {
+            if (canStartNow()) startStory();
+            else { resetToHint(); return; }
+          } else {
+            // Если юзер прокрутил обратно вверх и кнопки снова в кадре —
+            // плейсхолдеры уезжают в бок и возвращается стрелка.
+            if (!canStartNow()) { resetToHint(); return; }
+          }
+
+          const next = pickIndexByCenter();
+          if (next !== current) setActive(next);
+        });
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      // init
+      resetToHint();
+      onScroll();
+    };
     
       // до старта — ничего не показываем (только стрелку)
       sections.forEach(s => s.classList.remove('baActive'));
@@ -778,34 +848,37 @@ const closeModalEl = (el) => {
     const applyReviewImages = () => {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
       const suffix = theme === 'dark' ? 'b' : 'l';
-    
+
       document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
         const i = Number(img.getAttribute('data-review') || '1');
-        // подставляем картинку под тему
         img.src = `o${i}${suffix}.png`;
-    
-        // НЕ обрезаем: подгоняем контейнер под реальный aspect ratio
-        // (работает на любых устройствах/разрешениях)
-        const fit = () => {
-          const w = img.naturalWidth || 0;
-          const h = img.naturalHeight || 0;
-          if (!w || !h) return;
-          const slide = img.closest?.('.reviewSlide');
-          if (slide) {
-            // CSS поддерживает aspect-ratio — будет авто-высота по ширине
-            slide.style.aspectRatio = `${w} / ${h}`;
-          }
-        };
+
+        // крупный full-bleed режим: высоту/скейл держим CSS'ом,
+        // а aspect-ratio не фиксируем (иначе на телефоне будет "мелко")
+        const slide = img.closest?.('.reviewSlide');
+        if (slide) slide.style.aspectRatio = '';
+      });
+    };
     
         if (img.complete) fit();
         else img.addEventListener('load', fit, { once: true });
       });
     };
 
+    window.__SHETKA_APPLY_REVIEW_IMAGES = applyReviewImages;
+
     applyReviewImages();
     
     // init default
     setAboutTab('about');
+
+    // allow re-open refresh (reset to start + reapply assets)
+    window.__SHETKA_REFRESH_ABOUT = () => {
+      try { setAboutTab('about'); } catch (_) {}
+      try { applyReviewImages(); } catch (_) {}
+      try { applyBaImages(); } catch (_) {}
+      try { initBaStory(); } catch (_) {}
+    };
   }
 
   // ---------------- STATUS NORMALIZATION ----------------
