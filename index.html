@@ -16,10 +16,16 @@
 
     <!-- FIXED HEADER -->
     <header class="topbar" role="banner">
-      <div class="brandSlot" aria-hidden="true">
-        <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
-      </div>
-    </header>
+  <div class="brandSlot" aria-hidden="true">
+    <img class="appLogo" src="logo.png" alt="ЩЁТКА" />
+  </div>
+  <button class="themeSwitch glass" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Сменить тему">
+    <span class="themeKnob" aria-hidden="true">
+      <span class="themeIcon sun">☀️</span>
+      <span class="themeIcon moon">🌙</span>
+    </span>
+  </button>
+</header>
 
     <!-- STAGE -->
     <main class="stage" role="main">
@@ -48,25 +54,17 @@
           </div>
         </div>
 
-        <div class="homeCtas">
-          <button class="cta primary reveal" type="button" id="openDropoffChoice">
-            <div class="ctaIco">✨</div>
-            <div class="ctaText">
-              <div class="ctaTitle">Сдать вещь</div>
-              <div class="ctaSub">Выберите способ: курьер или принести самому</div>
-            </div>
-          </button>
+        <div class="homeCtasRow">
+  <button class="ctaMini ctaDropoff reveal" type="button" id="openDropoffChoice">
+    <span class="ctaMiniTxt">Сдать вещь</span>
+  </button>
 
-          <button class="cta secondary reveal" type="button" id="openEstimateSheet">
-            <div class="ctaIco">📸</div>
-            <div class="ctaText">
-              <div class="ctaTitle">Консультация по фото/видео</div>
-              <div class="ctaSub">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки.</div>
-            </div>
-          </button>
-        </div>
+  <button class="ctaMini ctaConsult reveal" type="button" id="openEstimateSheet">
+    <span class="ctaMiniTxt">Консультация</span>
+  </button>
+</div>
 
-        <button class="supportBtn glass reveal" id="supportOpenFromHome" type="button">💬 Написать менеджеру</button>
+<button class="supportBtn glass reveal supportCenter" id="supportOpenFromHome" type="button">💬 Написать администратору</button>
       </section>
 
       <!-- ORDERS -->
@@ -114,7 +112,8 @@
               <span id="courierRequestsSubText">активных</span>
             </div>
           </div>
-          <div class="pulseDot" id="courierRequestsPulse" aria-hidden="true" style="display:none"></div>
+          <div class="pulseDot" id="courierRequestsPulse" aria-hidden="true" style="display:none">
+            <span class="pulseNum" id="courierRequestsUnread" hidden>0</span></div>
         </button>
 
         <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
@@ -186,7 +185,16 @@
           <div class="glass aboutCard reveal">
             <div class="aboutTitle">Отзывы</div>
             <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
-              <div class="reviewSlide">🖼️ Слайд 1</div>
+                            <div class="reviewSlide">🖼️ Слайд 1</div>
+              <div class="reviewSlide">🖼️ Слайд 2</div>
+              <div class="reviewSlide">🖼️ Слайд 3</div>
+              <div class="reviewSlide">🖼️ Слайд 4</div>
+              <div class="reviewSlide">🖼️ Слайд 5</div>
+              <div class="reviewSlide">🖼️ Слайд 6</div>
+              <div class="reviewSlide">🖼️ Слайд 7</div>
+              <div class="reviewSlide">🖼️ Слайд 8</div>
+              <div class="reviewSlide">🖼️ Слайд 9</div>
+              <div class="reviewSlide">🖼️ Слайд 10</div></div>
               <div class="reviewSlide">🖼️ Слайд 2</div>
               <div class="reviewSlide">🖼️ Слайд 3</div>
             </div>
@@ -370,21 +378,23 @@
         <div class="modalH modalHBig">Сдать вещь</div>
         <div class="modalP">Выберите удобный способ.</div>
         <div style="height:10px"></div>
-        <button class="cta primary" type="button" id="openCourierSheet">
-          <div class="ctaIco">🚚</div>
-          <div class="ctaText">
-            <div class="ctaTitle">Вызвать курьера</div>
-            <div class="ctaSub">Заберём и привезём обратно</div>
-          </div>
-        </button>
-        <div style="height:10px"></div>
-        <button class="cta secondary" type="button" id="openDropoffMap">
-          <div class="ctaIco">🏬</div>
-          <div class="ctaText">
-            <div class="ctaTitle">Принести самому</div>
-            <div class="ctaSub">Покажем адрес и построим маршрут</div>
-          </div>
-        </button>
+        <div class="modalActionsCol">
+  <button class="cta primary" type="button" id="openCourierSheet">
+    <div class="ctaIco">🚚</div>
+    <div class="ctaText">
+      <div class="ctaTitle">Вызвать курьера</div>
+      <div class="ctaSub">Заберём и привезём обратно</div>
+    </div>
+  </button>
+  <div style="height:10px"></div>
+  <button class="cta secondary" type="button" id="openDropoffMap">
+    <div class="ctaIco">🏬</div>
+    <div class="ctaText">
+      <div class="ctaTitle">Принести самому</div>
+      <div class="ctaSub">Покажем адрес и построим маршрут</div>
+    </div>
+  </button>
+</div>
       </div>
     </section>
 
@@ -449,16 +459,7 @@
             <span>Фамилия (опционально)</span>
             <input id="regLastName" class="fieldInput" />
           </div>
-
-          <div class="modalRowCol">
-            <span>Пол</span>
-            <div class="seg" id="regGenderSeg">
-              <button class="segBtn" type="button" data-gender="M">М</button>
-              <button class="segBtn" type="button" data-gender="W">Ж</button>
-            </div>
-          </div>
-
-          <div class="modalRowCol">
+<div class="modalRowCol">
             <span>Номер телефона</span>
             <input id="regPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
           </div>
@@ -505,16 +506,7 @@
             <span>Фамилия</span>
             <input id="profLastName" class="fieldInput" placeholder="Фамилия" />
           </div>
-
-          <div class="modalRowCol">
-            <span>Пол</span>
-            <div class="seg" id="profGenderSeg">
-              <button class="segBtn" type="button" data-gender="M">М</button>
-              <button class="segBtn" type="button" data-gender="W">Ж</button>
-            </div>
-          </div>
-
-          <div class="modalRowCol">
+<div class="modalRowCol">
             <span>Номер телефона</span>
             <input id="profPhone" class="phoneInput" inputmode="tel" placeholder="+7 9xx xxx-xx-xx" />
           </div>
