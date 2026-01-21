@@ -500,7 +500,7 @@ haptic("light");
   const showPage = (page, { push = true } = {}) => {
     if (page === currentPage) {
       // каждый переход/тап по вкладке начинается с начала страницы + перерисовка
-      try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+      try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
 
       // обновляем контент текущей страницы
       if (page === "home") { try { hydrateProfile(); } catch(_) {} try { runHomeIntro(); } catch(_) {} }
@@ -538,7 +538,7 @@ haptic("light");
     setTabActive(page);
 
     // при переключении страницы сбрасываем скролл, чтобы логотип "уходил под блоки" корректно везде
-    try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
     document.body.classList.remove("logoBehind");
     
     document.body.classList.toggle("page-estimate", page === "estimate");
@@ -609,111 +609,155 @@ haptic("light");
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER ======
+    // ====== BEFORE/AFTER (NEW: этажи, движение строго от скролла) ======
     let _baInited = false;
     const initBaStory = () => {
       if (_baInited) return;
       _baInited = true;
 
+      const aboutPage = document.querySelector('.page[data-page="about"]');
       const story = document.querySelector('.baStory');
       const hint = document.getElementById('baSwipeHint');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      if (!story || !sections.length) return;
 
-      // Триггер старта: стрелка остаётся, пока полностью не уйдут за экран
-      // заголовок "О нас..." + кнопки "О нас / До‑после"
       const pageHead = document.querySelector('.page[data-page="about"] .pageHead');
       const aboutSeg = document.getElementById('aboutSeg');
 
+      if (!story || !sections.length) return;
+
       let started = false;
-      let current = 0;
       let raf = 0;
 
-      const setActive = (idx) => {
-        const i = Math.max(0, Math.min(sections.length - 1, idx | 0));
-        current = i;
-        sections.forEach((s, k) => s.classList.toggle('baActive', k === i));
+      const clamp01 = (x) => Math.max(0, Math.min(1, x));
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const ease = (t) => {
+        // мягко и медленно (без резких стартов)
+        t = clamp01(t);
+        return t * t * (3 - 2 * t); // smoothstep
       };
 
-      const resetToHint = () => {
-        started = false;
-        story.classList.remove('baStarted');
-        if (hint) {
-          hint.style.opacity = "1";
-          hint.style.transform = "translateY(-50%)";
-        }
-        if (hint) hint.setAttribute('aria-hidden', 'false');
-        // снимаем активность — плейсхолдеры уедут в бок (CSS transition)
-        sections.forEach(s => s.classList.remove('baActive'));
-      };
-
-      const startStory = () => {
-        if (started) return;
-        started = true;
-        story.classList.add('baStarted');
-        if (hint) hint.setAttribute('aria-hidden', 'true');
-        setActive(0);
-      };
+      const offX = () => (window.innerWidth || 360) * 0.62 + 80; // насколько "за экран" уезжаем
 
       const canStartNow = () => {
         const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
         const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
-      
-        return headBottom <= -28 && segBottom <= -28;
+        // стартуем только когда шапка и кнопки полностью ушли вверх
+        return headBottom <= 0 && segBottom <= 0;
       };
 
-      const pickIndexByCenter = () => {
+      const sectionProgress = (sec) => {
+        const r = sec.getBoundingClientRect();
         const vh = window.innerHeight || 1;
-        const centerY = vh * 0.5;
+        // прогресс = как далеко центр экрана прошёл по секции
+        const center = vh * 0.55;
+        const p = (center - r.top) / (r.height || 1);
+        return clamp01(p);
+      };
 
-        let bestIdx = 0;
-        let bestDist = Infinity;
+      const setStarted = (v) => {
+        started = !!v;
+        story.classList.toggle('baStarted', started);
+        // пока история идёт — прячем шапку/кнопки (и показываем только после полного отката)
+        aboutPage?.classList.toggle('baLockHeader', started);
 
-        for (let i = 0; i < sections.length; i++) {
-          const r = sections[i].getBoundingClientRect();
-          // игнорируем слишком далёкие, но даём небольшой запас
-          if (r.bottom < -vh * 0.6 || r.top > vh * 1.6) continue;
-          const secCenter = r.top + r.height * 0.5;
-          const dist = Math.abs(secCenter - centerY);
-          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        if (hint) {
+          hint.setAttribute('aria-hidden', started ? 'true' : 'false');
+        }
+      };
+
+      const resetAllOffscreen = () => {
+        const off = offX();
+        sections.forEach((sec) => {
+          const b = sec.querySelector('.baBefore');
+          const a = sec.querySelector('.baAfter');
+          if (b) b.style.transform = `translate3d(${-off}px,0,0)`;
+          if (a) a.style.transform = `translate3d(${ off}px,0,0)`;
+        });
+      };
+
+      const render = () => {
+        raf = 0;
+
+        // если вкладка не "До/После" — ничего не делаем
+        if (pCases?.hidden) return;
+
+        const can = canStartNow();
+
+        // 1) ещё не стартовали: держим всё за краями, стрелка видна, шапка/кнопки видны
+        if (!started) {
+          if (can) {
+            // шапка исчезла -> запускаем историю
+            setStarted(true);
+          } else {
+            setStarted(false);
+            resetAllOffscreen();
+            return;
+          }
         }
 
-        // фиксируем последний, когда центр экрана прошёл центр последней секции
-        const last = sections[sections.length - 1];
-        if (last) {
-          const lr = last.getBoundingClientRect();
-          const lastCenter = lr.top + lr.height * 0.5;
-          if (centerY >= lastCenter) return sections.length - 1;
+        // 2) история идёт:
+        // если юзер пошёл вверх и шапка начинает возвращаться —
+        // мы НЕ показываем её, пока первый этаж полностью не задвинется обратно.
+        if (started && !can) {
+          const p0 = sectionProgress(sections[0]);
+          if (p0 <= 0.01) {
+            // первый этаж полностью спрятан -> теперь можно вернуть шапку и стрелку
+            setStarted(false);
+            resetAllOffscreen();
+            return;
+          }
+          // иначе продолжаем анимацию, шапку держим скрытой
         }
 
-        return bestIdx;
+        const off = offX();
+        const lastIdx = sections.length - 1;
+
+        sections.forEach((sec, idx) => {
+          const p = sectionProgress(sec);
+
+          const beforeEl = sec.querySelector('.baBefore');
+          const afterEl  = sec.querySelector('.baAfter');
+          if (!beforeEl || !afterEl) return;
+
+          let xL = -off;
+          let xR = off;
+
+          if (p <= 0) {
+            // полностью спрятано
+            xL = -off; xR = off;
+          } else if (p < 0.5) {
+            // Фаза 1: медленный выезд в центр
+            const t = ease(p / 0.5);
+            xL = lerp(-off, 0, t);
+            xR = lerp( off, 0, t);
+          } else {
+            if (idx === lastIdx) {
+              // последний этаж: зафиксировать в центре
+              xL = 0; xR = 0;
+            } else {
+              // Фаза 2: медленный разъезд обратно за края
+              const t = ease((p - 0.5) / 0.5);
+              xL = lerp(0, -off, t);
+              xR = lerp(0,  off, t);
+            }
+          }
+
+          beforeEl.style.transform = `translate3d(${xL}px,0,0)`;
+          afterEl.style.transform  = `translate3d(${xR}px,0,0)`;
+        });
       };
 
       const onScroll = () => {
         if (raf) return;
-        raf = requestAnimationFrame(() => {
-          raf = 0;
-
-          // До старта держим стрелку, пока не ушли заголовок и кнопки
-          if (!started) {
-            if (canStartNow()) startStory();
-            else { resetToHint(); return; }
-          } else {
-            // Если юзер прокрутил обратно вверх и кнопки снова в кадре —
-            // плейсхолдеры уезжают в бок и возвращается стрелка.
-            if (!canStartNow()) { resetToHint(); return; }
-          }
-
-          const next = pickIndexByCenter();
-          if (next !== current) setActive(next);
-        });
+        raf = requestAnimationFrame(render);
       };
 
       window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('touchmove', onScroll, { passive: true });
-      
-      // init
-      resetToHint();
+      window.addEventListener('resize', onScroll, { passive: true });
+
+      // init: всё спрятано, стрелка видна
+      setStarted(false);
+      resetAllOffscreen();
       onScroll();
     };
 
@@ -722,7 +766,7 @@ haptic("light");
       seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
       if (pAbout) pAbout.hidden = (k !== 'about');
       if (pCases) pCases.hidden = (k !== 'cases');
-      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
       if (k === 'cases') {
         applyBaImages();
