@@ -110,17 +110,14 @@
       // ВАЖНО: не затираем локальные поля пустыми значениями с сервера.
       // (Особенно gender — иначе он "слетает" после переключения вкладок.)
       const remote = {
-        city: (rp.city || "").toString(),
-        gender: (rp.gender || "").toString().toUpperCase() || "", // может быть пустым
-        first_name: rp.first_name || "",
-        last_name: rp.last_name || "",
-        phone: rp.phone || "",
-        avatar_kind: rp.avatar_kind || ((rp.gender || "").toString().toUpperCase() === "M" ? "ava_m" : "ava_w"),
-        avatar_url: (rp.avatar_url || "").trim() || genderToAvatar((rp.gender || "").toString().toUpperCase()),
-        promo_code: rp.promo_code ?? null,
-        promo_percent: rp.promo_percent ?? null,
-        promo_used: !!rp.promo_used,
-      };
+  city: (rp.city || "").toString(),
+  first_name: rp.first_name || "",
+  last_name: rp.last_name || "",
+  phone: rp.phone || "",
+  promo_code: rp.promo_code ?? null,
+  promo_percent: rp.promo_percent ?? null,
+  promo_used: !!rp.promo_used,
+};
 
       // Если профиль в Supabase пустой — не трогаем локальный
       if (!(remote.city && remote.first_name && remote.phone)) return false;
@@ -130,31 +127,23 @@
       const remoteStamp = String(rp.updated_at || "");
 
       const differs =
-        String(local.city || "") !== String(remote.city || "") ||
-        String((local.gender || "").toUpperCase()) !== String((remote.gender || "").toUpperCase()) ||
-        String(local.first_name || "") !== String(remote.first_name || "") ||
-        String(local.last_name || "") !== String(remote.last_name || "") ||
-        String(local.phone || "") !== String(remote.phone || "") ||
-        String(local.avatar_kind || "") !== String(remote.avatar_kind || "") ||
-        String(local.avatar_url || "") !== String(remote.avatar_url || "");
+  String(local.city || "") !== String(remote.city || "") ||
+  String(local.first_name || "") !== String(remote.first_name || "") ||
+  String(local.last_name || "") !== String(remote.last_name || "") ||
+  String(local.phone || "") !== String(remote.phone || "");
 
-      const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
+const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
       if (!shouldUpdate) return false;
 
-      const mergedGender = remote.gender || (local.gender || "");
       const mergedCity = String(remote.city || "").trim() || (local.city || "");
-      saveProfile({
-        ...local,
-        ...remote,
-        city: mergedCity,
-        gender: mergedGender,
-        // на всякий случай нормализуем аватар под пол (в мини-аппе используем только пресеты)
-        avatar_url: (remote.avatar_url || "").trim() || (local.avatar_url || "").trim() || genderToAvatar(mergedGender),
-        avatar_kind: (remote.avatar_kind || "").trim() || (local.avatar_kind || "").trim() || ((mergedGender || "").toUpperCase() === "M" ? "ava_m" : "ava_w"),
-        [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
-      });
-      localStorage.setItem("shetka_registered_v1", "1");
-      return true;
+saveProfile({
+  ...local,
+  ...remote,
+  city: mergedCity,
+  [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
+});
+localStorage.setItem("shetka_registered_v1", "1");
+return true;
     } catch (e) {
       console.log("syncRemoteProfileIfNewer error:", e);
       return false;
@@ -517,7 +506,7 @@ const closeModalEl = (el) => {
       }
     } catch(_) {}
     // fallback
-    if (window.confirm("Выйти из формы? Данные не сохранятся.")) doLeave();
+    confirmDialog("Выйти из формы? Данные не сохранятся.").then((ok) => { if (ok) doLeave(); });
   };
 
   const goBack = () => {
@@ -558,6 +547,16 @@ const closeModalEl = (el) => {
       if (pCases) pCases.hidden = (k !== 'cases');
       try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
+      if (k === 'cases') {
+        // restart BA placeholders animation on each open
+        document.querySelectorAll('[data-ba]').forEach(el => el.classList.remove('baActive'));
+        requestAnimationFrame(() => {
+          document.querySelectorAll('[data-ba]').forEach(el => {
+            // class will be re-added by observer when intersecting; force reflow fallback
+            void el.offsetHeight;
+          });
+        });
+      }
     };
 
     // Before/After: slide-in placeholders from edges (10 cases)
@@ -565,9 +564,9 @@ const closeModalEl = (el) => {
       if ('IntersectionObserver' in window) {
         const baObs = new IntersectionObserver((entries) => {
           entries.forEach((e) => {
-            if (!e.isIntersecting) return;
-            e.target.classList.add('baActive');
-            baObs.unobserve(e.target);
+            // animate every time: add on enter, remove on leave
+            if (e.isIntersecting) e.target.classList.add('baActive');
+            else e.target.classList.remove('baActive');
           });
         }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
         document.querySelectorAll('[data-ba]').forEach(el => baObs.observe(el));
@@ -844,57 +843,66 @@ const closeModalEl = (el) => {
   const servicesContent = $("#priceContent");
 
   const PRICE = [
-    { key:"clean_shoes", title:"Чистка обуви", items:[
-      ["Открытая обувь", 1690],
-      ["Кроссовки / Туфли", 1990],
-      ["Полусапоги / Ботинки", 2390],
-      ["Сапоги / Ботфорты", 2690],
-      ["Детская обувь", 1290],
-    ]},
-    { key:"bags", title:"Сумки", items:[
-      ["Сумка маленькая", 2200],
-      ["Сумка средняя", 2700],
-      ["Сумка большая", 3800],
-      ["Полный уход с покраской — маленькая", 3500],
-      ["Полный уход с покраской — средняя", 4500],
-      ["Полный уход с покраской — большая", 5000],
-    ]},
-    { key:"other", title:"Другие изделия", items:[
-      ["Колясок", 2500],
-      ["Автокресел", 2000],
-      ["Глобальная чистка кожи", 5500],
-    ]},
-    { key:"dis", title:"Дезинфекция", items:[
-      ["Устранение запаха", 500],
-    ]},
-    { key:"sole", title:"Ремонт • Подошва", items:[
-      ["Замена подошвы", 3500],
-      ["Прошивка круговая", 1500],
-      ["Переклейка подошвы", 1500],
-      ["Прошивка + проклейка", 2000],
-      ["Изготовление подошвы", 4500],
-      ["Замена наката", 2000],
-      ["Переклейка наката", 1000],
-      ["Замена супинатора", 1500],
-    ]},
-    { key:"sew", title:"Ремонт • Швейные работы", items:[
-      ["Замена молнии (10 см)", 600],
-      ["Латки", 350],
-      ["Прошивка", 500],
-      ["Замена бегунка", 500],
-      ["Ремонт задников", 1500],
-      ["Замена обувных резинок", 800],
-      ["Изготовление стелек", 1000],
-    ]},
-    { key:"color", title:"Покраска", items:[
-      ["Покраска изделий", 1000],
-      ["Реставрация — туфли/кроссовки", 4500],
-      ["Реставрация — полусапоги/ботинки", 5500],
-      ["Реставрация — сапоги", 6000],
-      ["Куртки до 50 см", 6000],
-      ["Куртки свыше 50 см", 8000],
-    ]}
-  ];
+  { key:"clean_shoes", title:"Чистка обуви", items:[
+    ["Открытая обувь", 1690],
+    ["Кроссовки / Туфли", 1990],
+    ["Полусапоги / Ботинки", 2390],
+    ["Сапоги / Ботфорты", 2690],
+    ["Детская обувь", 1290],
+  ]},
+
+  { key:"bags", title:"Сумки", items:[
+    ["Сумка маленькая", 2200],
+    ["Сумка средняя", 2700],
+    ["Сумка большая", 3800],
+    ["Полный уход с покраской — маленькая", 3500],
+    ["Полный уход с покраской — средняя", 4500],
+    ["Полный уход с покраской — большая", 5000],
+  ]},
+
+  { key:"dis", title:"Дезинфекция", items:[
+    ["Устранение запаха", 500],
+  ]},
+
+  { key:"sole", title:"Ремонт • Подошва", items:[
+    ["Замена подошвы", 3500],
+    ["Прошивка круговая", 1500],
+    ["Переклейка подошвы", 1500],
+    ["Прошивка + проклейка", 2000],
+    ["Изготовление подошвы", 4500],
+    ["Замена наката", 2000],
+    ["Переклейка наката", 1000],
+    ["Замена супинатора", 1500],
+  ]},
+
+  { key:"sew", title:"Ремонт • Швейные работы", items:[
+    ["Замена молнии (10 см)", 600],
+    ["Латки", 350],
+    ["Прошивка", 500],
+    ["Замена бегунка", 500],
+    ["Ремонт задников", 1500],
+    ["Замена обувных резинок", 800],
+    ["Изготовление стелек", 1000],
+  ]},
+
+  { key:"color_shoes", title:"Реставрация • Обувь", items:[
+    ["Покраска обуви", 1000],
+    ["Реставрация — туфли/кроссовки", 4500],
+    ["Реставрация — полусапоги/ботинки", 5500],
+    ["Реставрация — сапоги", 6000],
+  ]},
+
+  { key:"color_clothes", title:"Реставрация • Одежда", items:[
+    ["Покраска кожаной куртки до 50 см", 6000],
+    ["Покраска кожаной куртки свыше 50 см", 8000],
+  ]},
+
+  { key:"other", title:"Другие изделия", items:[
+    ["Коляски", 2500],
+    ["Автокресла", 2000],
+    ["Глобальная чистка кожи", 5500],
+  ]},
+];
 
   // --- Courier: услуги из прайса по категории ---
   const PRICE_SERVICES_BY_KEY = Object.fromEntries(
@@ -903,11 +911,11 @@ const closeModalEl = (el) => {
 
   // грубая привязка категорий курьера к разделам прайса (можно расширять)
   const CR_CATEGORY_TO_PRICE_KEYS = {
-    "Обувь": ["clean_shoes", "sole", "sew", "color", "dis"],
-    "Сумка": ["bags", "sew", "color", "dis"],
-    "Верхняя одежда": ["color", "dis"],
-    "Аксессуар": ["other", "sew", "color", "dis"],
-  };
+  "Обувь": ["clean_shoes", "sole", "sew", "color_shoes", "dis"],
+  "Сумка": ["bags", "sew", "dis"],
+  "Верхняя одежда": ["color_clothes", "dis"],
+  "Аксессуар": ["other", "sew", "dis"],
+};
 
   const crServicesForCategory = (cat) => {
     const keys = CR_CATEGORY_TO_PRICE_KEYS[String(cat || "").trim()] || [];
@@ -919,12 +927,12 @@ const closeModalEl = (el) => {
   // Верхний фильтр (segmented) — витринные категории.
   // Важно: "Другое" и "Ремонт" — отдельно (по просьбе).
   const SERVICES_SEG = [
-    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "color", "dis"] },
-    { key: "bags", title: "Сумки", price_keys: ["bags", "color", "dis"] },
-    { key: "clothes", title: "Одежда", price_keys: ["color", "dis"] },
-    { key: "repair", title: "Ремонт", price_keys: ["sole", "sew"] },
-    { key: "other", title: "Другое", price_keys: ["other", "dis"] },
-  ];
+  { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "color_shoes", "dis"] },
+  { key: "bags", title: "Сумки", price_keys: ["bags", "dis"] },
+  { key: "clothes", title: "Одежда", price_keys: ["color_clothes", "dis"] },
+  { key: "repair", title: "Ремонт", price_keys: ["sole", "sew"] },
+  { key: "other", title: "Другое", price_keys: ["other", "dis"] },
+];
   let activeServicesKey = SERVICES_SEG[0].key;
 
   function buildServiceCardsByKeys(keys){
@@ -1040,7 +1048,7 @@ const closeModalEl = (el) => {
     const p = loadProfile() || {};
 
     const nameEl = $("#tgName");
-    const imgEl = $("#tgAvatar");
+    const imgEl = null;
 
     const shownName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
     const tgName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
@@ -1048,11 +1056,6 @@ const closeModalEl = (el) => {
 
     if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
     if (cityValue) cityValue.textContent = (p.city || "").trim() || "—";
-
-    // Аватар: ТОЛЬКО PNG (по полу). Никаких рамок/букв/фоллбеков.
-    const g = (p.gender || "").toUpperCase();
-    const avatar = (p.avatar_url || "").trim() || genderToAvatar(g) || "ava_m_1.png";
-    if (imgEl) imgEl.src = avatar;
 
     // Кнопка "Промокод" показывается только если промокоды реально есть
     // Поддерживаем 2 формата:
@@ -1118,7 +1121,7 @@ const closeModalEl = (el) => {
   const profileEditModal = $("#profileEditModal");
 
   const regCitySeg = $("#regCitySeg");
-  const regGenderSeg = $("#regGenderSeg");
+  const regGenderSeg = null; // removed
   const regFirstName = $("#regFirstName");
   const regLastName = $("#regLastName");
   const regPhone = $("#regPhone");
@@ -1132,7 +1135,7 @@ const closeModalEl = (el) => {
 
   const editProfileBtn = $("#editProfileBtn");
   const profCitySeg = $("#profCitySeg");
-  const profGenderSeg = $("#profGenderSeg");
+  const profGenderSeg = null; // removed
   const profFirstName = $("#profFirstName");
   const profLastName = $("#profLastName");
   const profPhone = $("#profPhone");
@@ -1169,14 +1172,6 @@ const closeModalEl = (el) => {
   };
 
   let selectedCity = "";
-  let selectedGender = "";
-
-  const genderToAvatar = (g) => {
-    const gg = String(g || "").toUpperCase();
-    if (gg === "M") return "ava_m_1.png";
-    if (gg === "W" || gg === "Ж") return "ava_w_1.png";
-    return "";
-  };
   let selectedAvatarKind = "preset_1";
   let uploadedAvatarDataUrl = ""; // хранится локально, в бот не шлём
 
@@ -1238,10 +1233,9 @@ const closeModalEl = (el) => {
 
   function isRegFormReady() {
     const city = selectedCity;
-    const gender = selectedGender;
     const first = (regFirstName?.value || "").trim();
     const phone = (regPhone?.value || "").trim();
-    return !!city && !!gender && !!first && isValidRuPhone(phone);
+    return !!city && !!first && isValidRuPhone(phone);
   }
 
   function syncRegSubmitState() {
@@ -1256,11 +1250,9 @@ const closeModalEl = (el) => {
     const p = loadProfile() || {};
     const cityBtn = $("#profCitySeg .segBtn.active");
     const city = cityBtn?.dataset?.city || p.city || "";
-    const genderBtn = $("#profGenderSeg .segBtn.active");
-    const gender = genderBtn?.dataset?.gender || p.gender || "";
     const first = (profFirstName?.value || "").trim();
     const phone = (profPhone?.value || "").trim();
-    return !!city && !!gender && !!first && isValidRuPhone(phone);
+    return !!city && !!first && isValidRuPhone(phone);
   }
 
   function syncProfSaveState() {
@@ -1275,7 +1267,6 @@ const closeModalEl = (el) => {
   // реактивная валидация профиля
   [profFirstName, profLastName, profPhone].forEach(el => el?.addEventListener?.("input", syncProfSaveState));
   profCitySeg?.addEventListener?.("click", syncProfSaveState);
-  profGenderSeg?.addEventListener?.("click", syncProfSaveState);
     
   // --- reset через URL: ?reset=1
   try {
@@ -1292,16 +1283,6 @@ const closeModalEl = (el) => {
     if (!btn) return;
     selectedCity = btn.dataset.city || "";
     $$("#regCitySeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
-    haptic("light");
-    syncRegSubmitState();
-  });
-
-  // --- пол сегмент (регистрация)
-  regGenderSeg?.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("button[data-gender]");
-    if (!btn) return;
-    selectedGender = btn.dataset.gender || "";
-    $$("#regGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
     haptic("light");
     syncRegSubmitState();
   });
@@ -1326,20 +1307,15 @@ const closeModalEl = (el) => {
       if (tg_id) {
         const rp = await getRemoteProfile(tg_id);
         if (rp?.city && rp?.first_name && rp?.phone) {
-          const rg = (rp.gender || rp.avatar_kind || "").toString().toUpperCase();
-          const remoteAvatar = (rp.avatar_url || "").toString().trim();
           saveProfile({
-            city: rp.city,
-            first_name: rp.first_name,
-            last_name: rp.last_name || "",
-            phone: rp.phone,
-            gender: rg === "M" || rg === "W" ? rg : "",
-            avatar_url: remoteAvatar || genderToAvatar(rg),
-            avatar_kind: (rp.avatar_kind || ((rg === "M") ? "ava_m" : "ava_w")),
-            promo_code: rp.promo_code || null,
-            promo_percent: rp.promo_percent || null,
-            promo_used: !!rp.promo_used,
-          });
+  city: rp.city,
+  first_name: rp.first_name,
+  last_name: rp.last_name || "",
+  phone: rp.phone,
+  promo_code: rp.promo_code || null,
+  promo_percent: rp.promo_percent || null,
+  promo_used: !!rp.promo_used,
+});
           localStorage.setItem(LS_REGISTERED, "1");
           hydrateProfile?.();
           return;
@@ -1366,13 +1342,7 @@ const closeModalEl = (el) => {
 
     if (profFirstName) profFirstName.value = p.first_name || "";
     if (profLastName) profLastName.value = p.last_name || "";
-    if (profPhone) profPhone.value = p.phone || "";
-
-    // пол
-    const g = (p.gender || "").toUpperCase();
-    selectedGender = g;
-    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.gender || "").toUpperCase() === g));
-  };
+    if (profPhone) profPhone.value = p.phone || "";  };
 
   // --- профиль: открыть модалку настроек
   editProfileBtn?.addEventListener("click", () => {
@@ -1393,33 +1363,18 @@ const closeModalEl = (el) => {
     haptic("light");
   });
 
-  // --- профиль: выбор пола (настройки)
-  profGenderSeg?.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("button[data-gender]");
-    if (!btn) return;
-  
-    selectedGender = (btn.dataset.gender || "").toUpperCase();
-  
-    // ВАЖНО: как и с городом — ставим active на выбранную кнопку
-    $$("#profGenderSeg .segBtn").forEach(b => b.classList.toggle("active", b === btn));
-  
-    haptic("light");
-    syncProfSaveState();
-  });
-
   // --- регистрация: submit
   const GIFT_PERCENT = 20;
 
   regSubmitBtn?.addEventListener("click", async () => {
     try {
       const city = selectedCity;
-      const gender = selectedGender;
-      const first = (regFirstName?.value || "").trim();
+            const first = (regFirstName?.value || "").trim();
       const last = (regLastName?.value || "").trim();
       const phone = (regPhone?.value || "").trim();
 
       // По ТЗ: без красных ошибок. Просто не даём отправить.
-      if (!city || !gender || !first || !isValidRuPhone(phone)) return;
+      if (!city || !first || !isValidRuPhone(phone)) return;
   
       // 1) берём уникальный промокод из Supabase
       const promo_code = await reservePromoCode();
@@ -1427,12 +1382,9 @@ const closeModalEl = (el) => {
       // 2) кладём регистрацию в очередь Supabase -> бот заберёт
       await supaEnqueue("register", {
         city,
-        gender,
         first_name: first,
         last_name: last || null,
         phone,
-        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
-        avatar_url: genderToAvatar(gender),
         promo_percent: GIFT_PERCENT,
         promo_code,
       });
@@ -1440,12 +1392,9 @@ const closeModalEl = (el) => {
       // 3) сохраняем локально и закрываем модалку
       saveProfile({
         city,
-        gender,
         first_name: first,
         last_name: last || "",
         phone,
-        avatar_url: genderToAvatar(gender),
-        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
         promo_code,
         promo_percent: GIFT_PERCENT,
         promo_used: false,
@@ -1478,35 +1427,26 @@ const closeModalEl = (el) => {
       const cityBtn = $("#profCitySeg .segBtn.active");
       const city = cityBtn?.dataset?.city || p.city || "";
 
-      const genderBtn = $("#profGenderSeg .segBtn.active");
-      const gender = genderBtn?.dataset?.gender || p.gender || "";
-
       const first = (profFirstName?.value || "").trim();
       const last = (profLastName?.value || "").trim();
       const phone = normalizePhone(profPhone?.value || "");
 
       // валидация телефона — как в регистрации
-      if (!city || !gender || !first || !isValidRuPhone(phone)) {
+      if (!city || !first || !isValidRuPhone(phone)) {
         // без изменения визуала — просто не даём сохранить
         return;
       }
 
       await supaEnqueue("profile_update", {
         city,
-        gender,
         first_name: first,
         last_name: last || null,
         phone,
-        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
-        avatar_url: genderToAvatar(gender),
       });
 
       saveProfile({
         ...p,
         city,
-        gender,
-        avatar_url: genderToAvatar(gender),
-        avatar_kind: (gender || "").toUpperCase() === "M" ? "ava_m" : "ava_w",
         first_name: first,
         last_name: last,
         phone,
@@ -2007,7 +1947,7 @@ const closeModalEl = (el) => {
       
           // Удалить
           $("#peDeleteBtn")?.addEventListener("click", async () => {
-            if (!confirm("Удалить заявку?")) return;
+            if (!(await confirmDialog("Удалить заявку?"))) return;
             await peDelete(card.id);
             await peRefreshAll(true);
             peCloseCardModal();
@@ -2061,7 +2001,7 @@ const closeModalEl = (el) => {
       
             $("#rateSendBtn")?.addEventListener("click", async () => {
               if (!(picked >= 1 && picked <= 5)) return;
-              if (!confirm("После оценки заявка будет удалена из профиля. Продолжить?") ) return;
+              if (!(await confirmDialog("После оценки заявка будет удалена из профиля. Продолжить?"))) return;
               const comment = ($("#rateComment")?.value || "").trim();
               await peRateAndDelete(card.id, picked, comment);
               await peRefreshAll(true);
@@ -2114,6 +2054,7 @@ const closeModalEl = (el) => {
   const crTile = $("#courierRequestsTile");
   const crCount = $("#courierRequestsCount");
   const crPulse = $("#courierRequestsPulse");
+  const crUnread = $("#courierRequestsUnread");
   const crListEl = $("#crList");
 
   let CR_CACHE = { list: [] };
@@ -2163,34 +2104,47 @@ const closeModalEl = (el) => {
   }
 
   function crUpdateProfileTile(list) {
-    const arr = Array.isArray(list) ? list : [];
-    const activeCount = arr.length;
+  const arr = Array.isArray(list) ? list : [];
+  const activeCount = arr.length;
 
-    if (!crTile) return;
+  if (!crTile) return;
 
-    const hideTile = () => {
-      crTile.hidden = true;
-      crTile.setAttribute("hidden", "");
-      crTile.style.display = "none";
-      if (crCount) crCount.textContent = "0";
-      if (crPulse) crPulse.style.display = "none";
-    };
+  const needsMedia = arr.filter(x => String(x?.status || "") === "waiting_media").length;
 
-    const showTile = () => {
-      crTile.hidden = false;
-      crTile.removeAttribute("hidden");
-      crTile.style.display = "";
-      if (crPulse) crPulse.style.display = "none"; // без пульсации (требований нет)
-    };
+  const hideTile = () => {
+    crTile.hidden = true;
+    crTile.setAttribute("hidden", "");
+    crTile.style.display = "none";
+    if (crCount) crCount.textContent = "0";
+    if (crPulse) crPulse.style.display = "none";
+    if (crUnread) crUnread.hidden = true;
+    if (crUnread) crUnread.textContent = "0";
+  };
 
-    if (activeCount < 1) {
-      hideTile();
-      return;
-    }
+  const showTile = () => {
+    crTile.hidden = false;
+    crTile.removeAttribute("hidden");
+    crTile.style.display = "";
+  };
 
-    showTile();
-    if (crCount) crCount.textContent = String(activeCount);
+  if (activeCount < 1) {
+    hideTile();
+    return;
   }
+
+  showTile();
+  if (crCount) crCount.textContent = String(activeCount);
+
+  // маленький индикатор если нужно добавить медиа
+  if (crPulse) {
+    crPulse.style.display = needsMedia > 0 ? "" : "none";
+  }
+  if (crUnread) {
+    crUnread.textContent = String(needsMedia);
+    crUnread.hidden = !(needsMedia > 0);
+  }
+}
+
 
   function crCard(x) {
     const id = Number(x?.id || 0);
@@ -2293,7 +2247,7 @@ const closeModalEl = (el) => {
     });
 
     $("#crCancelBtn")?.addEventListener("click", async () => {
-      if (!confirm("Отменить курьерскую заявку?")) return;
+      if (!(await confirmDialog("Отменить курьерскую заявку?"))) return;
       try {
         await crUserCancel(id);
         await crRefreshAll(true);
@@ -3077,7 +3031,8 @@ const closeModalEl = (el) => {
       `;
 
       const applyCityActive = (city) => {
-        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
+        const c = String(city || "").trim();
+        $$("#crCitySeg .segBtn").forEach(b => b.classList.toggle("active", String(b.dataset.city || "").trim() === c));
       };
 
       const sync = () => {
