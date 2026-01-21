@@ -1608,3 +1608,75 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 .crSavedAddrs{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
 .crSavedAddrs .smallBtn{white-space:nowrap;}
 
+
+
+/* ====== PATCH 2026-01-21: Home/Profile layout + theme toggle ====== */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.themeSwitch{
+  width: 92px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* Profile panel: no avatar */
+.profileRowNoAvatar{display:flex; align-items:flex-start;}
+.profileRowNoAvatar .profileMeta{width:100%;}
+.profileName{line-height:1.15;}
+
+/* Home CTAs: 2 compact buttons sliding to center */
+.homeCtasRow{
+  display:flex;
+  gap:12px;
+  margin-top: 12px;
+}
+.ctaMini{
+  flex:1;
+  height: 54px;
+  border-radius: 18px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.62);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  letter-spacing: .01em;
+  position: relative;
+  overflow:hidden;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+  transition: transform 420ms cubic-bezier(0.25,1,0.33,1), opacity 420ms cubic-bezier(0.25,1,0.33,1);
+}
+html[data-theme="dark"] .ctaMini{background: rgba(15,17,21,.55);}
+.ctaMini:active{transform: scale(.985);}
+.ctaMiniTxt{font-size: 15px;}
+.ctaDropoff{opacity:0; transform: translate3d(-14vw,0,0);}
+.ctaConsult{opacity:0; transform: translate3d( 14vw,0,0);}
+.ctaDropoff.is-revealed, .ctaConsult.is-revealed{opacity:1; transform: translate3d(0,0,0);}
+
+/* Centered support button */
+.supportCenter{
+  width: 100%;
+  max-width: 360px;
+  margin: 14px auto 0;
+  display:flex;
+  justify-content:center;
+}
+
+/* Dropoff modal: center buttons */
+.modalActionsCol{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.modalActionsCol .cta{
+  width: 100%;
+  max-width: 420px;
+}
