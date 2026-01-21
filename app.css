@@ -742,7 +742,24 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
 .reviewsTrack{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:12px 2px 6px;}
-.reviewSlide{flex:0 0 86%; scroll-snap-align:center; border:1px dashed var(--hair); border-radius:18px; min-height:130px; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.reviewSlide{
+  flex:0 0 86%;
+  scroll-snap-align:center;
+  border:1px dashed var(--hair);
+  border-radius:18px;
+  min-height:130px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:.85;
+
+  position:relative;
+  overflow:hidden;
+
+  /* безопасность на маленьких экранах */
+  max-height: min(70vh, 560px);
+}
+
 .dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
 .dot{width:6px; height:6px; border-radius:999px; background: rgba(0,0,0,.25);} 
 html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);} 
@@ -751,7 +768,9 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .reviewImg{
   width: 100%;
   height: 100%;
-  object-fit: cover;
+
+  object-fit: contain;
+
   border-radius: 18px;
   display:block;
 }
@@ -767,6 +786,13 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 /* ====== BEFORE/AFTER ====== */
 .baStory{
   margin-top:12px;
+}
+
+/* когда пользователь начал свайпать — стрелка пропадает */
+.baStory.baStarted .baSwipeHint{
+  opacity: 0;
+  transform: translateY(-50%) scale(.92);
+  transition: opacity 260ms ease, transform 260ms ease;
 }
 
 /* каждая секция = "слайд" примерно на 1 экран + чуть запас для входа/выхода */
@@ -788,11 +814,40 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 /* ключ: держим пару по центру, но чуть ниже, чтобы не перекрывать верх */
 .baSticky{
   position: sticky;
-  top: calc(50% + (var(--ba-safe-top) / 2));
+  top: 50%;
   transform: translateY(-50%);
   padding: 14px;
 }
 
+/* свайп-хинт: только анимированная стрелка вниз, без текста */
+.baSwipeHint{
+  position: sticky;
+  top: 50%;
+  transform: translateY(-50%);
+  display:flex;
+  justify-content:center;
+  pointer-events:none;
+  z-index: 3;
+}
+.baArrow{
+  width: 22px;
+  height: 22px;
+  border-right: 3px solid rgba(0,0,0,.45);
+  border-bottom: 3px solid rgba(0,0,0,.45);
+  transform: rotate(45deg);
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.12));
+  animation: baArrow 1.15s ease-in-out infinite;
+}
+html[data-theme="dark"] .baArrow{
+  border-right-color: rgba(255,255,255,.45);
+  border-bottom-color: rgba(255,255,255,.45);
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+}
+@keyframes baArrow{
+  0%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
+  50%{ transform: translate3d(0,6px,0) rotate(45deg); opacity:.7; }
+  100%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
+}
 
 /* пара "до/после" */
 .baPair{
@@ -833,17 +888,28 @@ html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
 /* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
 .baPh.hasImg span{ opacity: 0; }
 
-/* entrance from edges */
-.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
-.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
-.baSection.baActive .baBefore,
-.baSection.baActive .baAfter{
-  transform: translate3d(0,0,0);
-  opacity:1;
+.baBefore,
+.baAfter{
   transition: transform 680ms cubic-bezier(0.25,1,0.33,1),
               opacity 520ms cubic-bezier(0.25,1,0.33,1);
 }
 
+/* entrance from edges */
+.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
+.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
+
+/* активный кейс = ровно по центру */
+.baSection.baActive .baBefore,
+.baSection.baActive .baAfter{
+  transform: translate3d(0,0,0);
+  opacity:1;
+}
+
+/* до старта свайпа — ничего не показываем (только стрелка) */
+.baStory:not(.baStarted) .baSection .baBefore,
+.baStory:not(.baStarted) .baSection .baAfter{
+  opacity: 0;
+}
 
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
