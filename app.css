@@ -742,56 +742,77 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
 /* ===== Reviews: full-bleed, no crop, crisp text ===== */
-.aboutReviewsCard{ padding: 14px 0 10px; } /* убрали боковые паддинги у карусели */
-.aboutReviewsTitle{ padding: 0 14px; }
-.aboutReviewsDots{ padding: 10px 0 2px; }
+.aboutReviewsCard {
+  padding: 8px 0 6px !important; /* Уменьшаем вертикальные отступы */
+  border-radius: 0 !important;   /* Убираем скругление полностью */
+  border: none !important;       /* Убираем обводку */
+  background: transparent !important; /* Прозрачный фон */
+  margin: 0 calc(var(--pad) * -1); /* Увеличиваем на паддинги страницы */
+  width: calc(100% + var(--pad) * 2); /* Шире на размер паддингов */
+  box-shadow: none !important;   /* Убираем тень */
+}
 
-/* full-bleed wrapper */
-.reviewsBleed{
+.aboutReviewsTitle {
+  padding: 0 var(--pad); /* Только заголовку оставляем паддинги */
+  font-size: 15px;      /* Можно уменьшить размер заголовка */
+  margin-bottom: 6px;   /* Меньше отступ после заголовка */
+}
+
+/* full-bleed wrapper - убираем лишние отступы */
+.reviewsBleed {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+  padding: 0; /* Убираем любые паддинги */
 }
 
-/* track */
-.reviewsTrack{
+/* track - убираем скругление и обводку */
+.reviewsTrack {
   border: 0;
   border-radius: 0;
-  display:flex;
+  display: flex;
   gap: 0;
-  overflow-x:auto;
-  overflow-y:hidden;
-  scroll-snap-type:x mandatory;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 
-/* slide = ровно экран по ширине */
-.reviewsTrack .reviewSlide{
+/* slide = ровно экран по ширине, уменьшаем высоту */
+.reviewsTrack .reviewSlide {
   flex: 0 0 100vw;
   scroll-snap-align: center;
   border-radius: 0;
   overflow: hidden;
   position: relative;
 
-  /* НЕ огромная высота */
-  height: clamp(260px, 56vh, 520px);
+  /* УМЕНЬШАЕМ ВЫСОТУ блока под картинку */
+  height: clamp(180px, 40vh, 380px); /* Было 260px..520px */
 
-  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  /* Убираем лишний фон */
+  background: transparent !important;
 }
 
-/* image: no crop, no blur */
-.reviewImg{
+/* image: no crop, no blur - уменьшаем отступы внутри картинки */
+.reviewImg {
   width: 100%;
   height: 100%;
-  display:block;
+  display: block;
 
   object-fit: contain;          /* ключ: не режем текст */
   object-position: center;
 
   image-rendering: -webkit-optimize-contrast;
   transform: translateZ(0);
+  
+  /* Уменьшаем паддинги внутри картинки */
+  padding: 4px 0; /* Отступ сверху/снизу от края блока */
 }
 
+/* Dots - уменьшаем отступы */
+.aboutReviewsDots {
+  padding: 6px 0 0; /* Было 10px 0 2px */
+}
 
 .story{margin-top:12px;}
 .storySection{height:140vh;}
