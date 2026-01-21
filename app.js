@@ -110,14 +110,16 @@
       // ВАЖНО: не затираем локальные поля пустыми значениями с сервера.
       // (Особенно gender — иначе он "слетает" после переключения вкладок.)
       const remote = {
-  city: (rp.city || "").toString(),
-  first_name: rp.first_name || "",
-  last_name: rp.last_name || "",
-  phone: rp.phone || "",
-  promo_code: rp.promo_code ?? null,
-  promo_percent: rp.promo_percent ?? null,
-  promo_used: !!rp.promo_used,
-};
+        city: (rp.city || "").toString(),
+        first_name: rp.first_name || "",
+        last_name: rp.last_name || "",
+        phone: rp.phone || "",
+        promo_code: rp.promo_code ?? null,
+        promo_percent: rp.promo_percent ?? null,
+        promo_used: !!rp.promo_used,
+        // синхронизация адресов (до 5)
+        saved_addresses: Array.isArray(rp.saved_addresses) ? rp.saved_addresses : (Array.isArray(rp.saved_addresses_json) ? rp.saved_addresses_json : null),
+      };
 
       // Если профиль в Supabase пустой — не трогаем локальный
       if (!(remote.city && remote.first_name && remote.phone)) return false;
@@ -127,21 +129,28 @@
       const remoteStamp = String(rp.updated_at || "");
 
       const differs =
-  String(local.city || "") !== String(remote.city || "") ||
-  String(local.first_name || "") !== String(remote.first_name || "") ||
-  String(local.last_name || "") !== String(remote.last_name || "") ||
-  String(local.phone || "") !== String(remote.phone || "");
+        String(local.city || "") !== String(remote.city || "") ||
+        String(local.first_name || "") !== String(remote.first_name || "") ||
+        String(local.last_name || "") !== String(remote.last_name || "") ||
+        String(local.phone || "") !== String(remote.phone || "") ||
+        (Array.isArray(remote.saved_addresses) && JSON.stringify(local.saved_addresses || []) !== JSON.stringify(remote.saved_addresses || []));
 
 const shouldUpdate = force || differs || (!!remoteStamp && (!localStamp || remoteStamp > localStamp));
       if (!shouldUpdate) return false;
 
       const mergedCity = String(remote.city || "").trim() || (local.city || "");
-saveProfile({
-  ...local,
-  ...remote,
-  city: mergedCity,
-  [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
-});
+      // не тащим null/пустые адреса
+      const mergedSaved = Array.isArray(remote.saved_addresses)
+        ? remote.saved_addresses.slice(0, 5)
+        : (Array.isArray(local.saved_addresses) ? local.saved_addresses.slice(0, 5) : []);
+
+      saveProfile({
+        ...local,
+        ...remote,
+        city: mergedCity,
+        saved_addresses: mergedSaved,
+        [REMOTE_STAMP_KEY]: remoteStamp || localStamp || "",
+      });
 localStorage.setItem("shetka_registered_v1", "1");
 return true;
     } catch (e) {
@@ -863,80 +872,139 @@ const closeModalEl = (el) => {
   const servicesTabs = $("#priceTabs");
   const servicesContent = $("#priceContent");
 
+  // --- Прайс и услуги (единый источник правды) ---
+  // Формат: { key, title, duration?, items: [{name, from?, price?, note?}] }
   const PRICE = [
-  { key:"clean_shoes", title:"Чистка обуви", items:[
-    ["Открытая обувь", 1690],
-    ["Кроссовки / Туфли", 1990],
-    ["Полусапоги / Ботинки", 2390],
-    ["Сапоги / Ботфорты", 2690],
-    ["Детская обувь", 1290],
-  ]},
-
-  { key:"bags", title:"Сумки", items:[
-    ["Сумка маленькая", 2200],
-    ["Сумка средняя", 2700],
-    ["Сумка большая", 3800],
-    ["Полный уход с покраской — маленькая", 3500],
-    ["Полный уход с покраской — средняя", 4500],
-    ["Полный уход с покраской — большая", 5000],
-  ]},
-
-  { key:"dis", title:"Дезинфекция", items:[
-    ["Устранение запаха", 500],
-  ]},
-
-  { key:"sole", title:"Ремонт • Подошва", items:[
-    ["Замена подошвы", 3500],
-    ["Прошивка круговая", 1500],
-    ["Переклейка подошвы", 1500],
-    ["Прошивка + проклейка", 2000],
-    ["Изготовление подошвы", 4500],
-    ["Замена наката", 2000],
-    ["Переклейка наката", 1000],
-    ["Замена супинатора", 1500],
-  ]},
-
-  { key:"sew", title:"Ремонт • Швейные работы", items:[
-    ["Замена молнии (10 см)", 600],
-    ["Латки", 350],
-    ["Прошивка", 500],
-    ["Замена бегунка", 500],
-    ["Ремонт задников", 1500],
-    ["Замена обувных резинок", 800],
-    ["Изготовление стелек", 1000],
-  ]},
-
-  { key:"color_shoes", title:"Реставрация • Обувь", items:[
-    ["Покраска обуви", 1000],
-    ["Реставрация — туфли/кроссовки", 4500],
-    ["Реставрация — полусапоги/ботинки", 5500],
-    ["Реставрация — сапоги", 6000],
-  ]},
-
-  { key:"color_clothes", title:"Реставрация • Одежда", items:[
-    ["Покраска кожаной куртки до 50 см", 6000],
-    ["Покраска кожаной куртки свыше 50 см", 8000],
-  ]},
-
-  { key:"other", title:"Другие изделия", items:[
-    ["Коляски", 2500],
-    ["Автокресла", 2000],
-    ["Глобальная чистка кожи", 5500],
-  ]},
-];
+    {
+      key: "clean_shoes",
+      title: "Химчистка обуви",
+      duration: "3–5 рабочих дней",
+      items: [
+        { name: "Открытая обувь", from: 1690 },
+        { name: "Кроссовки / Туфли", from: 1990 },
+        { name: "Полусапоги / ботинки", from: 2390 },
+        { name: "Сапоги ботфорты", from: 2690 },
+        { name: "Детская обувь", from: 1290 },
+      ],
+    },
+    {
+      key: "clean_bags",
+      title: "Химчистка сумок",
+      duration: "3–5 рабочих дней",
+      items: [
+        { name: "Маленькая", from: 2200 },
+        { name: "Средняя", from: 2700 },
+        { name: "Большая", from: 3800 },
+      ],
+    },
+    {
+      key: "clean_other",
+      title: "Химчистка (прочее)",
+      duration: "5–10 рабочих дней",
+      items: [
+        { name: "Коляска", from: 2500 },
+        { name: "Автокресло", from: 2000 },
+      ],
+    },
+    {
+      key: "global_leather",
+      title: "Глобальная чистка кожаных курток и кожаных изделий",
+      duration: "5–10 рабочих дней",
+      items: [{ name: "Глобальная чистка", from: 5500 }],
+    },
+    {
+      key: "dis",
+      title: "Дезинфекция",
+      items: [{ name: "Устранение запаха", from: 500 }],
+    },
+    {
+      key: "repair",
+      title: "Ремонт",
+      duration: "7–10 рабочих дней",
+      items: [
+        { name: "Замена подошвы", price: 3500 },
+        { name: "Прошивка круговая", price: 1500 },
+        { name: "Переклейка подошвы", price: 1500 },
+        { name: "Прошивка и проклейка", price: 2000 },
+        { name: "Изготовление подошвы", from: 4500 },
+        { name: "Замена наката", price: 2000 },
+        { name: "Переклейка наката", price: 1000 },
+        { name: "Замена супинатора", price: 1500 },
+      ],
+    },
+    {
+      key: "sew",
+      title: "Швейные работы",
+      duration: "3–5 рабочих дней",
+      items: [
+        { name: "Замена молнии", price: 600, note: "за 10 см" },
+        { name: "Латки", from: 350 },
+        { name: "Прошивка", from: 500 },
+        { name: "Замена бегунка", price: 500 },
+        { name: "Ремонт задников", from: 1500 },
+        { name: "Замена обувных резинок", from: 800 },
+      ],
+    },
+    {
+      key: "insoles",
+      title: "Изготовление стелек",
+      duration: "3–5 рабочих дней",
+      items: [{ name: "Стельки", from: 1000 }],
+    },
+    {
+      key: "color_any",
+      title: "Покраска изделий",
+      items: [{ name: "Покраска", from: 1000 }],
+    },
+    {
+      key: "bag_full_color",
+      title: "Полный уход сумок с покраской",
+      duration: "7–10 рабочих дней",
+      items: [
+        { name: "Маленькая", from: 3500 },
+        { name: "Средняя", from: 4500 },
+        { name: "Большая", from: 5000 },
+      ],
+    },
+    {
+      key: "shoe_restore",
+      title: "Комплекс: реставрация / покраска / восстановление (обувь)",
+      duration: "7–10 рабочих дней",
+      items: [
+        { name: "Туфли / кроссовки", from: 4500 },
+        { name: "Полусапоги / ботинки", from: 5500 },
+        { name: "Сапоги", from: 6000 },
+      ],
+    },
+    {
+      key: "jacket_restore",
+      title: "Восстановление / покраска курток",
+      duration: "10–15 рабочих дней",
+      items: [
+        { name: "До 50 см", from: 6000 },
+        { name: "Свыше 50 см", from: 8000 },
+      ],
+    },
+  ];
 
   // --- Courier: услуги из прайса по категории ---
   const PRICE_SERVICES_BY_KEY = Object.fromEntries(
-    PRICE.map(c => [c.key, (c.items || []).map(([name]) => String(name || "").trim()).filter(Boolean)])
+    PRICE.map(c => [
+      c.key,
+      (c.items || [])
+        .map(it => String(it?.name || "").trim())
+        .filter(Boolean),
+    ])
   );
 
   // грубая привязка категорий курьера к разделам прайса (можно расширять)
   const CR_CATEGORY_TO_PRICE_KEYS = {
-  "Обувь": ["clean_shoes", "sole", "sew", "color_shoes", "dis"],
-  "Сумка": ["bags", "sew", "dis"],
-  "Верхняя одежда": ["color_clothes", "dis"],
-  "Аксессуар": ["other", "sew", "dis"],
-};
+    "Обувь": ["clean_shoes", "shoe_restore", "repair", "sew", "insoles", "color_any", "dis"],
+    "Сумка": ["clean_bags", "bag_full_color", "sew", "color_any", "dis"],
+    "Верхняя одежда": ["global_leather", "jacket_restore", "color_any", "dis"],
+    "Аксессуар": ["clean_other", "sew", "color_any", "dis"],
+    "Другое": ["clean_other", "sew", "color_any", "dis"],
+  };
 
   const crServicesForCategory = (cat) => {
     const keys = CR_CATEGORY_TO_PRICE_KEYS[String(cat || "").trim()] || [];
@@ -948,30 +1016,32 @@ const closeModalEl = (el) => {
   // Верхний фильтр (segmented) — витринные категории.
   // Важно: "Другое" и "Ремонт" — отдельно (по просьбе).
   const SERVICES_SEG = [
-  { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "color_shoes", "dis"] },
-  { key: "bags", title: "Сумки", price_keys: ["bags", "dis"] },
-  { key: "clothes", title: "Одежда", price_keys: ["color_clothes", "dis"] },
-  { key: "repair", title: "Ремонт", price_keys: ["sole", "sew"] },
-  { key: "other", title: "Другое", price_keys: ["other", "dis"] },
-];
+    { key: "shoes", title: "Обувь", price_keys: ["clean_shoes", "shoe_restore", "repair", "sew", "insoles", "color_any", "dis"] },
+    { key: "bags", title: "Сумки", price_keys: ["clean_bags", "bag_full_color", "color_any", "dis"] },
+    { key: "clothes", title: "Куртки", price_keys: ["global_leather", "jacket_restore", "color_any", "dis"] },
+    { key: "other", title: "Прочее", price_keys: ["clean_other", "color_any", "dis"] },
+  ];
   let activeServicesKey = SERVICES_SEG[0].key;
 
   function buildServiceCardsByKeys(keys){
-    const set = new Map();
+    const out = [];
     (keys || []).forEach(k => {
       const cat = PRICE.find(x => x.key === k);
-      (cat?.items || []).forEach(([name, price]) => {
-        const n = String(name || "").trim();
+      if (!cat) return;
+      out.push({ __section: true, title: cat.title, duration: cat.duration || "", key: cat.key });
+      (cat.items || []).forEach((it) => {
+        const n = String(it?.name || "").trim();
         if (!n) return;
-        if (!set.has(n)) set.set(n, { name: n, from: Number(price || 0) || null, source_key: k });
-        else {
-          const cur = set.get(n);
-          const v = Number(price || 0) || null;
-          if (v && (!cur.from || v < cur.from)) cur.from = v;
-        }
+        out.push({
+          name: n,
+          from: (it?.from != null ? Number(it.from) : null),
+          price: (it?.price != null ? Number(it.price) : null),
+          note: String(it?.note || "").trim(),
+          source_key: k,
+        });
       });
     });
-    return Array.from(set.values()).sort((a,b) => String(a.name).localeCompare(String(b.name), "ru"));
+    return out;
   }
 
   const renderServicesTabs = () => {
@@ -1001,21 +1071,29 @@ const closeModalEl = (el) => {
     servicesContent.innerHTML = `
       <div class="servicesHero glass reveal">
         <div class="servicesHeroTitle">${escapeHtml(seg.title)}</div>
-        <div class="servicesHeroSub">Выберите услугу — при желании мы подставим её в «Сдать вещь».</div>
+        <div class="servicesHeroSub">Базовый прайс и сроки выполнения по категориям.</div>
       </div>
       <div class="servicesGrid">
         ${cards.map(c => {
-          const from = c.from ? `от ${escapeHtml(formatMoney(c.from))}` : "по запросу";
+          if (c.__section) {
+            return `
+              <div class="svcSection reveal" data-reveal="left">
+                <div class="svcSectionTitle">${escapeHtml(c.title)}</div>
+                ${c.duration ? `<div class="svcSectionSub">Сроки: ${escapeHtml(c.duration)}</div>` : ``}
+              </div>
+            `;
+          }
+          const priceTxt = c.price ? escapeHtml(formatMoney(c.price)) : (c.from ? `от ${escapeHtml(formatMoney(c.from))}` : "по запросу");
+          const noteTxt = c.note ? `<div class="svcNote">${escapeHtml(c.note)}</div>` : ``;
           return `
-            <div class="svcCard glass reveal" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
+            <div class="svcCard glass reveal" data-reveal="${Math.random() > 0.5 ? "right" : "up"}" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
               <div class="svcIco" aria-hidden="true">✨</div>
               <div class="svcBody">
                 <div class="svcTitle">${escapeHtml(c.name)}</div>
-                <div class="svcSub">Результат зависит от состояния изделия</div>
+                ${noteTxt}
               </div>
               <div class="svcMeta">
-                <div class="svcPrice">${from}</div>
-                <button class="smallBtn" type="button">Выбрать</button>
+                <div class="svcPrice">${priceTxt}</div>
               </div>
             </div>
           `;
@@ -1030,9 +1108,8 @@ const closeModalEl = (el) => {
         const catTitle = String(el.getAttribute('data-svc-cat') || '').trim();
         const mapCat = (t) => {
           if (t === 'Сумки') return 'Сумка';
-          if (t === 'Одежда') return 'Верхняя одежда';
-          if (t === 'Ремонт') return 'Обувь';
-          if (t === 'Другое') return 'Аксессуар';
+          if (t === 'Куртки') return 'Верхняя одежда';
+          if (t === 'Прочее') return 'Другое';
           return 'Обувь';
         };
         if (!name) return;
@@ -2084,8 +2161,8 @@ const closeModalEl = (el) => {
     if (s === "waiting_media") return "Ожидаем фото";
     if (s === "waiting_confirm") return "Ожидает подтверждения";
     if (s === "confirmed") return "Подтверждено";
-    if (s === "in_route") return "Курьер в пути";
-    if (s === "picked_up") return "Забрано";
+    if (s === "enroute" || s === "in_route") return "Курьер в пути";
+    if (s === "picked" || s === "picked_up") return "Забрано";
     if (s === "done") return "Завершено";
     if (s === "cancelled") return "Отменено";
     return s || "—";
@@ -2095,7 +2172,7 @@ const closeModalEl = (el) => {
     // используем существующие классы цветов
     if (s === "done") return "green";
     if (s === "cancelled") return "red";
-    if (s === "in_route" || s === "picked_up") return "orange";
+    if (s === "enroute" || s === "in_route" || s === "picked" || s === "picked_up") return "orange";
     if (s === "confirmed") return "blue";
     return "gray";
   };
@@ -2211,9 +2288,10 @@ const closeModalEl = (el) => {
     const addrLine = [addr.city, addr.street, addr.house, addr.apartment].filter(Boolean).join(", ") || "—";
     const dtLine = [date, slot].filter(Boolean).join(" ") || "—";
 
-    const canEdit = (st !== "in_route" && st !== "picked_up" && st !== "done" && st !== "cancelled");
+    const canEdit = !(st === "enroute" || st === "in_route" || st === "picked" || st === "picked_up" || st === "done" || st === "cancelled");
     const canAddMedia = (st === "waiting_media");
     const canCancel = canEdit;
+    const canDelete = canEdit;
 
     const itemsHtml = items.map((it, idx) => {
       const cat = escapeHtml(String(it?.category || "—"));
@@ -2238,6 +2316,7 @@ const closeModalEl = (el) => {
         ${canAddMedia ? `<button class="smallBtn" type="button" id="crAddMediaBtn">Добавить медиа</button>` : ""}
         ${canEdit ? `<button class="smallBtn" type="button" id="crEditBtn">Редактировать вещи</button>` : ""}
         ${canCancel ? `<button class="smallBtn" type="button" id="crCancelBtn">Отменить</button>` : ""}
+        ${canDelete ? `<button class="smallBtn danger" type="button" id="crDeleteBtn">Удалить</button>` : ""}
       </div>
     `;
 
@@ -2278,6 +2357,47 @@ const closeModalEl = (el) => {
         try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch(_){ }
       }
     });
+
+    $("#crDeleteBtn")?.addEventListener("click", async () => {
+      if (!(await confirmDialog("Удалить курьерскую заявку полностью?"))) return;
+      try {
+        await crUserDelete(id);
+        await crRefreshAll(true);
+        closeModal();
+        try { tg?.showAlert?.("Заявка удалена"); } catch (_) {}
+      } catch (e) {
+        try { tg?.showAlert?.("Ошибка: " + String(e?.message || e)); } catch (_) {}
+      }
+    });
+  }
+
+  async function crUserDelete(id) {
+    const reqId = Number(id) || 0;
+    if (!reqId) return;
+    const tg_id = getTgId();
+    if (!tg_id) throw new Error("Нет tg_id");
+    // Полное удаление через очередь в бота: бот удалит из Supabase courier_requests и courier_media
+    const res = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        kind: "courier_delete",
+        tg_id,
+        payload_json: { request_id: reqId },
+      }),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok || !data || !data.ok) {
+      const err = (data && data.error) ? data.error : `HTTP ${res.status}: ${text.slice(0, 140)}`;
+      throw new Error(err);
+    }
   }
 
   async function crUserCancel(id) {
@@ -2725,12 +2845,32 @@ const closeModalEl = (el) => {
     const getSavedKey = () => `cr_saved_addrs_${getTgId() || 0}`;
     const loadSavedAddrs = () => {
       try {
+        // 1) пробуем взять из профиля (синхронизируется между устройствами)
+        const p = loadProfile() || {};
+        if (Array.isArray(p.saved_addresses) && p.saved_addresses.length) {
+          return p.saved_addresses.slice(0, 5);
+        }
+
+        // 2) fallback — локальный storage (для оффлайна)
         const raw = localStorage.getItem(getSavedKey());
         const arr = JSON.parse(raw || "[]");
-        return Array.isArray(arr) ? arr : [];
+        return Array.isArray(arr) ? arr.slice(0, 5) : [];
       } catch {
         return [];
       }
+    };
+
+    const persistSavedAddrs = async (list) => {
+      const safe = Array.isArray(list) ? list.slice(0, 5) : [];
+      // локально
+      try { localStorage.setItem(getSavedKey(), JSON.stringify(safe)); } catch (_) {}
+      // в профиль (и дальнейшая синхронизация через бот -> Supabase profiles)
+      const cur = loadProfile() || {};
+      saveProfile({ ...cur, saved_addresses: safe });
+      try {
+        // профиль обновляется через очередь Supabase — чтобы видеть на другом устройстве
+        await enqueueRequest("profile_update", { saved_addresses: safe });
+      } catch (_) {}
     };
 
     const saveAddrIfNeeded = () => {
@@ -2752,7 +2892,7 @@ const closeModalEl = (el) => {
       const exists = list.some(x => `${x.city}|${x.street}|${x.house}|${x.apartment}`.toLowerCase() == fingerprint);
       if (!exists) {
         list.unshift(entry);
-        localStorage.setItem(getSavedKey(), JSON.stringify(list.slice(0, 5)));
+        persistSavedAddrs(list);
       }
     };
 
@@ -3109,7 +3249,7 @@ const closeModalEl = (el) => {
         const list = loadSavedAddrs();
         if (i < 0 || i >= list.length) return;
         list.splice(i, 1);
-        try { localStorage.setItem(getSavedKey(), JSON.stringify(list)); } catch(_) {}
+        persistSavedAddrs(list);
         // rerender same step
         CR_WIZ.step = "address";
         crRenderWizard();
