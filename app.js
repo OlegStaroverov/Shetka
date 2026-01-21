@@ -581,6 +581,38 @@ const closeModalEl = (el) => {
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
+    // ====== BEFORE/AFTER: активный слайд по центру (вход/выход только вбок) ======
+    let baObserver = null;
+    
+    const initBaObserver = () => {
+      if (baObserver) return;
+    
+      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
+      if (!sections.length) return;
+    
+      const setActive = (el) => {
+        sections.forEach(s => s.classList.toggle('baActive', s === el));
+      };
+    
+      // включаем первый сразу
+      setActive(sections[0]);
+    
+      baObserver = new IntersectionObserver((entries) => {
+        let best = null;
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+        }
+        if (best) setActive(best.target);
+      }, {
+        root: null,
+        rootMargin: "-40% 0px -40% 0px",
+        threshold: [0.01, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95],
+      });
+    
+      sections.forEach(sec => baObserver.observe(sec));
+    };
+
     const setAboutTab = (key) => {
       const k = String(key || 'about');
       seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
@@ -590,14 +622,7 @@ const closeModalEl = (el) => {
       initRevealObserver();
       if (k === 'cases') {
         applyBaImages();
-
-        // restart BA animation on each open
-        document.querySelectorAll('[data-ba]').forEach(el => el.classList.remove('baActive'));
-        requestAnimationFrame(() => {
-          document.querySelectorAll('[data-ba]').forEach(el => {
-            void el.offsetHeight;
-          });
-        });
+        initBaObserver();
       }
     };
 
@@ -625,20 +650,6 @@ const closeModalEl = (el) => {
         }
       });
     };
-
-    // Before/After: slide-in placeholders from edges (10 cases)
-    try {
-      if ('IntersectionObserver' in window) {
-        const baObs = new IntersectionObserver((entries) => {
-          entries.forEach((e) => {
-            // animate every time: add on enter, remove on leave
-            if (e.isIntersecting) e.target.classList.add('baActive');
-            else e.target.classList.remove('baActive');
-          });
-        }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
-        document.querySelectorAll('[data-ba]').forEach(el => baObs.observe(el));
-      }
-    } catch(_) {}
 
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
@@ -2918,7 +2929,7 @@ const closeModalEl = (el) => {
       saveProfile({ ...cur, saved_addresses: safe });
       try {
         // профиль обновляется через очередь Supabase — чтобы видеть на другом устройстве
-        await enqueueRequest("profile_update", { saved_addresses: safe });
+        await supaEnqueue("profile_update", { saved_addresses: safe });
       } catch (_) {}
     };
 
