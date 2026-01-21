@@ -756,14 +756,36 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
-/* ====== BEFORE/AFTER placeholders (10 cases) ====== */
-.baStory{margin-top:12px;}
-.baSection{height:160vh;}
-.baSticky{position:sticky; top:12px;}
-.baPair{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+/* ====== BEFORE/AFTER ====== */
+.baStory{
+  margin-top:12px;
+}
+
+/* каждая секция = "слайд" примерно на 1 экран + чуть запас для входа/выхода */
+.baSection{
+  height: 200vh; /* можно 180vh, но 200 даёт "паузы" в центре красивее */
+}
+
+/* ключ: держим пару ровно по центру экрана */
+.baSticky{
+  position: sticky;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 14px;
+}
+
+/* пара "до/после" */
+.baPair{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
 @media (max-width:420px){
   .baPair{grid-template-columns:1fr;}
 }
+
+/* плейсхолдер/картинка */
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
@@ -775,18 +797,33 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   letter-spacing: .22em;
   text-indent: .22em;
   opacity:.92;
+
+  /* важно для будущих реальных картинок */
+  background: rgba(255,255,255,.35);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   will-change: transform, opacity;
   transform: translate3d(0,0,0);
-  background: rgba(255,255,255,.35);
 }
+
 html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
-.baPh span{font-size:20px; opacity:.78;}
+
+/* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
+.baPh.hasImg span{ opacity: 0; }
 
 /* entrance from edges */
 .baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
 .baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
+
 .baSection.baActive .baBefore,
-.baSection.baActive .baAfter{ transform: translate3d(0,0,0); opacity:1; transition: transform 680ms cubic-bezier(0.25,1,0.33,1), opacity 520ms cubic-bezier(0.25,1,0.33,1); }
+.baSection.baActive .baAfter{
+  transform: translate3d(0,0,0);
+  opacity:1;
+  transition: transform 680ms cubic-bezier(0.25,1,0.33,1),
+              opacity 520ms cubic-bezier(0.25,1,0.33,1);
+}
 
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
