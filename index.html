@@ -139,10 +139,7 @@
           </div>
         </div>
 
-        <div class="aboutTabs pageIntro" data-intro="up" id="aboutSeg">
-          <button class="segBtn glass active" type="button" data-about-tab="about">О нас</button>
-          <button class="segBtn glass" type="button" data-about-tab="cases">До/После</button>
-        </div>
+        <div class="aboutTabs glass pageIntro" data-intro="up" id="aboutSeg"><button class="segBtn active" type="button" data-about-tab="about">О нас</button><button class="segBtn" type="button" data-about-tab="cases">До/После</button></div>
 
         <!-- TAB: ABOUT -->
         <div id="aboutPanelAbout">
@@ -178,7 +175,7 @@
             </div>
           </div>
 
-          <div class="aboutCard aboutReviewsCard reveal pageIntro" data-intro="up">
+          <div class="glass aboutCard aboutReviewsCard reveal pageIntro" data-intro="up">
             <div class="aboutTitle aboutReviewsTitle">Отзывы</div>
           
             <div class="reviewsBleed">
@@ -203,28 +200,68 @@
 
         <!-- TAB: CASES -->
         <div id="aboutPanelCases" hidden>
-          <div class="baStory" aria-label="Кейсы До/После">
-            <!-- свайп-хинт: только стрелка вниз (без текста) -->
-            <div class="baSwipeHint" id="baSwipeHint" aria-hidden="true">
-              <div class="baArrow"></div>
-            </div>
-            <!-- 10 animated placeholders, no titles/texts -->
-            <section class="baSection" data-ba>
-              <div class="baSticky">
-                <div class="baPair">
-                  <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-                  <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-                </div>
-              </div>
-            </section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-          </div>
-        </div>
+  <div class="baStory" aria-label="Кейсы До/После">
+    <!-- стрелка: видна только до старта истории -->
+    <div class="baSwipeHint" id="baSwipeHint" aria-hidden="true">
+      <div class="baArrow"></div>
+    </div>
+
+    <!-- 6 этажей (6 пар) -->
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+
+    <section class="baSection" data-ba>
+  <div class="baSticky">
+    <div class="baPair">
+      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+    </div>
+  </div>
+</section>
+  </div>
+</div>
       </section>
 
       <section class="page" data-page="estimate" hidden>
