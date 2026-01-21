@@ -741,22 +741,42 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
-/* ===== Reviews: full-bleed, no crop, crisp text ===== */
-.aboutReviewsCard{ padding: 14px 0 10px; } /* убрали боковые паддинги у карусели */
-.aboutReviewsTitle{ padding: 0 14px; }
-.aboutReviewsDots{ padding: 10px 0 2px; }
+/* ===== REVIEWS (full-bleed, без видимых боковых краёв, тёмный фон) ===== */
 
-/* full-bleed wrapper */
+/* Карточка "Отзывы": шире экрана, без скруглений, тёмный фон */
+.aboutReviewsCard{
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 122vw;                 /* больше экрана — боковые края уедут за экран */
+  max-width: none;
+
+  background: #18181A !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  /* компактнее по вертикали */
+  padding: 10px 0 10px;
+  margin-top: 12px;
+}
+
+/* Заголовок должен стоять так же, как FAQ (по бокам как var(--pad)) */
+.aboutReviewsTitle{
+  padding: 0 var(--pad);
+  margin: 0 0 14px 0;          /* чуть больше сверху до картинки */
+}
+
+/* Полоса/карусель: ровно от края экрана до края (100vw), независимо от ширины карточки */
 .reviewsBleed{
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
 }
 
-/* track */
 .reviewsTrack{
-  border: 0;
-  border-radius: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
   display:flex;
   gap: 0;
   overflow-x:auto;
@@ -765,31 +785,41 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   -webkit-overflow-scrolling: touch;
 }
 
-/* slide = ровно экран по ширине */
+/* Слайд НЕ задаём огромной высотой — подстраивается под картинку */
 .reviewsTrack .reviewSlide{
   flex: 0 0 100vw;
   scroll-snap-align: center;
-  border-radius: 0;
-  overflow: hidden;
-  position: relative;
 
-  /* НЕ огромная высота */
-  height: clamp(260px, 56vh, 520px);
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
 
-  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  /* небольшой отступ снизу до края карточки */
+  padding: 0 0 10px;
 }
 
-/* image: no crop, no blur */
+/* Картинка: чётко, не режется, по высоте адаптивно */
 .reviewImg{
-  width: 100%;
-  height: 100%;
   display:block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
 
-  object-fit: contain;          /* ключ: не режем текст */
+  max-height: min(58vh, 520px);
+
+  object-fit: contain;
   object-position: center;
 
   image-rendering: -webkit-optimize-contrast;
   transform: translateZ(0);
+}
+
+.aboutReviewsDots{
+  padding: 6px 0 0;
 }
 
 
@@ -801,43 +831,11 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
-/* ====== BEFORE/AFTER ====== */
-.baStory{
-  margin-top:12px;
-}
+/* ====== BEFORE/AFTER (НОВАЯ ЛОГИКА: этажи, движение строго от скролла) ====== */
 
-/* когда пользователь начал свайпать — стрелка пропадает */
-.baStory.baStarted .baSwipeHint{
-  opacity: 0;
-  transform: translateY(-50%) scale(.92);
-  transition: opacity 420ms ease, transform 420ms ease;
-}
+.baStory{ margin-top: 12px; }
 
-/* каждая секция = "слайд" примерно на 1 экран + чуть запас для входа/выхода */
-.baSection{
-  height: 200vh; /* можно 180vh, но 200 даёт "паузы" в центре красивее */
-}
-
-/* последний кейс: не даём "вытолкнуть" его скроллом вниз */
-.baSection:last-child{
-  height: 100vh; /* или 110vh если хочешь микро-запас */
-}
-
-
-:root{
-  /* безопасный отступ сверху под заголовок + кнопки "О НАС / ДО ПОСЛЕ" */
-  --ba-safe-top: 76px; /* подстрой 64–92px по вкусу */
-}
-
-/* ключ: держим пару по центру, но чуть ниже, чтобы не перекрывать верх */
-.baSticky{
-  position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 14px;
-}
-
-/* свайп-хинт: только анимированная стрелка вниз, без текста */
+/* Пока история НЕ началась: стрелка видна */
 .baSwipeHint{
   position: sticky;
   top: 50%;
@@ -846,7 +844,8 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   justify-content:center;
   pointer-events:none;
   z-index: 3;
-  transition: opacity 320ms ease, transform 320ms ease;
+  opacity: 1;
+  transition: opacity 260ms ease, transform 260ms ease;
 }
 .baArrow{
   width: 22px;
@@ -864,22 +863,36 @@ html[data-theme="dark"] .baArrow{
 }
 @keyframes baArrow{
   0%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
-  50%{ transform: translate3d(0,6px,0) rotate(45deg); opacity:.7; }
+  50%{ transform: translate3d(0, 6px,0) rotate(45deg); opacity:.7; }
   100%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
 }
 
-/* пара "до/после" */
+/* Когда история началась: стрелка исчезает */
+.baStory.baStarted .baSwipeHint{
+  opacity: 0;
+  transform: translateY(-50%) scale(.92);
+}
+
+/* Этажи: делаем длиннее, чтобы движение было очень медленным */
+.baSection{ height: 220vh; }
+.baSection:last-child{ height: 260vh; } /* финальный “держим в центре” */
+
+/* Липкий контейнер, держим пару по центру */
+.baSticky{
+  position: sticky;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 14px;
+}
+
+/* Пара */
 .baPair{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-@media (max-width:420px){
-  .baPair{grid-template-columns:1fr;}
-}
-
-/* плейсхолдер/картинка */
+/* Карточки (плейсхолдеры/картинки) */
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
@@ -887,47 +900,34 @@ html[data-theme="dark"] .baArrow{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight:900;
+  font-weight: 900;
   letter-spacing: .22em;
   text-indent: .22em;
-  opacity:.92;
+  opacity:.96;
 
-  /* важно для будущих реальных картинок */
   background: rgba(255,255,255,.35);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 
-  will-change: transform, opacity;
+  will-change: transform;
   transform: translate3d(0,0,0);
 }
-
 html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
 
-/* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
+/* если подставили картинку — буквы прячем */
 .baPh.hasImg span{ opacity: 0; }
 
-.baBefore,
-.baAfter{
-  transition: transform 900ms cubic-bezier(0.22,1,0.36,1),
-              opacity   720ms cubic-bezier(0.22,1,0.36,1);
-}
-
-/* entrance from edges */
-.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
-.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
-
-/* активный кейс = ровно по центру */
-.baSection.baActive .baBefore,
-.baSection.baActive .baAfter{
-  transform: translate3d(0,0,0);
-  opacity:1;
-}
-
-/* до старта свайпа — ничего не показываем (только стрелка) */
-.baStory:not(.baStarted) .baSection .baBefore,
-.baStory:not(.baStarted) .baSection .baAfter{
+/* Блокируем появление шапки/кнопок, пока история не “откатилась” полностью */
+.page[data-page="about"].baLockHeader .pageHead,
+.page[data-page="about"].baLockHeader #aboutSeg{
   opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.page[data-page="about"]:not(.baLockHeader) .pageHead,
+.page[data-page="about"]:not(.baLockHeader) #aboutSeg{
+  transition: opacity 180ms ease;
 }
 
 /* --------- Map modal --------- */
@@ -2023,78 +2023,29 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   line-height: 1.2;
 }
 
-/* =========================
-   REVIEWS — как ты просишь
-   ========================= */
 
-/* 1) сама карточка — тёмная, без скруглений, края за экран */
-.aboutReviewsCard{
-  background: #1c1c1c !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-
-  /* делаем карточку шире экрана, чтобы её боковые края не было видно */
-  width: 112vw;
-  margin-left: calc(50% - 56vw);
-  margin-right: calc(50% - 56vw);
-
-  /* вертикальные отступы */
-  padding: 10px 0 10px;
+/* ===== ABOUT TABS (как в "Услуги": общий контейнер + подсветка активной) ===== */
+.aboutTabs{
+  display:flex;
+  gap: 8px;
+  padding: 10px;
+  overflow:auto;
+  margin-top: 10px;
 }
-
-/* 2) заголовок: чуть больше воздуха до картинки */
-.aboutReviewsTitle{
-  padding: 0 14px;
-  margin-bottom: 14px;  /* больше от заголовка до картинки */
-}
-
-/* 3) обёртка: тоже на всю ширину карточки */
-.reviewsBleed{
+.aboutTabs.glass{
+  /* стекло берём из .glass, здесь только гарантируем ширину */
   width: 100%;
 }
-
-/* 4) трек: без рамок/скруглений */
-.reviewsTrack{
-  border: 0 !important;
-  border-radius: 0 !important;
+.aboutTabs .segBtn{
+  flex: 1;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.30);
+  font-weight: 900;
 }
-
-/* 5) “рамка” слайда: НЕ гигантская, подстраивается под картинку */
-.reviewSlide{
-  flex: 0 0 100vw;
-  scroll-snap-align: center;
-  border-radius: 0 !important;
-  overflow: visible;          /* важно: не режем */
-  background: transparent !important;
-
-  /* вместо огромной фикс-высоты — нормальная “под картинку” */
-  height: auto !important;
-  padding: 0 0 10px;          /* небольшой отступ снизу до низа блока */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+.aboutTabs .segBtn.active{
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
 }
-
-/* 6) сама картинка: чётко, не режется, размер адекватный */
-.reviewImg{
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-
-  /* чтобы не было “слишком высокой рамки” — ограничиваем максимум */
-  max-height: min(58vh, 520px);
-
-  object-fit: contain;
-  object-position: center;
-
-  image-rendering: -webkit-optimize-contrast;
-  transform: translateZ(0);
-}
-
-/* 7) точки снизу — компактно */
-.aboutReviewsDots{
-  padding: 6px 0 0;
-}
-
