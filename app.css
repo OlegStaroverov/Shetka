@@ -719,19 +719,27 @@ html[data-theme="dark"] .svcSection{ background: rgba(255,255,255,.06); }
 .aboutTitle{font-weight:800; font-size:18px;}
 .aboutText{opacity:.8; margin-top:6px;}
 
-/* About tabs: отдельные кнопки (без общего контейнера) */
+/* About tabs: как вкладки услуг */
 .aboutTabs{
   display:flex;
-  gap: 10px;
-  padding: 0 14px;
-  margin-top: 12px;
+  gap: 8px;
+  padding: 10px;       
+  overflow:auto;      
 }
 .aboutTabs .segBtn{
-  border-radius: 18px;
+  padding: 10px 12px;
+  border-radius: 999px;
   border: 1px solid var(--hair);
-  background: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.30);
+  font-weight: 900;
+  white-space: nowrap;
 }
 html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+.aboutTabs .segBtn.active{
+  border-color: var(--accentBorder);
+  background: var(--accentBg);
+}
+
 .acc{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
 .accItem{border:1px solid var(--hair); border-radius:16px; overflow:hidden; background: rgba(255,255,255,.5);} 
 html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);} 
@@ -741,42 +749,50 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
-/* ===== REVIEWS (full-bleed, без видимых боковых краёв, тёмный фон) ===== */
+/* ===== REVIEWS: блок шире экрана (краёв не видно), но трек 100vw, фон по теме ===== */
 
-/* Карточка "Отзывы": шире экрана, без скруглений, тёмный фон */
+/* 1) сама карточка: шире экрана, чтобы боковые края уходили за экран */
 .aboutReviewsCard{
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 122vw;                 /* больше экрана — боковые края уедут за экран */
+  /* НЕ используем left/transform (они чаще дают “уезд” iOS), только margin */
+  width: 124vw;
+  margin-left: calc(50% - 62vw);
+  margin-right: calc(50% - 62vw);
   max-width: none;
 
-  background: #18181A !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
 
-  /* компактнее по вертикали */
+  /* вертикально компактно */
   padding: 10px 0 10px;
   margin-top: 12px;
+
+  /* по умолчанию (светлая тема) — как обычные светлые блоки */
+  background: var(--bg1);
 }
 
-/* Заголовок должен стоять так же, как FAQ (по бокам как var(--pad)) */
+/* ТОЛЬКО тёмная тема: фон #18181A */
+html[data-theme="dark"] .aboutReviewsCard{
+  background: #18181A;
+}
+
+/* 2) Заголовок: отступ слева/справа как у FAQ */
 .aboutReviewsTitle{
   padding: 0 var(--pad);
-  margin: 0 0 14px 0;          /* чуть больше сверху до картинки */
+  margin: 0 0 14px 0; /* чуть больше до картинки */
 }
 
-/* Полоса/карусель: ровно от края экрана до края (100vw), независимо от ширины карточки */
+/* 3) Карусель должна быть ровно от края экрана до края (100vw) */
 .reviewsBleed{
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
 }
 
+/* 4) Трек: без рамок, snap */
 .reviewsTrack{
-  border: 0 !important;
-  border-radius: 0 !important;
+  border: 0;
+  border-radius: 0;
   display:flex;
   gap: 0;
   overflow-x:auto;
@@ -785,24 +801,20 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   -webkit-overflow-scrolling: touch;
 }
 
-/* Слайд НЕ задаём огромной высотой — подстраивается под картинку */
+/* 5) Слайд: не делаем огромную “рамку”, он под картинку */
 .reviewsTrack .reviewSlide{
   flex: 0 0 100vw;
   scroll-snap-align: center;
-
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-
+  background: transparent;
   display:flex;
   align-items:center;
   justify-content:center;
 
-  /* небольшой отступ снизу до края карточки */
+  /* небольшой отступ снизу до низа блока */
   padding: 0 0 10px;
 }
 
-/* Картинка: чётко, не режется, по высоте адаптивно */
+/* 6) Картинка: чётко, не режется */
 .reviewImg{
   display:block;
   width: auto;
@@ -818,18 +830,8 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   transform: translateZ(0);
 }
 
-.aboutReviewsDots{
-  padding: 6px 0 0;
-}
-
-
-.story{margin-top:12px;}
-.storySection{height:140vh;}
-.storySticky{position:sticky; top:12px; padding:14px;}
-.storyTitle{font-weight:800; font-size:18px;}
-.storyGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
-.storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
-.storySub{opacity:.7; margin-top:10px; font-size:13px;}
+/* точки */
+.aboutReviewsDots{ padding: 6px 0 0; }
 
 /* ====== BEFORE/AFTER (НОВАЯ ЛОГИКА: этажи, движение строго от скролла) ====== */
 
@@ -2054,3 +2056,6 @@ html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
 html, body { overflow-x: hidden !important; }
 .app, .stage, .page { overflow-x: hidden !important; }
 body { touch-action: pan-y; overscroll-behavior-x: none; }
+
+/* Любые широкие секции не должны влиять на позицию остальных блоков */
+.aboutReviewsCard, .reviewsBleed { contain: layout paint; }
