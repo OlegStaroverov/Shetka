@@ -2049,3 +2049,8 @@ html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
   border-color: var(--accentBorder);
   background: var(--accentBg);
 }
+
+/* ===== HARD FIX: запрет горизонтального уезда страницы ===== */
+html, body { overflow-x: hidden !important; }
+.app, .stage, .page { overflow-x: hidden !important; }
+body { touch-action: pan-y; overscroll-behavior-x: none; }
