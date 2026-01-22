@@ -533,6 +533,8 @@ haptic("light");
     });
 
     currentPage = page;
+    try { window.scrollTo(0, 0); } catch(_) {}
+    setTimeout(() => { try { window.scrollTo(0, 0); } catch(_) {} }, 0);
     try { runPageIntro(page); } catch(_) {}
     if (push) pageStack.push(page);
     setTabActive(page);
@@ -642,7 +644,7 @@ haptic("light");
         const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
         const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
         // стартуем только когда шапка и кнопки полностью ушли вверх
-        return headBottom <= 0 && segBottom <= 0;
+        return headBottom <= -8 && segBottom <= -8;
       };
 
       const sectionProgress = (sec) => {
@@ -700,7 +702,7 @@ haptic("light");
         // мы НЕ показываем её, пока первый этаж полностью не задвинется обратно.
         if (started && !can) {
           const p0 = sectionProgress(sections[0]);
-          if (p0 <= 0.01) {
+          if (p0 <= 0.001) {
             // первый этаж полностью спрятан -> теперь можно вернуть шапку и стрелку
             setStarted(false);
             resetAllOffscreen();
@@ -769,7 +771,6 @@ haptic("light");
       try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
       if (k === 'cases') {
-        applyBaImages();
         initBaStory();
       }
     };
