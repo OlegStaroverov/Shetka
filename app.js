@@ -515,7 +515,17 @@ haptic("light");
       return;
     }
 
-    const curEl = $(`.page[data-page="${currentPage}"]`);
+    // Safety: никогда не держим две страницы видимыми одновременно (это и давало "дубли страниц").
+// Скрываем все страницы кроме целевой сразу, до анимации.
+$$(".page").forEach(p => {
+  const key = p.getAttribute("data-page");
+  if (key && key !== page) {
+    p.hidden = true;
+    p.classList.remove("pageActive", "pageEntering");
+  }
+});
+
+const curEl = $(`.page[data-page="${currentPage}"]`);
     const nextEl = $(`.page[data-page="${page}"]`);
     if (!nextEl) return;
 
@@ -641,10 +651,11 @@ haptic("light");
       const offX = () => (window.innerWidth || 360) * 0.62 + 80; // насколько "за экран" уезжаем
 
       const canStartNow = () => {
-        const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
-        const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
-        // стартуем только когда шапка и кнопки полностью ушли вверх
-        return headBottom <= -8 && segBottom <= -8;
+        // Стартуем, когда блок истории реально пришёл в зону видимости,
+        // а не когда "шапка уехала". Иначе стрелка может зависнуть посреди страницы.
+        const r = story.getBoundingClientRect();
+        const vh = window.innerHeight || 1;
+        return r.top <= vh * 0.35;
       };
 
       const sectionProgress = (sec) => {
@@ -659,9 +670,6 @@ haptic("light");
       const setStarted = (v) => {
         started = !!v;
         story.classList.toggle('baStarted', started);
-        // пока история идёт — прячем шапку/кнопки (и показываем только после полного отката)
-        aboutPage?.classList.toggle('baLockHeader', started);
-
         if (hint) {
           hint.setAttribute('aria-hidden', started ? 'true' : 'false');
         }
