@@ -68,6 +68,7 @@ html,body{
   color:var(--txt);
   background: transparent;
   overflow-x:hidden;
+  overflow-x: clip;
   overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
 }
@@ -196,7 +197,7 @@ input[type="date"], input[type="time"]{
   height: 100%;
   object-fit: contain;
   display:block;
-  transform: scale(5);
+  transform: scale(1.8);
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
 
@@ -752,25 +753,21 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 /* ===== REVIEWS: блок шире экрана (краёв не видно), но трек 100vw, фон по теме ===== */
 
 /* 1) сама карточка: шире экрана, чтобы боковые края уходили за экран */
+/* 1) сама карточка: делаем БЕЗ 124vw (это часто даёт горизонтальный скролл в iOS/Telegram).
+   Full-bleed делаем только через .reviewsBleed (100vw) ниже. */
 .aboutReviewsCard{
-  /* НЕ используем left/transform (они чаще дают “уезд” iOS), только margin */
-  width: 124vw;
-  margin-left: calc(50% - 62vw);
-  margin-right: calc(50% - 62vw);
+  width: 100%;
   max-width: none;
 
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
+  border-radius: 22px;
+  border: 1px solid var(--hair);
+  box-shadow: var(--shadow);
 
-  /* вертикально компактно */
-  padding: 10px 0 10px;
+  padding: 14px 0 10px;
   margin-top: 12px;
 
-  /* по умолчанию (светлая тема) — как обычные светлые блоки */
   background: var(--bg1);
 }
-
 /* ТОЛЬКО тёмная тема: фон #18181A */
 html[data-theme="dark"] .aboutReviewsCard{
   background: #18181A;
@@ -791,6 +788,7 @@ html[data-theme="dark"] .aboutReviewsCard{
 
 /* 4) Трек: без рамок, snap */
 .reviewsTrack{
+  scrollbar-width: none;
   border: 0;
   border-radius: 0;
   display:flex;
@@ -840,9 +838,9 @@ html[data-theme="dark"] .aboutReviewsCard{
 /* Пока история НЕ началась: стрелка видна */
 .baSwipeHint{
   position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
-  display:flex;
+  top: calc(var(--headerH) + var(--safeTop) + 12px);
+  transform: none;
+display:flex;
   justify-content:center;
   pointer-events:none;
   z-index: 3;
@@ -2059,3 +2057,6 @@ body { touch-action: pan-y; overscroll-behavior-x: none; }
 
 /* Любые широкие секции не должны влиять на позицию остальных блоков */
 .aboutReviewsCard, .reviewsBleed { contain: layout paint; }
+
+/* Hide horizontal scrollbar in reviews track (Telegram/iOS shows it as a second slider) */
+.reviewsTrack::-webkit-scrollbar{ display:none; height:0; }
