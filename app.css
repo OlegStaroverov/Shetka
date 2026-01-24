@@ -68,7 +68,6 @@ html,body{
   color:var(--txt);
   background: transparent;
   overflow-x:hidden;
-  overflow-x: clip;
   overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
 }
@@ -197,7 +196,7 @@ input[type="date"], input[type="time"]{
   height: 100%;
   object-fit: contain;
   display:block;
-  transform: scale(1.8);
+  transform: scale(5);
   transform-origin: center;
   image-rendering: -webkit-optimize-contrast;
 
@@ -720,27 +719,19 @@ html[data-theme="dark"] .svcSection{ background: rgba(255,255,255,.06); }
 .aboutTitle{font-weight:800; font-size:18px;}
 .aboutText{opacity:.8; margin-top:6px;}
 
-/* About tabs: как вкладки услуг */
+/* About tabs: отдельные кнопки (без общего контейнера) */
 .aboutTabs{
   display:flex;
-  gap: 8px;
-  padding: 10px;       
-  overflow:auto;      
+  gap: 10px;
+  padding: 0 14px;
+  margin-top: 12px;
 }
 .aboutTabs .segBtn{
-  padding: 10px 12px;
-  border-radius: 999px;
+  border-radius: 18px;
   border: 1px solid var(--hair);
-  background: rgba(255,255,255,.30);
-  font-weight: 900;
-  white-space: nowrap;
+  background: rgba(255,255,255,.35);
 }
 html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
-.aboutTabs .segBtn.active{
-  border-color: var(--accentBorder);
-  background: var(--accentBg);
-}
-
 .acc{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
 .accItem{border:1px solid var(--hair); border-radius:16px; overflow:hidden; background: rgba(255,255,255,.5);} 
 html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);} 
@@ -750,149 +741,29 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
-/* ===== REVIEWS: блок шире экрана (краёв не видно), но трек 100vw, фон по теме ===== */
+.reviewsTrack{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:12px 2px 6px;}
+.reviewSlide{flex:0 0 86%; scroll-snap-align:center; border:1px dashed var(--hair); border-radius:18px; min-height:130px; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
+.dot{width:6px; height:6px; border-radius:999px; background: rgba(0,0,0,.25);} 
+html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);} 
+.dot.active{background: var(--lime);} 
 
-/* 1) сама карточка: шире экрана, чтобы боковые края уходили за экран */
-/* 1) сама карточка: делаем БЕЗ 124vw (это часто даёт горизонтальный скролл в iOS/Telegram).
-   Full-bleed делаем только через .reviewsBleed (100vw) ниже. */
-.aboutReviewsCard{
-  width: 100%;
-  max-width: none;
+.story{margin-top:12px;}
+.storySection{height:140vh;}
+.storySticky{position:sticky; top:12px; padding:14px;}
+.storyTitle{font-weight:800; font-size:18px;}
+.storyGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+.storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
+.storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
-  border-radius: 22px;
-  border: 1px solid var(--hair);
-  box-shadow: var(--shadow);
-
-  padding: 14px 0 10px;
-  margin-top: 12px;
-
-  background: var(--bg1);
+/* ====== BEFORE/AFTER placeholders (10 cases) ====== */
+.baStory{margin-top:12px;}
+.baSection{height:160vh;}
+.baSticky{position:sticky; top:12px;}
+.baPair{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+@media (max-width:420px){
+  .baPair{grid-template-columns:1fr;}
 }
-/* ТОЛЬКО тёмная тема: фон #18181A */
-html[data-theme="dark"] .aboutReviewsCard{
-  background: #18181A;
-}
-
-/* 2) Заголовок: отступ слева/справа как у FAQ */
-.aboutReviewsTitle{
-  padding: 0 var(--pad);
-  margin: 0 0 14px 0; /* чуть больше до картинки */
-}
-
-/* 3) Карусель должна быть ровно от края экрана до края (100vw) */
-.reviewsBleed{
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-}
-
-/* 4) Трек: без рамок, snap */
-.reviewsTrack{
-  scrollbar-width: none;
-  border: 0;
-  border-radius: 0;
-  display:flex;
-  gap: 0;
-  overflow-x:auto;
-  overflow-y:hidden;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 5) Слайд: не делаем огромную “рамку”, он под картинку */
-.reviewsTrack .reviewSlide{
-  flex: 0 0 100vw;
-  scroll-snap-align: center;
-  background: transparent;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  /* небольшой отступ снизу до низа блока */
-  padding: 0 0 10px;
-}
-
-/* 6) Картинка: чётко, не режется */
-.reviewImg{
-  display:block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-
-  max-height: min(58vh, 520px);
-
-  object-fit: contain;
-  object-position: center;
-
-  image-rendering: -webkit-optimize-contrast;
-  transform: translateZ(0);
-}
-
-/* точки */
-.aboutReviewsDots{ padding: 6px 0 0; }
-
-/* ====== BEFORE/AFTER (НОВАЯ ЛОГИКА: этажи, движение строго от скролла) ====== */
-
-.baStory{ margin-top: 12px; }
-
-/* Пока история НЕ началась: стрелка видна */
-.baSwipeHint{
-  position: sticky;
-  top: calc(var(--headerH) + var(--safeTop) + 12px);
-  transform: none;
-display:flex;
-  justify-content:center;
-  pointer-events:none;
-  z-index: 3;
-  opacity: 1;
-  transition: opacity 260ms ease, transform 260ms ease;
-}
-.baArrow{
-  width: 22px;
-  height: 22px;
-  border-right: 3px solid rgba(0,0,0,.45);
-  border-bottom: 3px solid rgba(0,0,0,.45);
-  transform: rotate(45deg);
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.12));
-  animation: baArrow 1.15s ease-in-out infinite;
-}
-html[data-theme="dark"] .baArrow{
-  border-right-color: rgba(255,255,255,.45);
-  border-bottom-color: rgba(255,255,255,.45);
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
-}
-@keyframes baArrow{
-  0%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
-  50%{ transform: translate3d(0, 6px,0) rotate(45deg); opacity:.7; }
-  100%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
-}
-
-/* Когда история началась: стрелка исчезает */
-.baStory.baStarted .baSwipeHint{
-  opacity: 0;
-  transform: translateY(-50%) scale(.92);
-}
-
-/* Этажи: делаем длиннее, чтобы движение было очень медленным */
-.baSection{ height: 220vh; }
-.baSection:last-child{ height: 260vh; } /* финальный “держим в центре” */
-
-/* Липкий контейнер, держим пару по центру */
-.baSticky{
-  position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 14px;
-}
-
-/* Пара */
-.baPair{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-/* Карточки (плейсхолдеры/картинки) */
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
@@ -900,35 +771,22 @@ html[data-theme="dark"] .baArrow{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight: 900;
+  font-weight:900;
   letter-spacing: .22em;
   text-indent: .22em;
-  opacity:.96;
-
-  background: rgba(255,255,255,.35);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  will-change: transform;
+  opacity:.92;
+  will-change: transform, opacity;
   transform: translate3d(0,0,0);
+  background: rgba(255,255,255,.35);
 }
 html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
+.baPh span{font-size:20px; opacity:.78;}
 
-/* если подставили картинку — буквы прячем */
-.baPh.hasImg span{ opacity: 0; }
-
-/* Блокируем появление шапки/кнопок, пока история не “откатилась” полностью */
-.page[data-page="about"].baLockHeader .pageHead,
-.page[data-page="about"].baLockHeader #aboutSeg{
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 180ms ease;
-}
-.page[data-page="about"]:not(.baLockHeader) .pageHead,
-.page[data-page="about"]:not(.baLockHeader) #aboutSeg{
-  transition: opacity 180ms ease;
-}
+/* entrance from edges */
+.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
+.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
+.baSection.baActive .baBefore,
+.baSection.baActive .baAfter{ transform: translate3d(0,0,0); opacity:1; transition: transform 680ms cubic-bezier(0.25,1,0.33,1), opacity 520ms cubic-bezier(0.25,1,0.33,1); }
 
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
@@ -1277,18 +1135,6 @@ html[data-theme="dark"] .rateStar{ background: rgba(255,255,255,.06); }
 }
 html[data-theme="dark"] .sheetCard{ background:#0f1115; }
 
-/* ===== Sheet transitions (like modals) ===== */
-.sheet .sheetCard{
-  opacity: 0;
-  transform: translate3d(0, 14px, 0) scale(.985);
-  transition: opacity 240ms cubic-bezier(0.22,1,0.36,1),
-              transform 240ms cubic-bezier(0.22,1,0.36,1);
-}
-.sheet.show .sheetCard{
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-}
-
 .sheetHead{
   display:flex;
   align-items:flex-start;
@@ -1498,4 +1344,495 @@ body.page-estimate #chatFab{
   width: min(440px, calc(100vw - 28px));
   padding-top: 22px; /* чтобы крестик не касался текста */
 }
+#leaveEstimateModal .modalH{ margin-top: 6px; }
 
+.pulseDot{
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background:#34c759;
+  box-shadow: 0 0 0 0 rgba(52,199,89,.25);
+  animation: pulseSoft 1.6s ease-in-out infinite;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position: relative;
+}
+
+/* слабая пульсация (по умолчанию) */
+@keyframes pulseSoft{
+  0%{ box-shadow: 0 0 0 0 rgba(52,199,89,.22); transform: scale(1); }
+  70%{ box-shadow: 0 0 0 7px rgba(52,199,89,0); transform: scale(1.04); }
+  100%{ box-shadow: 0 0 0 0 rgba(52,199,89,0); transform: scale(1); }
+}
+
+/* усиленная пульсация + синий цвет когда есть непрочитанные */
+.pulseDot.hasUnread{
+  background:#2f80ed;
+  box-shadow: 0 0 0 0 rgba(47,128,237,.40);
+  animation: pulseStrong 1.1s ease-in-out infinite;
+}
+
+@keyframes pulseStrong{
+  0%{ box-shadow: 0 0 0 0 rgba(47,128,237,.45); transform: scale(1); }
+  70%{ box-shadow: 0 0 0 11px rgba(47,128,237,0); transform: scale(1.08); }
+  100%{ box-shadow: 0 0 0 0 rgba(47,128,237,0); transform: scale(1); }
+}
+
+/* цифра непрочитанных внутри зелёной точки */
+.pulseNum{
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(8,12,8,.92);
+  text-shadow: 0 1px 1px rgba(255,255,255,.25);
+}
+
+.pulseDot.hasUnread .pulseNum{
+  color: rgba(255,255,255,.95);
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+/* ---- PHOTO ESTIMATES TILE STATES ---- */
+
+#photoEstimatesTile.peBlue,
+#photoEstimatesTile.peGreen{
+  border-color: var(--hair);
+}
+
+/* карточка заявки в списке */
+.peItem{
+  padding: 14px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+.peTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+}
+.peTitle{ font-weight: 950; letter-spacing:-.2px; }
+.peMeta{ margin-top:3px; font-size: 12px; color: var(--muted); }
+
+.peStatus{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border:1px solid var(--hair);
+  background: rgba(255,255,255,.30);
+  font-size: 12px;
+  font-weight: 900;
+}
+html[data-theme="dark"] .peStatus{ background: rgba(255,255,255,.06); }
+
+.peDot{ width:8px; height:8px; border-radius:999px; background:#ff9f0a; }
+.peDot.waiting_media{ background:#ff9f0a; }
+.peDot.waiting_admin{ background:#ff9f0a; }
+.peDot.answered{ background:#34c759; }
+.peDot.archived{ background: rgba(255,255,255,.55); }
+
+.peBody{ font-size: 13px; color: var(--muted); line-height:1.25; }
+
+/* --- PHOTO ESTIMATES CARD (modal) --- */
+.peInfo .peInfoRow{
+  font-size: 15px;
+}
+.peInfo .peInfoRow span{ font-size: 13px; }
+.peInfo .peInfoRow b{ font-weight: 950; }
+
+.peReplyBox{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.22);
+  text-align: center;
+}
+html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
+.peReplyTitle{ font-weight: 950; margin-bottom: 8px; }
+.peReplyText{
+  font-size: 13px;
+  color: var(--txt);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.peActions{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.peActions .danger{ grid-column: 1 / -1; }
+
+/* --- Registration title --- */
+.modalTitleReg{
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* --- TG icon button (phone) --- */
+.tgIconBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  /* Цвет иконки должен зависеть от темы */
+  color: var(--txt);
+}
+.tgIconBtn svg{ opacity:.9; }
+.tgIconBtn svg path{ fill: currentColor; }
+
+/* City/Gender active now use the same unified active style as everywhere (.segBtn.active). */
+
+/* Generic unified active style (for any tappable UI state) */
+.is-active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+}
+
+/* About top tabs: buttons are standalone (no shared glass container) */
+.aboutTabs{ display:flex; gap:10px; padding: 0 var(--pad); margin-top: 10px; }
+.aboutTabs .segBtn{ border-radius: 18px; border:1px solid var(--hair); background: rgba(255,255,255,.30); }
+html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+
+/* Center loader (used e.g. for Before/After image loading) */
+.centerLoader{
+  position: fixed;
+  inset: 0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 120;
+  background: rgba(0,0,0,.08);
+  backdrop-filter: blur(6px);
+}
+html[data-theme="dark"] .centerLoader{ background: rgba(0,0,0,.25); }
+.centerLoader.show{ display:flex; }
+.loaderPill{
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 900;
+}
+
+/* --- Registration submit: компактная кнопка по ширине текста и по центру --- */
+#regSubmitBtn{
+  align-self: center;
+  width: auto;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* --- Disabled buttons (регистрация неактивна, пока всё не заполнено) --- */
+.smallBtn:disabled,
+.cta:disabled{
+  opacity: .55;
+  pointer-events: none;
+}
+
+/* --- Field errors --- */
+.inputError{
+  border-color: rgba(255,59,48,.85) !important;
+  box-shadow: 0 0 0 2px rgba(255,59,48,.25);
+}
+.segError{
+  border-color: rgba(255,59,48,.85) !important;
+  box-shadow: 0 0 0 2px rgba(255,59,48,.25);
+}
+
+/* --- Hint under phone --- */
+.phoneHint{
+  margin-top:6px;
+  font-size:12px;
+  opacity:.75;
+  line-height:1.25;
+}
+
+#photoRequestsBtn{
+  display:none;
+  position: relative;
+}
+
+#photoRequestsBtn.green{
+  background: #2ecc71;
+}
+
+#photoRequestsBtn.blue{
+  background: #3498db;
+}
+
+#photoRequestsBtn.blink{
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse{
+  0%{ box-shadow: 0 0 0 0 rgba(46,204,113,.6); }
+  100%{ box-shadow: 0 0 0 12px rgba(46,204,113,0); }
+}
+
+#photoRequestsBtn .badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:#fff;
+  color:#3498db;
+  border-radius:50%;
+  font-size:12px;
+  padding:2px 6px;
+  font-weight:600;
+}
+
+
+/* --- Iteration 4 UX tweaks (minimal, local) --- */
+.settingRowCenter{justify-content:center;}
+.settingRowCenter .profileBtn{width:100%; max-width:360px; margin:0 auto;}
+
+/* Profile card prettier (no color changes) */
+.profileRow{gap:12px;}
+.profileName{font-size:18px; line-height:22px;}
+.profileHint{font-size:13px;}
+.profileQuickBtns{display:flex; gap:12px; margin-top:10px;}
+.profileQuickBtns .supportBtn{flex:1; justify-content:center;}
+
+/* Courier wizard form polish (only inside courier page) */
+[data-page="courier"] .estimateCard{padding:14px;}
+[data-page="courier"] .fieldLabel{font-size:13px; margin-bottom:6px;}
+[data-page="courier"] .fieldInput,
+[data-page="courier"] .fieldSelect{font-size:16px; padding:12px 12px;}
+[data-page="courier"] .order{border-radius:18px;}
+[data-page="courier"] .orderTop{align-items:center;}
+[data-page="courier"] .orderId{font-size:14px; opacity:.9;}
+[data-page="courier"] .crItemCard{margin-top:10px;}
+[data-page="courier"] .crItemCard:first-child{margin-top:0;}
+[data-page="courier"] .crItemTitle{font-size:13px; margin-left:2px;}
+
+/* Fix mobile overflow for date/time rows */
+[data-page="courier"] .modalGrid{grid-template-columns:1fr; gap:10px;}
+[data-page="courier"] input[type="date"],
+[data-page="courier"] input[type="time"]{width:100%; box-sizing:border-box;}
+
+/* Inline errors */
+.crErr{font-size:14px; margin-top:8px; font-weight:600;}
+
+
+/* --- Courier wizard (new screens only) --- */
+.page[data-page="courier"] .estimateCard{padding:14px;}
+.page[data-page="courier"] .fieldInput,
+.page[data-page="courier"] .fieldSelect{width:100%; box-sizing:border-box;}
+.crSectionTitle{font-size:18px; font-weight:800; margin-bottom:6px;}
+.crSectionSub{font-size:14px; color:var(--muted); margin-bottom:12px;}
+.crItemsList{display:flex; flex-direction:column; gap:10px;}
+.crItemCard{padding:12px;}
+.crItemHead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+.crItemTitle{font-size:14px; font-weight:700;}
+.crActionsRow{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+@media (max-width:420px){
+  .crActionsRow{grid-template-columns:1fr;}
+}
+.crFormGrid{display:flex; flex-direction:column; gap:12px;}
+.crRow2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+@media (max-width:420px){
+  .crRow2{grid-template-columns:1fr;}
+}
+.crErr{color:var(--danger,#ff3b30); font-size:15px; font-weight:700; margin-top:8px;}
+.crPreview{padding:12px; border-radius:14px;}
+.crPreviewRow{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:6px 0;}
+.crPreviewKey{opacity:.75; font-weight:700;}
+.crPreviewVal{min-width:0; text-align:right;}
+.crPreviewVal b{font-weight:800;}
+.crPreviewLine{margin:6px 0;}
+.crPreviewItems{margin-top:10px; display:flex; flex-direction:column; gap:10px;}
+.crBadgeReq{font-weight:800;}
+.crSavedAddrs{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+.crSavedAddrs .smallBtn{white-space:nowrap;}
+
+
+
+/* ====== PATCH 2026-01-21: Home/Profile layout + theme toggle ====== */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+.themeSwitch{
+  width: 92px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* Profile panel: no avatar */
+.profileRowNoAvatar{display:flex; align-items:flex-start;}
+.profileRowNoAvatar .profileMeta{width:100%;}
+.profileName{line-height:1.15;}
+
+/* ---------------- HOME (profile + CTAs) ---------------- */
+
+.homeProfile{
+  position: relative;
+  padding: 16px;
+}
+
+.profileCorner{
+  position:absolute;
+  top: 12px;
+  right: 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap: 10px;
+}
+
+.profileCorner .iconBtn{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid var(--hair);
+  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+}
+
+.themeMini{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid var(--hair);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+}
+
+.themeMiniIcon{font-size: 18px; line-height: 1;}
+html[data-theme="light"] .themeMiniIcon.moon{display:none;}
+html[data-theme="dark"] .themeMiniIcon.sun{display:none;}
+
+.profileMetaCentered{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.profileMetaCentered .profileName{
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -.2px;
+  margin-top: 2px;
+}
+
+.profileQuickBtnsRow{
+  width: 100%;
+  margin-top: 10px;
+  display:flex;
+  flex-direction: row-reverse; /* визуально справа-налево */
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+.profileQuickBtnsRow .supportBtn{
+  flex: 1;
+  height: 46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 850;
+}
+
+/* Home CTAs: compact, emoji, smooth slide to center (replays on each home open) */
+.homeCtasRow{
+  display:flex;
+  gap:12px;
+  margin-top: 12px;
+}
+
+.ctaMini{
+  flex:1;
+  height: 68px;
+  border-radius: 20px;
+  border: 1px solid var(--hair);
+  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 6px;
+  font-weight: 900;
+  letter-spacing: .01em;
+  position: relative;
+  overflow:hidden;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+
+.ctaMini::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: var(--accentBg);
+  opacity: .70;
+  pointer-events:none;
+}
+
+html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
+
+.ctaMini > *{ position: relative; z-index: 1; }
+.ctaMini:active{transform: scale(.985);}
+
+.ctaMiniIco{font-size: 20px; line-height: 1;}
+.ctaMiniTxt{font-size: 14px;}
+
+/* animation states */
+.homeAnim{
+  opacity: 0;
+  transition: transform 560ms cubic-bezier(0.22,1,0.36,1), opacity 560ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.ctaDropoff.homeAnim{ transform: translate3d(-18vw, 0, 0); }
+.ctaConsult.homeAnim{ transform: translate3d( 18vw, 0, 0); }
+.supportCenter.homeAnim{ transform: translate3d(0, 10px, 0); }
+
+.homeAnim.in{ opacity: 1; transform: translate3d(0,0,0); }
+
+.homeAnim.in{ transition-delay: 40ms; }
+.ctaConsult.homeAnim.in{ transition-delay: 90ms; }
+.supportCenter.homeAnim.in{ transition-delay: 140ms; }
+
+/* Centered support button */
+.supportCenter{
+  width: 100%;
+  max-width: 360px;
+  margin: 14px auto 0;
+  display:flex;
+  justify-content:center;
+}
+
+/* Dropoff modal: center buttons */
+.modalActionsCol{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.modalActionsCol .cta{
+  width: 100%;
+  max-width: 420px;
+}
