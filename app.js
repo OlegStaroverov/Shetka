@@ -216,29 +216,6 @@ return true;
     });
   };
 
-  // Page intro animation (like Home CTAs) for any page
-  const runPageIntro = (page) => {
-    const root = document.querySelector(`.page[data-page="${page}"]`);
-    if (!root || root.hidden) return;
-  
-    const nodes = Array.from(root.querySelectorAll('.pageIntro'));
-    if (!nodes.length) return;
-  
-    nodes.forEach(n => n.classList.remove('in'));
-    // reflow to replay
-    // eslint-disable-next-line no-unused-expressions
-    root.offsetHeight;
-  
-    requestAnimationFrame(() => {
-      nodes.forEach((n, i) => {
-        // ступенчатая задержка как на Home
-        n.style.transitionDelay = `${40 + i * 50}ms`;
-        n.classList.add('in');
-      });
-    });
-  };
-
-    
   const html = document.documentElement;
 
   // sendData bridge
@@ -456,10 +433,7 @@ const closeModalEl = (el) => {
     syncThemeSwitch();
     // pattern image depends on theme
     setPatternEnabled(getPatternEnabled());
-
-    // обновляем отзывы под тему
-    try { window.__SHETKA_APPLY_REVIEW_IMAGES?.(); } catch (_) {}
-haptic("light");
+    haptic("light");
   };
 
   // ---------------- PATTERN ----------------
@@ -499,33 +473,11 @@ haptic("light");
 
   const showPage = (page, { push = true } = {}) => {
     if (page === currentPage) {
-      // каждый переход/тап по вкладке начинается с начала страницы + перерисовка
-      try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
-
-      // обновляем контент текущей страницы
-      if (page === "home") { try { hydrateProfile(); } catch(_) {} try { runHomeIntro(); } catch(_) {} }
-      if (page === "orders") { try { renderOrders(); } catch(_) {} }
-      if (page === "services") { try { renderServices(); } catch(_) {} }
-      if (page === "about") { try { initAboutOnce(); } catch(_) {} try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
-      if (page === "photo_estimates") { try { peRefreshAll(true).catch(() => {}); } catch(_) {} }
-      if (page === "courier_requests") { try { crRefreshAll(true).catch(() => {}); } catch(_) {} }
-
-      try { runPageIntro(page); } catch(_) {}
-      
+      if (page === "home") { try { runHomeIntro(); } catch(_) {} }
       return;
     }
 
-    // Safety: никогда не держим две страницы видимыми одновременно (это и давало "дубли страниц").
-// Скрываем все страницы кроме целевой сразу, до анимации.
-$$(".page").forEach(p => {
-  const key = p.getAttribute("data-page");
-  if (key && key !== page) {
-    p.hidden = true;
-    p.classList.remove("pageActive", "pageEntering");
-  }
-});
-
-const curEl = $(`.page[data-page="${currentPage}"]`);
+    const curEl = $(`.page[data-page="${currentPage}"]`);
     const nextEl = $(`.page[data-page="${page}"]`);
     if (!nextEl) return;
 
@@ -543,14 +495,11 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
     });
 
     currentPage = page;
-    try { window.scrollTo(0, 0); } catch(_) {}
-    setTimeout(() => { try { window.scrollTo(0, 0); } catch(_) {} }, 0);
-    try { runPageIntro(page); } catch(_) {}
     if (push) pageStack.push(page);
     setTabActive(page);
 
     // при переключении страницы сбрасываем скролл, чтобы логотип "уходил под блоки" корректно везде
-    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
+    try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
     document.body.classList.remove("logoBehind");
     
     document.body.classList.toggle("page-estimate", page === "estimate");
@@ -566,7 +515,7 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
     }
     if (page === "orders") renderOrders();
     if (page === "services") renderServices();
-    if (page === "about") { initAboutOnce(); try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
+    if (page === "about") initAboutOnce();
     if (page === "photo_estimates") {
       // при заходе обновляем и рисуем
       peRefreshAll(true).catch(() => {});
@@ -621,192 +570,38 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER (NEW: этажи, движение строго от скролла) ======
-    let _baInited = false;
-    const initBaStory = () => {
-      if (_baInited) return;
-      _baInited = true;
-
-      const aboutPage = document.querySelector('.page[data-page="about"]');
-      const story = document.querySelector('.baStory');
-      const hint = document.getElementById('baSwipeHint');
-      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-
-      const pageHead = document.querySelector('.page[data-page="about"] .pageHead');
-      const aboutSeg = document.getElementById('aboutSeg');
-
-      if (!story || !sections.length) return;
-
-      let started = false;
-      let raf = 0;
-
-      const clamp01 = (x) => Math.max(0, Math.min(1, x));
-      const lerp = (a, b, t) => a + (b - a) * t;
-      const ease = (t) => {
-        // мягко и медленно (без резких стартов)
-        t = clamp01(t);
-        return t * t * (3 - 2 * t); // smoothstep
-      };
-
-      const offX = () => (window.innerWidth || 360) * 0.62 + 80; // насколько "за экран" уезжаем
-
-      const canStartNow = () => {
-        // Стартуем, когда блок истории реально пришёл в зону видимости,
-        // а не когда "шапка уехала". Иначе стрелка может зависнуть посреди страницы.
-        const r = story.getBoundingClientRect();
-        const vh = window.innerHeight || 1;
-        return r.top <= vh * 0.35;
-      };
-
-      const sectionProgress = (sec) => {
-        const r = sec.getBoundingClientRect();
-        const vh = window.innerHeight || 1;
-        // прогресс = как далеко центр экрана прошёл по секции
-        const center = vh * 0.55;
-        const p = (center - r.top) / (r.height || 1);
-        return clamp01(p);
-      };
-
-      const setStarted = (v) => {
-        started = !!v;
-        story.classList.toggle('baStarted', started);
-        if (hint) {
-          hint.setAttribute('aria-hidden', started ? 'true' : 'false');
-        }
-      };
-
-      const resetAllOffscreen = () => {
-        const off = offX();
-        sections.forEach((sec) => {
-          const b = sec.querySelector('.baBefore');
-          const a = sec.querySelector('.baAfter');
-          if (b) b.style.transform = `translate3d(${-off}px,0,0)`;
-          if (a) a.style.transform = `translate3d(${ off}px,0,0)`;
-        });
-      };
-
-      const render = () => {
-        raf = 0;
-
-        // если вкладка не "До/После" — ничего не делаем
-        if (pCases?.hidden) return;
-
-        const can = canStartNow();
-
-        // 1) ещё не стартовали: держим всё за краями, стрелка видна, шапка/кнопки видны
-        if (!started) {
-          if (can) {
-            // шапка исчезла -> запускаем историю
-            setStarted(true);
-          } else {
-            setStarted(false);
-            resetAllOffscreen();
-            return;
-          }
-        }
-
-        // 2) история идёт:
-        // если юзер пошёл вверх и шапка начинает возвращаться —
-        // мы НЕ показываем её, пока первый этаж полностью не задвинется обратно.
-        if (started && !can) {
-          const p0 = sectionProgress(sections[0]);
-          if (p0 <= 0.001) {
-            // первый этаж полностью спрятан -> теперь можно вернуть шапку и стрелку
-            setStarted(false);
-            resetAllOffscreen();
-            return;
-          }
-          // иначе продолжаем анимацию, шапку держим скрытой
-        }
-
-        const off = offX();
-        const lastIdx = sections.length - 1;
-
-        sections.forEach((sec, idx) => {
-          const p = sectionProgress(sec);
-
-          const beforeEl = sec.querySelector('.baBefore');
-          const afterEl  = sec.querySelector('.baAfter');
-          if (!beforeEl || !afterEl) return;
-
-          let xL = -off;
-          let xR = off;
-
-          if (p <= 0) {
-            // полностью спрятано
-            xL = -off; xR = off;
-          } else if (p < 0.5) {
-            // Фаза 1: медленный выезд в центр
-            const t = ease(p / 0.5);
-            xL = lerp(-off, 0, t);
-            xR = lerp( off, 0, t);
-          } else {
-            if (idx === lastIdx) {
-              // последний этаж: зафиксировать в центре
-              xL = 0; xR = 0;
-            } else {
-              // Фаза 2: медленный разъезд обратно за края
-              const t = ease((p - 0.5) / 0.5);
-              xL = lerp(0, -off, t);
-              xR = lerp(0,  off, t);
-            }
-          }
-
-          beforeEl.style.transform = `translate3d(${xL}px,0,0)`;
-          afterEl.style.transform  = `translate3d(${xR}px,0,0)`;
-        });
-      };
-
-      const onScroll = () => {
-        if (raf) return;
-        raf = requestAnimationFrame(render);
-      };
-
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll, { passive: true });
-
-      // init: всё спрятано, стрелка видна
-      setStarted(false);
-      resetAllOffscreen();
-      onScroll();
-    };
-
     const setAboutTab = (key) => {
       const k = String(key || 'about');
       seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
       if (pAbout) pAbout.hidden = (k !== 'about');
       if (pCases) pCases.hidden = (k !== 'cases');
-      try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
       if (k === 'cases') {
-        initBaStory();
+        // restart BA placeholders animation on each open
+        document.querySelectorAll('[data-ba]').forEach(el => el.classList.remove('baActive'));
+        requestAnimationFrame(() => {
+          document.querySelectorAll('[data-ba]').forEach(el => {
+            // class will be re-added by observer when intersecting; force reflow fallback
+            void el.offsetHeight;
+          });
+        });
       }
     };
 
-    // ====== BEFORE/AFTER assets (do1.png / posle1.png ...) ======
-    const BA_CASES = Array.from({ length: 6 }, (_, i) => ({
-      before: `do${i + 1}.png`,
-      after: `posle${i + 1}.png`,
-    }));
-
-    const applyBaImages = () => {
-      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      sections.forEach((sec, idx) => {
-        const pair = BA_CASES[idx];
-        if (!pair) return;
-
-        const beforeEl = sec.querySelector('.baBefore');
-        const afterEl  = sec.querySelector('.baAfter');
-        if (beforeEl) {
-          beforeEl.style.backgroundImage = `url('${pair.before}')`;
-          beforeEl.classList.add('hasImg');
-        }
-        if (afterEl) {
-          afterEl.style.backgroundImage = `url('${pair.after}')`;
-          afterEl.classList.add('hasImg');
-        }
-      });
-    };
+    // Before/After: slide-in placeholders from edges (10 cases)
+    try {
+      if ('IntersectionObserver' in window) {
+        const baObs = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            // animate every time: add on enter, remove on leave
+            if (e.isIntersecting) e.target.classList.add('baActive');
+            else e.target.classList.remove('baActive');
+          });
+        }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+        document.querySelectorAll('[data-ba]').forEach(el => baObs.observe(el));
+      }
+    } catch(_) {}
 
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
@@ -850,35 +645,8 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
       });
     }
 
-    // ====== Reviews assets (o1b.png / o1l.png ...) ======
-    const applyReviewImages = () => {
-      const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      const suffix = theme === 'dark' ? 'b' : 'l';
-
-      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
-        const i = Number(img.getAttribute('data-review') || '1');
-        img.src = `o${i}${suffix}.png`;
-
-        // крупный full-bleed режим: высоту/скейл держим CSS'ом,
-        // а aspect-ratio не фиксируем (иначе на телефоне будет "мелко")
-        const slide = img.closest?.('.reviewSlide');
-        if (slide) slide.style.aspectRatio = '';
-      });
-    };
-
-    window.__SHETKA_APPLY_REVIEW_IMAGES = applyReviewImages;
-    applyReviewImages();
-    
     // init default
     setAboutTab('about');
-
-    // allow re-open refresh (reset to start + reapply assets)
-    window.__SHETKA_REFRESH_ABOUT = () => {
-      try { setAboutTab('about'); } catch (_) {}
-      try { applyReviewImages(); } catch (_) {}
-      try { applyBaImages(); } catch (_) {}
-      try { initBaStory(); } catch (_) {}
-    };
   }
 
   // ---------------- STATUS NORMALIZATION ----------------
@@ -3101,7 +2869,7 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
       saveProfile({ ...cur, saved_addresses: safe });
       try {
         // профиль обновляется через очередь Supabase — чтобы видеть на другом устройстве
-        await supaEnqueue("profile_update", { saved_addresses: safe });
+        await enqueueRequest("profile_update", { saved_addresses: safe });
       } catch (_) {}
     };
 
@@ -3909,22 +3677,14 @@ const curEl = $(`.page[data-page="${currentPage}"]`);
       goBack();
     };
   
-    if (!estimateDirty) { doExit(); return; }
-  
-    // ТОЧЬ-В-ТОЧЬ как в курьере
-    try {
-      if (tg?.showConfirm) {
-        tg.showConfirm("Выйти из формы? Данные не сохранятся.", (ok) => {
-          if (ok) doExit();
-        });
-        return;
-      }
-    } catch(_) {}
-  
-    // fallback
-    confirmDialog("Выйти из формы? Данные не сохранятся.").then((ok) => { if (ok) doExit(); });
+    if (estimateDirty) {
+      leaveAction = doExit;
+      openLeaveEstimateModal(leaveEstimateModal);
+    } else {
+      doExit();
+    }
   });
-
+  
   // Далее / Назад
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
@@ -4001,17 +3761,9 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   
   // ---------------- INIT ----------------
   setTabActive("home");
-  
-  try {
-    const home = document.querySelector('.page[data-page="home"]');
-    if (home) {
-      home.hidden = false;              // ВАЖНО: показать страницу
-      home.classList.add('pageActive'); // анимации
-    }
-  } catch (_) {}
-  
+  // mark first page as active for CSS transitions
+  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
   hydrateProfile();
-
   try { runHomeIntro(); } catch(_) {}
   initRevealObserver();
   renderChat();
