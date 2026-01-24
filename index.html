@@ -65,7 +65,7 @@
 
       <!-- ORDERS -->
       <section class="page" data-page="orders" hidden>
-        <div class="pageHead noBack pageIntro" data-intro="up">
+        <div class="pageHead noBack">
           <div>
             <div class="pageTitle">Заказы</div>
             <div class="pageSub">Все заявки и заказы в одном месте</div>
@@ -73,19 +73,19 @@
         </div>
 
         <!-- Search by order id -->
-        <div class="glass searchBar pageIntro" data-intro="left">
+        <div class="glass searchBar">
           <div class="searchIco">🔎</div>
           <input id="orderSearchInput" class="searchInput" inputmode="numeric" placeholder="Введите номер заказа" />
           <button id="orderSearchBtn" class="searchBtn" type="button">Найти</button>
         </div>
         <div id="searchResult" class="searchResult"></div>
 
-        <div class="sectionTitle pageIntro" data-intro="up">Ваши заказы</div>
+        <div class="sectionTitle">Ваши заказы</div>
         <div id="ordersList" class="orders"></div>
 
-        <div class="sectionTitle pageIntro" data-intro="up">Заявки</div>
+        <div class="sectionTitle">Заявки</div>
 
-        <button class="tile glass pageIntro" data-intro="left" id="photoEstimatesTile" type="button" hidden>
+        <button class="tile glass" id="photoEstimatesTile" type="button" hidden>
           <div class="tileIco">📸</div>
           <div class="tileTxt">
             <div class="tileTitle">Консультации по фото/видео</div>
@@ -99,7 +99,7 @@
           </div>
         </button>
 
-        <button class="tile glass pageIntro" data-intro="right" id="courierRequestsTile" type="button" hidden>
+        <button class="tile glass" id="courierRequestsTile" type="button" hidden>
           <div class="tileIco">🚚</div>
           <div class="tileTxt">
             <div class="tileTitle">Курьерские заявки</div>
@@ -112,43 +112,46 @@
             <span class="pulseNum" id="courierRequestsUnread" hidden>0</span></div>
         </button>
 
-        <button class="supportBtn glass pageIntro" data-intro="up" id="supportOpenFromProfile" type="button">
+        <button class="supportBtn glass" id="supportOpenFromProfile" type="button">
           💬 Написать в поддержку
         </button>
       </section>
 
       <!-- SERVICES -->
       <section class="page" data-page="services" hidden>
-        <div class="pageHead noBack pageIntro" data-intro="up">
+        <div class="pageHead noBack">
           <div>
             <div class="pageTitle">Услуги</div>
             <div class="pageSub">Витрина услуг и ориентировочные цены</div>
           </div>
         </div>
 
-        <div class="priceTabs glass pageIntro" data-intro="left" id="priceTabs"></div>
+        <div class="priceTabs glass" id="priceTabs"></div>
         <div id="priceContent" class="price"></div>
       </section>
 
       <!-- ABOUT -->
       <section class="page" data-page="about" hidden>
-        <div class="pageHead noBack pageIntro" data-intro="up">
+        <div class="pageHead noBack">
           <div>
             <div class="pageTitle">О нас</div>
             <div class="pageSub">Коротко, по делу — и с примерами работ</div>
           </div>
         </div>
 
-        <div class="aboutTabs glass pageIntro" data-intro="up" id="aboutSeg"><button class="segBtn active" type="button" data-about-tab="about">О нас</button><button class="segBtn" type="button" data-about-tab="cases">До/После</button></div>
+        <div class="aboutTabs" id="aboutSeg">
+          <button class="segBtn glass active" type="button" data-about-tab="about">О нас</button>
+          <button class="segBtn glass" type="button" data-about-tab="cases">До/После</button>
+        </div>
 
         <!-- TAB: ABOUT -->
         <div id="aboutPanelAbout">
-          <div class="glass aboutCard reveal pageIntro" data-intro="up">
+          <div class="glass aboutCard reveal">
             <div class="aboutTitle">Щётка — мастерская ухода за вещами</div>
             <div class="aboutText">По фото/видео подскажем, что можно сделать, примерную стоимость и сроки. Дальше — либо курьер, либо приём в мастерской.</div>
           </div>
 
-          <div class="glass aboutCard reveal pageIntro" data-acc data-intro="up">
+          <div class="glass aboutCard reveal" data-acc>
             <div class="aboutTitle">FAQ</div>
             <div class="acc">
               <div class="accItem" data-acc-item aria-expanded="false">
@@ -175,93 +178,47 @@
             </div>
           </div>
 
-          <div class="aboutCard aboutReviewsCard reveal pageIntro" data-intro="up">
-            <div class="aboutTitle aboutReviewsTitle">Отзывы</div>
-          
-            <div class="reviewsBleed">
-              <div class="reviewsTrack" id="reviewsTrack">
-                <div class="reviewSlide"><img class="reviewImg" data-review="1" alt="Отзыв 1"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="2" alt="Отзыв 2"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="3" alt="Отзыв 3"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="4" alt="Отзыв 4"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="5" alt="Отзыв 5"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="6" alt="Отзыв 6"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="7" alt="Отзыв 7"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="8" alt="Отзыв 8"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="9" alt="Отзыв 9"></div>
-                <div class="reviewSlide"><img class="reviewImg" data-review="10" alt="Отзыв 10"></div>
-              </div>
+          <div class="glass aboutCard reveal">
+            <div class="aboutTitle">Отзывы</div>
+            <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
+              <div class="reviewSlide">🖼️ Слайд 1</div>
+              <div class="reviewSlide">🖼️ Слайд 2</div>
+              <div class="reviewSlide">🖼️ Слайд 3</div>
+              <div class="reviewSlide">🖼️ Слайд 4</div>
+              <div class="reviewSlide">🖼️ Слайд 5</div>
+              <div class="reviewSlide">🖼️ Слайд 6</div>
+              <div class="reviewSlide">🖼️ Слайд 7</div>
+              <div class="reviewSlide">🖼️ Слайд 8</div>
+              <div class="reviewSlide">🖼️ Слайд 9</div>
+              <div class="reviewSlide">🖼️ Слайд 10</div>
             </div>
-          
-            <div class="dots aboutReviewsDots" id="reviewsDots" aria-hidden="true"></div>
+            <div class="dots" id="reviewsDots" aria-hidden="true"></div>
           </div>
-
         </div>
 
         <!-- TAB: CASES -->
         <div id="aboutPanelCases" hidden>
-  <div class="baStory" aria-label="Кейсы До/После">
-    <!-- стрелка: видна только до старта истории -->
-    <div class="baSwipeHint" id="baSwipeHint" aria-hidden="true">
-      <div class="baArrow"></div>
-    </div>
-
-    <!-- 6 этажей (6 пар) -->
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-
-    <section class="baSection" data-ba>
-  <div class="baSticky">
-    <div class="baPair">
-      <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-      <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-    </div>
-  </div>
-</section>
-  </div>
-</div>
+          <div class="baStory" aria-label="Кейсы До/После">
+            <!-- 10 animated placeholders, no titles/texts -->
+            <section class="baSection" data-ba>
+              <div class="baSticky">
+                <div class="baPair">
+                  <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
+                  <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
+                </div>
+              </div>
+            </section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
+          </div>
+        </div>
       </section>
 
       <section class="page" data-page="estimate" hidden>
