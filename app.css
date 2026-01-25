@@ -1838,72 +1838,124 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
 }
 
 
+/* =========================
+   FIXES (About tabs + Reviews)
+   ========================= */
 
-/* =========================================================
-   HOTFIX: Reviews must be EXACT edge-to-edge (no drifting),
-   and slides/images must fill from edge to edge.
-   ========================================================= */
+/* 1) About tabs must highlight (same as Services) in BOTH themes */
+.segWrap .aboutTabs.seg{
+  padding: 0;
+  gap: 8px;
+}
+.segWrap .aboutTabs .segBtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+}
+html[data-theme="light"] .segWrap .aboutTabs .segBtn{
+  border-color: rgba(0,0,0,.08);
+  background: rgba(0,0,0,.03);
+}
+.segWrap .aboutTabs .segBtn.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+}
+
+/* 2) Reviews: "infinite" full-bleed block (no visible edges) */
 .reviewsSection{
-  /* override old "160vw centered" behavior */
-  width: 100vw !important;
-  left: auto !important;
-  transform: none !important;
+  position: relative;
+  margin-top: 12px;
 
-  /* true full-bleed inside max-width app */
-  margin-left: calc(50% - 50vw) !important;
-  margin-right: calc(50% - 50vw) !important;
+  /* go far beyond viewport so edges are not visible */
+  width: 160vw;
+  left: 50%;
+  transform: translateX(-50%);
 
-  border-radius: 0 !important;
-  overflow: hidden !important;
+  border-radius: 0;
+  border: 0;
 
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  /* solid base so it doesn't look transparent */
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+
+  /* space for label + content */
+  padding: 16px var(--pad) 12px;
+  overflow: hidden;
 }
 
-/* keep label readable */
 .reviewsLabel{
-  left: var(--pad) !important;
+  position: absolute;
+  top: 10px;
+  left: var(--pad);
+  z-index: 1;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 950;
+  font-size: 13px;
 }
 
-/* track: edge-to-edge, no gaps */
+.reviewsSection .reviewsBleed{
+  /* keep content readable inside infinite strip */
+  margin-top: 28px;
+}
+
+/* Track keeps same behavior, but the slide is "just image centered" */
 .reviewsSection .reviewsTrack{
-  gap: 0 !important;
-  padding: 0 !important;
+  display:flex;
+  gap: 12px;
+  overflow-x: auto;
   scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 10px 0 8px;
 }
 
-/* each slide = full viewport width */
 .reviewsSection .reviewSlide{
-  flex: 0 0 100% !important;
-  scroll-snap-align: start;
-  height: clamp(320px, 56vh, 520px) !important;
+  flex: 0 0 86%;
+  scroll-snap-align: center;
 
-  /* solid background under image */
-  background: var(--bg1) !important;
+  /* fixed "stage" size */
+  height: clamp(280px, 52vh, 420px);
+
   display:flex;
   align-items:center;
   justify-content:center;
+
+  /* NO frame */
+  border: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
-html[data-theme="dark"] .reviewsSection .reviewSlide{
-  background: #0f1115 !important;
-}
-
-/* image fills slide; contain keeps quality (no stretching) */
 .reviewsSection .reviewImg{
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  padding: 0 !important;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  display:block;
 }
 
-/* progress bar full-bleed too */
+/* visible scrollbar (light + dark) */
+.reviewsSection .reviewsTrack{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15,17,21,.35) transparent;
+}
+html[data-theme="dark"] .reviewsSection .reviewsTrack{
+  scrollbar-color: rgba(243,245,247,.25) transparent;
+}
+.reviewsSection .reviewsTrack::-webkit-scrollbar{ height: 6px; }
+.reviewsSection .reviewsTrack::-webkit-scrollbar-track{ background: transparent; }
+.reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
+  background: rgba(15,17,21,.35);
+  border-radius: 999px;
+}
+html[data-theme="dark"] .reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
+  background: rgba(243,245,247,.25);
+}
+
+/* keep progress bar visible on infinite block */
 .reviewsSection .reviewsProgress{
-  margin: 8px var(--pad) 0 !important;
-}
-
-/* dots keep centered */
-.reviewsSection .dots{
-  padding-left: var(--pad);
-  padding-right: var(--pad);
+  margin: 8px 0 0;
 }
