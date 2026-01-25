@@ -747,52 +747,70 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
   margin-top: 12px;
 }
 
-/* title must align with FAQ (not full-bleed) */
-.reviewsTitle{
-  font-weight: 800;
-  font-size: 18px;
-  margin: 0 0 10px 0;
-}
+.reviewsSection .aboutTitle{ margin: 0 0 10px 0; }
+
+/* Заголовок "Отзывы" — идентичен FAQ (используем тот же класс .aboutTitle в HTML) */
 
 /*
-  Bleed container: keeps the infinite/wide background,
-  but content (images) stays exactly edge-to-edge of the viewport.
+  Контейнер отзывов:
+  - фон может "уходить" за края (псевдо-элемент)
+  - контент (картинки) строго в пределах экрана пользователя (100vw) с микрозазором
+  - ничего не должно перекрывать системный скроллбар страницы
 */
 .reviewsBleed{
-  /* push the block beyond the page padding so desktop doesn't show side edges */
-  width: calc(100vw + 160px);
-  margin-left: calc(-1 * (var(--pad) + 80px));
-  margin-right: calc(-1 * (var(--pad) + 80px));
+  position: relative;
+  z-index: 0;
 
+  /* ровно ширина экрана */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+
+  /* без скруглений (как просила) */
   border-radius: 0;
   border: 0;
 
-  padding: 12px 0 10px;
-  position: relative;
+  /* аккуратные отступы вокруг трека/полоски */
+  padding: 10px 0 8px;
+  overflow: visible;
 }
 
-html[data-theme="dark"] .reviewsBleed{
+/* ВЫТЯНУТЫЙ фон, который уходит за экран (но НЕ трогает контент) */
+.reviewsBleed::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:-140px;
+  right:-140px;
+  background: transparent;
+  z-index:-1;
+  pointer-events:none;
+}
+
+/* 1) цвет блока в тёмной теме */
+html[data-theme="dark"] .reviewsBleed::before{
   background: #18181a;
 }
 
-/* track: true edge-to-edge carousel */
+/* track: горизонтальная лента, без внутренних скроллбаров */
 .reviewsTrack{
   display:flex;
   overflow-x:auto;
+  overflow-y:hidden;
   overscroll-behavior-x: contain;
   scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;
 
-  /* no inner padding so images touch the viewport edges */
   padding: 0;
   gap: 0;
 
-  /* hide internal scrollbars (page scrollbar must stay visible) */
   scrollbar-width: none;
+  touch-action: pan-x;
 }
 .reviewsTrack::-webkit-scrollbar{ height: 0; }
 
-/* slide is exactly one viewport wide */
+/* slide = ровно один экран */
 .reviewSlide{
   flex: 0 0 100vw;
   scroll-snap-align: start;
@@ -801,22 +819,22 @@ html[data-theme="dark"] .reviewsBleed{
   align-items:flex-start;
   justify-content:center;
 
-  /* no placeholder height: height is defined by image */
   min-height: 0;
-
   border: 0;
   border-radius: 0;
   background: transparent;
-  opacity: 1;
 }
 
 /*
-  Image: width edge-to-edge, keep full image vertically (no strong cropping).
-  So: fit by width, height auto.
+  Картинка:
+  - строго в пределах экрана (не уходит за края)
+  - почти "от края до края" (микро-отступ 1px с каждой стороны)
+  - без сильного кропа: показываем целиком по ширине, высота свободная
 */
 .reviewImg{
   display:block;
-  width: 100vw;
+  width: calc(100vw - 2px);
+  max-width: calc(100vw - 2px);
   height: auto;
 
   object-fit: contain;
@@ -840,7 +858,7 @@ html[data-theme="dark"] .reviewsProgress{ background: rgba(255,255,255,.14); }
   background: var(--lime);
 }
 
-/* dots: small gap from image and from bottom */
+/* dots: небольшой отступ под ползунком */
 .dots{
   display:flex;
   gap: 6px;
