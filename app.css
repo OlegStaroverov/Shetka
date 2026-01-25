@@ -775,26 +775,40 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   margin-top:12px;
 }
 
-/* каждая секция = "слайд" примерно на 1 экран + чуть запас для входа/выхода */
-.baSection{
-  height: 200vh; /* можно 180vh, но 200 даёт "паузы" в центре красивее */
+/* первый "этаж" — подсказка со стрелкой */
+.baIntro{
+  height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.baIntroInner{ width:100%; display:flex; align-items:center; justify-content:center; padding: 12px; }
+.baArrow{
+  width: 34px;
+  height: 34px;
+  border-right: 4px solid var(--text);
+  border-bottom: 4px solid var(--text);
+  transform: rotate(45deg);
+  opacity: .8;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.18));
+  animation: baArrowFloat 1.05s ease-in-out infinite;
+}
+@keyframes baArrowFloat{
+  0%,100%{ transform: translateY(-2px) rotate(45deg); opacity: .78; }
+  50%{ transform: translateY(10px) rotate(45deg); opacity: 1; }
 }
 
-/* последний кейс: не даём "вытолкнуть" его скроллом вниз */
-.baSection:last-child{
-  height: 100vh; /* или 110vh если хочешь микро-запас */
-}
+/* когда стрелку нужно скрыть (скроллим в кейсы) */
+.baArrow.baHidden{ opacity:0; transform: translateY(-16px) rotate(45deg); animation: none; transition: opacity 220ms ease, transform 220ms ease; }
+
+/* каждый кейс = отдельный "этаж" (ровно 1 экран) */
+.baSection{ height: 100vh; }
 
 
-:root{
-  /* безопасный отступ сверху под заголовок + кнопки "О НАС / ДО ПОСЛЕ" */
-  --ba-safe-top: 76px; /* подстрой 64–92px по вкусу */
-}
-
-/* ключ: держим пару по центру, но чуть ниже, чтобы не перекрывать верх */
+/* держим пару по центру экрана (двигается только вбок, вертикаль фикс) */
 .baSticky{
   position: sticky;
-  top: calc(50% + (var(--ba-safe-top) / 2));
+  top: 50%;
   transform: translateY(-50%);
   padding: 14px;
 }
@@ -815,6 +829,8 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
+  /* карточки большие и читаемые на всех экранах */
+  height: min(62vh, 420px);
   min-height: 220px;
   display:flex;
   align-items:center;
@@ -839,16 +855,8 @@ html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
 /* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
 .baPh.hasImg span{ opacity: 0; }
 
-/* entrance from edges */
-.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
-.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
-.baSection.baActive .baBefore,
-.baSection.baActive .baAfter{
-  transform: translate3d(0,0,0);
-  opacity:1;
-  transition: transform 680ms cubic-bezier(0.25,1,0.33,1),
-              opacity 520ms cubic-bezier(0.25,1,0.33,1);
-}
+/* начальное состояние: карты готовы, а движение задаёт JS на скролле */
+.baBefore,.baAfter{ opacity: 0; }
 
 
 /* --------- Map modal --------- */
