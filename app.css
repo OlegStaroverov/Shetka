@@ -320,6 +320,10 @@ html[data-theme="dark"] .cta.primary{
 
 /* PAGE HEAD */
 .pageHead{ display:flex; gap: 12px; align-items:flex-start; }
+.pageHead.noBack > div{
+  padding-left: 12px;
+}
+
 .backBtn{
   width: 42px;
   height: 42px;
@@ -755,6 +759,24 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .storyGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
+
+/* ===== About segmented (wrap like Services) ===== */
+.segWrap{
+  padding: 10px;
+  border-radius: var(--radius);
+}
+
+/* Make about tabs behave exactly like other .seg groups */
+.segWrap .aboutTabs{
+  margin-top: 0;
+  padding: 0;
+  gap: 8px;
+}
+
+/* Ensure buttons look like Services segmented buttons */
+.segWrap .aboutTabs .segBtn{
+  border-radius: 14px; /* same as base .segBtn */
+}
 
 /* ====== BEFORE/AFTER placeholders (10 cases) ====== */
 .baStory{margin-top:12px;}
