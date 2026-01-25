@@ -582,36 +582,88 @@ const closeModalEl = (el) => {
     const pReviews = document.getElementById('aboutPanelReviews');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER: активный слайд по центру (вход/выход только вбок) ======
-    let baObserver = null;
-    
-    const initBaObserver = () => {
-      if (baObserver) return;
-    
+    // ====== BEFORE/AFTER: управление строго скроллом (въезд/выезд только вбок) ======
+    let _baScrollInited = false;
+    let _baRaf = 0;
+    const _ease = (t) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+
+    const initBaScroll = () => {
+      if (_baScrollInited) return;
+      _baScrollInited = true;
+
+      const introArrow = document.querySelector('.baArrow');
+      const segEl = document.getElementById('aboutSeg');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
       if (!sections.length) return;
-    
-      const setActive = (el) => {
-        sections.forEach(s => s.classList.toggle('baActive', s === el));
-      };
-    
-      // включаем первый сразу
-      setActive(sections[0]);
-    
-      baObserver = new IntersectionObserver((entries) => {
-        let best = null;
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
-        }
-        if (best) setActive(best.target);
-      }, {
-        root: null,
-        rootMargin: "-40% 0px -40% 0px",
-        threshold: [0.01, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95],
+
+      // начальное состояние: всё скрыто по бокам, стрелка видна
+      sections.forEach((sec) => {
+        const b = sec.querySelector('.baBefore');
+        const a = sec.querySelector('.baAfter');
+        if (b) { b.style.opacity = '0'; b.style.transform = 'translate3d(-120vw,0,0)'; }
+        if (a) { a.style.opacity = '0'; a.style.transform = 'translate3d( 120vw,0,0)'; }
       });
-    
-      sections.forEach(sec => baObserver.observe(sec));
+      try { introArrow?.classList?.remove?.('baHidden'); } catch (_) {}
+
+      const update = () => {
+        _baRaf = 0;
+        const vh = Math.max(1, window.innerHeight || 1);
+        const vw = Math.max(1, window.innerWidth || 1);
+        const off = Math.round(vw * 0.62); // насколько уезжаем влево/вправо
+
+        // скрываем стрелку только когда сегменты (кнопки) полностью ушли вверх
+        let hideArrow = false;
+        try {
+          const r = segEl?.getBoundingClientRect?.();
+          if (r && r.bottom <= 0) hideArrow = true;
+        } catch (_) {}
+        if (introArrow) introArrow.classList.toggle('baHidden', hideArrow);
+
+        // анимация секций: прогресс 0..1 при движении секции от +vh до -vh
+        for (let i = 0; i < sections.length; i++) {
+          const sec = sections[i];
+          const rect = sec.getBoundingClientRect();
+          const progress = Math.max(0, Math.min(1, (vh - rect.top) / (2 * vh)));
+          const isLast = (i === sections.length - 1);
+
+          // обычные: 0..0.5 въезд, 0.5..1 выезд обратно
+          // последний: только въезд и стоп по центру (дальше скроллить некуда)
+          const p = isLast ? Math.min(progress, 0.5) : progress;
+
+          let tx;
+          let op;
+          if (p <= 0.5) {
+            const t = _ease(p / 0.5);
+            tx = Math.round((-off) + (off * t));
+            op = 0.12 + (0.88 * t);
+          } else {
+            const t = _ease((p - 0.5) / 0.5);
+            tx = Math.round(0 + (-off * t));
+            op = 1 - (0.88 * t);
+          }
+
+          const beforeEl = sec.querySelector('.baBefore');
+          const afterEl = sec.querySelector('.baAfter');
+          if (beforeEl) {
+            beforeEl.style.transform = `translate3d(${tx}px,0,0)`;
+            beforeEl.style.opacity = String(op);
+          }
+          if (afterEl) {
+            afterEl.style.transform = `translate3d(${-tx}px,0,0)`;
+            afterEl.style.opacity = String(op);
+          }
+        }
+      };
+
+      const onScroll = () => {
+        if (_baRaf) return;
+        _baRaf = requestAnimationFrame(update);
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      // первый прогон
+      onScroll();
     };
 
     const setAboutTab = (key) => {
@@ -636,7 +688,7 @@ const closeModalEl = (el) => {
 
       if (k === 'cases') {
         applyBaImages();
-        initBaObserver();
+        initBaScroll();
       }
     };
 
