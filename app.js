@@ -605,16 +605,167 @@ const closeModalEl = (el) => {
       try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
       if (k === 'cases') {
-        // restart BA placeholders animation on each open
-        document.querySelectorAll('[data-ba]').forEach(el => el.classList.remove('baActive'));
-        requestAnimationFrame(() => {
-          document.querySelectorAll('[data-ba]').forEach(el => {
-            // class will be re-added by observer when intersecting; force reflow fallback
-            void el.offsetHeight;
-          });
-        });
+        baStart();
+      } else {
+        baStop();
       }
     };
+
+    // ---------------- Before/After (scroll-driven scenes, no libs) ----------------
+    // Files: do1.png / posle1.png ... do10.png / posle10.png
+    const BA_COUNT = 10;
+
+    let _baInited = false;
+    let _baRaf = 0;
+    let _baScenes = [];
+    let _baScroller = null;
+    let _baOverlay = null;
+
+    const baEase = (t) => {
+      // smooth but snappy (0..1)
+      const x = Math.max(0, Math.min(1, t));
+      return 1 - Math.pow(1 - x, 3);
+    };
+
+    const baLerp = (a, b, t) => a + (b - a) * t;
+
+    const baSetSources = () => {
+      // set image sources once (theme-independent)
+      document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
+        const n = Number(img.getAttribute('data-ba-n') || 0);
+        if (!n) return;
+        const side = img.getAttribute('data-ba-img');
+        const src = side === 'after' ? `posle${n}.png` : `do${n}.png`;
+        if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+      });
+    };
+
+    const baCollectScenes = () => {
+      _baScroller = document.getElementById('baScroller');
+      _baOverlay = document.getElementById('baOverlay');
+      _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
+        const before = sec.querySelector('.baBefore');
+        const after  = sec.querySelector('.baAfter');
+        return { sec, before, after, top: 0, h: 0, last: sec.classList.contains('baLast') };
+      });
+    };
+
+    const baRefresh = () => {
+      if (!_baScenes.length) return;
+      const y = window.scrollY || 0;
+      _baScenes.forEach((s) => {
+        const r = s.sec.getBoundingClientRect();
+        s.top = r.top + y;
+        s.h = Math.max(1, r.height);
+      });
+    };
+
+    const baSetScrolledFlag = () => {
+      const scrolled = (window.scrollY || 0) > 6;
+      document.body.classList.toggle('ba-scrolled', scrolled);
+    };
+
+    const baTick = () => {
+      if (!_baInited) return;
+
+      const vh = window.innerHeight || 1;
+      const y = window.scrollY || 0;
+
+      // how far cards fly from sides
+      const off = Math.min((window.innerWidth || 360) * 0.62, 360);
+
+      for (const s of _baScenes) {
+        if (!s.before || !s.after) continue;
+
+        // progress in "screens": 0..2 for normal scenes, 0..1 for last
+        const pRaw = (y - s.top) / vh;
+        const maxP = s.last ? 1 : 2;
+        const p = Math.max(0, Math.min(maxP, pRaw));
+
+        // visibility guard: if far away, keep it offscreen (saves paints a bit)
+        // still OK for reverse scroll
+        if (pRaw < -0.5) {
+          s.before.style.transform = `translate3d(${-off}px,0,0)`;
+          s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+          s.before.style.opacity = '0';
+          s.after.style.opacity = '0';
+          continue;
+        }
+        if (pRaw > maxP + 0.5) {
+          // passed scene
+          if (s.last) {
+            s.before.style.transform = `translate3d(0,0,0)`;
+            s.after.style.transform  = `translate3d(0,0,0)`;
+            s.before.style.opacity = '1';
+            s.after.style.opacity = '1';
+          } else {
+            s.before.style.transform = `translate3d(${-off}px,0,0)`;
+            s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+            s.before.style.opacity = '0';
+            s.after.style.opacity = '0';
+          }
+          continue;
+        }
+
+        // Enter: 0..1 => fly to center
+        const enter = baEase(Math.min(1, p));
+        let bx = baLerp(-off, 0, enter);
+        let ax = baLerp( off, 0, enter);
+        let op = Math.min(1, Math.max(0, p * 1.6)); // fade in quickly
+
+        // Exit (only non-last): 1..2 => fly back to sides
+        if (!s.last && p > 1) {
+          const exit = baEase(Math.min(1, p - 1));
+          bx = baLerp(0, -off, exit);
+          ax = baLerp(0,  off, exit);
+          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.35)); // fade out
+        }
+
+        s.before.style.transform = `translate3d(${bx}px,0,0)`;
+        s.after.style.transform  = `translate3d(${ax}px,0,0)`;
+        s.before.style.opacity = String(op);
+        s.after.style.opacity  = String(op);
+      }
+
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    const baStart = () => {
+      const pCases = document.getElementById('aboutPanelCases');
+      if (!pCases || pCases.hidden) return;
+
+      // one-time init per opening
+      _baInited = true;
+      document.body.classList.add('ba-mode');
+      document.body.classList.remove('ba-scrolled');
+
+      baCollectScenes();
+      baSetSources();
+      baRefresh();
+      baSetScrolledFlag();
+
+      // listeners
+      window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
+      window.addEventListener('resize', baRefresh, { passive: true });
+
+      // start rAF loop
+      cancelAnimationFrame(_baRaf);
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    const baStop = () => {
+      if (!_baInited) return;
+      _baInited = false;
+
+      cancelAnimationFrame(_baRaf);
+      _baRaf = 0;
+
+      window.removeEventListener('scroll', baSetScrolledFlag);
+      window.removeEventListener('resize', baRefresh);
+
+      document.body.classList.remove('ba-mode', 'ba-scrolled');
+    };
+
 
     // Before/After: slide-in placeholders from edges (10 cases)
     try {
