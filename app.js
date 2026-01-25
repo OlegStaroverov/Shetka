@@ -603,73 +603,83 @@ if (tg) {
 
     const seg = document.getElementById('aboutSeg');
     const pAbout = document.getElementById('aboutPanelAbout');
+    const pReviews = document.getElementById('aboutPanelReviews');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // --- Reviews wiring (20 images, theme-aware) ---
+    // --- Reviews wiring (separate tab) ---
     const track = document.getElementById('reviewsTrack');
-    const dotsWrap = document.getElementById('reviewsDots');
+    const filtersWrap = document.getElementById('reviewsFilters');
 
-    const buildReviewsDotsOnce = () => {
-      if (!track || !dotsWrap) return;
-      const slides = Array.from(track.querySelectorAll('.reviewSlide'));
-      if (!slides.length) return;
+    // ПРИМЕЧАНИЕ: если захочешь иначе распределить отзывы по категориям —
+    // просто поменяй номера в массивах ниже.
+    const REV_GROUPS = {
+      all:     Array.from({ length: 20 }, (_, i) => i + 1),
+      shoes:   [1,2,3,4,5,6,7,8],
+      bags:    [9,10,11,12,13],
+      jackets: [14,15,16],
+      other:   [17,18,19,20],
+    };
 
-      // prevent duplicates
-      if (dotsWrap.dataset.built === "1") return;
-      dotsWrap.dataset.built = "1";
+    const setRevFilterActive = (key) => {
+      if (!filtersWrap) return;
+      const k = String(key || 'all');
+      filtersWrap.querySelectorAll('.segBtn[data-revfilter]').forEach((b) => {
+        b.classList.toggle('active', (b.getAttribute('data-revfilter') || 'all') === k);
+      });
+    };
 
-      dotsWrap.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+    const applyRevFilter = (key) => {
+      if (!track) return;
+      const k = String(key || 'all');
+      const allowed = new Set((REV_GROUPS[k] || REV_GROUPS.all).map(Number));
 
-      const setDot = (i) => {
-        dotsWrap.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
-      };
+      track.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+        const n = Number(img.getAttribute('data-review') || 0);
+        const slide = img.closest('.reviewSlide');
+        if (!slide) return;
+        slide.style.display = allowed.has(n) ? '' : 'none';
+      });
 
-      const getActiveIndex = () => {
-        const center = track.scrollLeft + (track.clientWidth / 2);
-        let bestI = 0;
-        let bestD = Infinity;
-        slides.forEach((s, i) => {
-          const sc = s.offsetLeft + (s.clientWidth / 2);
-          const d = Math.abs(sc - center);
-          if (d < bestD) { bestD = d; bestI = i; }
-        });
-        return bestI;
-      };
+      // после фильтра — в начало
+      try { track.scrollTo({ left: 0, behavior: 'instant' }); }
+      catch (_) { try { track.scrollLeft = 0; } catch(_e) {} }
 
-      const sync = () => {
-        setDot(getActiveIndex());
-        updateReviewsProgress();
-      };
+      updateReviewsProgress();
+      setRevFilterActive(k);
+    };
 
-      // rAF-throttle to avoid jank on scroll (especially iOS)
+    const initReviewsOnce = () => {
+      if (!track) return;
+      if (track.dataset.inited === '1') return;
+      track.dataset.inited = '1';
+
+      // rAF-throttle прогресса (чтобы не лагало)
       let _raf = 0;
       const onScroll = () => {
         if (_raf) return;
         _raf = requestAnimationFrame(() => {
           _raf = 0;
-          sync();
+          updateReviewsProgress();
         });
       };
 
       track.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
 
-      // Desktop: wheel (vertical) scrolls the carousel horizontally,
-      // but ONLY while there is horizontal space to scroll.
-      // When we are at the edges — let the page scroll normally (so right scrollbar stays usable).
+      // Desktop: колесо мыши листает картинки, если курсор над лентой
       try {
         track.addEventListener('wheel', (ev) => {
-          const dx = Math.abs(ev.deltaX || 0);
-          const dy = Math.abs(ev.deltaY || 0);
-          if (dy <= dx) return; // user is already doing horizontal gesture
-
           const max = Math.max(0, track.scrollWidth - track.clientWidth);
           if (max <= 0) return;
+
+          const dx = Math.abs(ev.deltaX || 0);
+          const dy = Math.abs(ev.deltaY || 0);
+          if (dx > dy) return; // уже горизонтальный жест
 
           const atStart = track.scrollLeft <= 0;
           const atEnd = track.scrollLeft >= (max - 1);
 
-          // allow page scroll at edges
+          // на краях отдаём колесо странице
           if ((ev.deltaY < 0 && atStart) || (ev.deltaY > 0 && atEnd)) return;
 
           ev.preventDefault();
@@ -677,7 +687,7 @@ if (tg) {
         }, { passive: false });
       } catch (_) {}
 
-      // Desktop: drag with mouse (like grabbing the carousel)
+      // Desktop: drag мышкой (как grab)
       try {
         let dragging = false;
         let startX = 0;
@@ -706,21 +716,19 @@ if (tg) {
         track.addEventListener('pointercancel', up, { passive: true });
       } catch (_) {}
 
-
-      dotsWrap.addEventListener('click', (e) => {
-        const dot = e.target?.closest?.('[data-dot]');
-        if (!dot) return;
-        const i = Number(dot.getAttribute('data-dot') || 0);
-        const s = slides[i];
-        if (!s) return;
-        track.scrollTo({ left: s.offsetLeft, behavior: 'smooth' });
+      // фильтры
+      filtersWrap?.addEventListener('click', (e) => {
+        const btn = e.target?.closest?.('[data-revfilter]');
+        if (!btn) return;
+        applyRevFilter(btn.getAttribute('data-revfilter') || 'all');
         haptic('light');
       });
 
-      requestAnimationFrame(sync);
+      // default
+      applyRevFilter('all');
+      requestAnimationFrame(onScroll);
     };
-
-    // --- Before/After scroll engine ---
+// --- Before/After scroll engine ---
     const BA_COUNT = 10;
     let _baInited = false;
     let _baRaf = 0;
@@ -902,6 +910,7 @@ if (tg) {
       });
 
       if (pAbout) pAbout.hidden = (k !== 'about');
+      if (pReviews) pReviews.hidden = (k !== 'reviews');
       if (pCases) pCases.hidden = (k !== 'cases');
 
       // reset scroll so intro starts clean
@@ -911,7 +920,9 @@ if (tg) {
 
       // keep reviews correct in both themes
       updateReviewImages(html.getAttribute("data-theme") || "light");
-      buildReviewsDotsOnce();
+      initReviewsOnce();
+      // прогресс должен быть корректный при открытии вкладки
+      requestAnimationFrame(updateReviewsProgress);
 
       if (k === 'cases') baStart();
       else baStop();
