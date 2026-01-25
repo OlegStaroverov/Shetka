@@ -611,6 +611,9 @@ const closeModalEl = (el) => {
         const vw = Math.max(1, window.innerWidth || 1);
         const off = Math.round(vw * 0.62); // насколько уезжаем влево/вправо
 
+        // Текущий скролл страницы (важно для точного прогресса по каждой секции)
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+
         // скрываем стрелку только когда сегменты (кнопки) полностью ушли вверх
         let hideArrow = false;
         try {
@@ -619,11 +622,26 @@ const closeModalEl = (el) => {
         } catch (_) {}
         if (introArrow) introArrow.classList.toggle('baHidden', hideArrow);
 
-        // анимация секций: прогресс 0..1 при движении секции от +vh до -vh
+        // По ТЗ: пока кнопки (seg) не скрылись за экраном — кейсы НЕ выезжают.
+        if (!hideArrow) {
+          for (let i = 0; i < sections.length; i++) {
+            const sec = sections[i];
+            const beforeEl = sec.querySelector('.baBefore');
+            const afterEl  = sec.querySelector('.baAfter');
+            if (beforeEl) { beforeEl.style.opacity = '0'; beforeEl.style.transform = 'translate3d(-120vw,0,0)'; }
+            if (afterEl)  { afterEl.style.opacity  = '0'; afterEl.style.transform  = 'translate3d( 120vw,0,0)'; }
+          }
+          return;
+        }
+
+        // анимация секций: прогресс 0..1 рассчитываем от scrollY относительно секции.
+        // Для sticky-сторителлинга важно: прогресс идёт по (height - vh).
         for (let i = 0; i < sections.length; i++) {
           const sec = sections[i];
-          const rect = sec.getBoundingClientRect();
-          const progress = Math.max(0, Math.min(1, (vh - rect.top) / (2 * vh)));
+          const start = sec.offsetTop;
+          const end = start + sec.offsetHeight - vh;
+          const denom = Math.max(1, (end - start));
+          const progress = Math.max(0, Math.min(1, (scrollY - start) / denom));
           const isLast = (i === sections.length - 1);
 
           // обычные: 0..0.5 въезд, 0.5..1 выезд обратно
