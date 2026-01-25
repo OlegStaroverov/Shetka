@@ -1861,24 +1861,22 @@ html[data-theme="light"] .segWrap .aboutTabs .segBtn{
   background: var(--accentBg) !important;
 }
 
-/* 2) Reviews: "infinite" full-bleed block (no visible edges) */
+/* 2) Reviews: full-bleed (edge-to-edge) + smooth snap slider */
 .reviewsSection{
   position: relative;
   margin-top: 12px;
 
-  /* go far beyond viewport so edges are not visible */
-  width: 160vw;
-  left: 50%;
-  transform: translateX(-50%);
+  /* full width of viewport, ignoring parent padding */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 
   border-radius: 0;
   border: 0;
 
-  /* solid base so it doesn't look transparent */
   background: linear-gradient(180deg, var(--bg0), var(--bg1));
 
-  /* space for label + content */
-  padding: 16px var(--pad) 12px;
+  /* label + content spacing */
+  padding: 16px 0 12px;
   overflow: hidden;
 }
 
@@ -1886,7 +1884,7 @@ html[data-theme="light"] .segWrap .aboutTabs .segBtn{
   position: absolute;
   top: 10px;
   left: var(--pad);
-  z-index: 1;
+  z-index: 2;
 
   padding: 6px 10px;
   border-radius: 999px;
@@ -1898,69 +1896,86 @@ html[data-theme="light"] .segWrap .aboutTabs .segBtn{
 }
 
 .reviewsSection .reviewsBleed{
-  /* keep content readable inside infinite strip */
   margin-top: 28px;
 }
 
-/* Track keeps same behavior, but the slide is "just image centered" */
+/* Slider track: smooth, snap, no lag */
 .reviewsSection .reviewsTrack{
   display:flex;
-  gap: 12px;
+  gap: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 
-  padding: 10px 0 8px;
+  /* edge-to-edge images */
+  padding: 0;
+  margin: 0;
+
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  will-change: scroll-position;
 }
+.reviewsSection .reviewsTrack::-webkit-scrollbar{ display:none; }
 
+/* Each slide takes the full screen width */
 .reviewsSection .reviewSlide{
-  flex: 0 0 86%;
-  scroll-snap-align: center;
+  flex: 0 0 100%;
+  width: 100vw;
+  scroll-snap-align: start;
 
-  /* fixed "stage" size */
-  height: clamp(280px, 52vh, 420px);
+  height: clamp(320px, 56vh, 520px);
 
   display:flex;
-  align-items:center;
-  justify-content:center;
+  align-items: stretch;
+  justify-content: stretch;
 
-  /* NO frame */
   border: 0;
   background: transparent;
   border-radius: 0;
 }
 
+/* Image: fill the whole slide without stretching (crop if needed) */
 .reviewsSection .reviewImg{
-  width: 92%;
-  height: 92%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
   display:block;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
 }
 
-/* visible scrollbar (light + dark) */
-.reviewsSection .reviewsTrack{
-  scrollbar-width: thin;
-  scrollbar-color: rgba(15,17,21,.35) transparent;
-}
-html[data-theme="dark"] .reviewsSection .reviewsTrack{
-  scrollbar-color: rgba(243,245,247,.25) transparent;
-}
-.reviewsSection .reviewsTrack::-webkit-scrollbar{ height: 6px; }
-.reviewsSection .reviewsTrack::-webkit-scrollbar-track{ background: transparent; }
-.reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
-  background: rgba(15,17,21,.35);
-  border-radius: 999px;
-}
-html[data-theme="dark"] .reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
-  background: rgba(243,245,247,.25);
-}
-
-/* keep progress bar visible on infinite block */
+/* Custom progress "ползунок" (theme-aware) */
 .reviewsSection .reviewsProgress{
-  margin: 8px 0 0;
+  margin: 10px var(--pad) 0;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15,17,21,.12);
+  overflow: hidden;
+}
+html[data-theme="dark"] .reviewsSection .reviewsProgress{
+  background: rgba(243,245,247,.10);
 }
 
+.reviewsSection .reviewsProgressFill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(15,17,21,.38);
+  transition: width 80ms linear;
+}
+html[data-theme="dark"] .reviewsSection .reviewsProgressFill{
+  background: rgba(243,245,247,.28);
+}
 
+/* Dots stay readable on full-bleed */
+.reviewsSection + .dots,
+.reviewsSection .dots{
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
 /* ===== FIX: About tabs active state must match Services in BOTH themes ===== */
 .aboutTabs .segBtn.active{
   border-color: var(--accentBorder) !important;
