@@ -217,6 +217,31 @@ return true;
   };
 
   const html = document.documentElement;
+  // ---------------- Reviews helpers (theme-aware images) ----------------
+  const reviewImgSrc = (n, mode) => {
+    const nn = Number(n) || 0;
+    const m = (mode === "dark") ? "b" : "l";
+    return `o${nn}${m}.png`;
+  };
+
+  const updateReviewImages = (mode) => {
+    const cur = mode || (html.getAttribute("data-theme") || "light");
+    document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+      const n = img.getAttribute("data-review");
+      const src = reviewImgSrc(n, cur);
+      if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+    });
+  };
+
+  const updateReviewsProgress = () => {
+    const track = document.getElementById("reviewsTrack");
+    const fill = document.getElementById("reviewsProgressFill");
+    if (!track || !fill) return;
+    const max = Math.max(1, track.scrollWidth - track.clientWidth);
+    const p = Math.max(0, Math.min(1, track.scrollLeft / max));
+    fill.style.width = `${Math.round(p * 100)}%`;
+  };
+
 
   // sendData bridge
   const sendToBot = (cmd, payload = {}) => {
@@ -411,6 +436,8 @@ const closeModalEl = (el) => {
   const applyTheme = (mode) => {
     html.setAttribute("data-theme", mode);
     localStorage.setItem("shetka_theme", mode);
+    // update theme-dependent review images instantly
+    updateReviewImages(mode);
 
     if (tg) {
       try {
@@ -623,28 +650,62 @@ const closeModalEl = (el) => {
       });
     });
 
-    // reviews carousel dots
+
+    // reviews carousel (images) + dots + progress
     const track = document.getElementById('reviewsTrack');
     const dots = document.getElementById('reviewsDots');
+    const fill = document.getElementById('reviewsProgressFill');
+
+    // ensure images match current theme on open
+    updateReviewImages(html.getAttribute("data-theme") || "light");
+
     if (track && dots) {
       const slides = Array.from(track.querySelectorAll('.reviewSlide'));
       dots.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+
       const setDot = (i) => {
         dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
       };
-      track.addEventListener('scroll', () => {
-        const w = track.clientWidth || 1;
-        const i = Math.round(track.scrollLeft / w);
-        setDot(Math.max(0, Math.min(slides.length-1, i)));
-      }, { passive: true });
+
+      const getActiveIndex = () => {
+        const center = track.scrollLeft + (track.clientWidth / 2);
+        let bestI = 0;
+        let bestD = Infinity;
+        slides.forEach((s, i) => {
+          const sc = s.offsetLeft + (s.clientWidth / 2);
+          const d = Math.abs(sc - center);
+          if (d < bestD) { bestD = d; bestI = i; }
+        });
+        return bestI;
+      };
+
+      const sync = () => {
+        setDot(getActiveIndex());
+        updateReviewsProgress();
+      };
+
+      track.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', sync, { passive: true });
+
       dots.addEventListener('click', (e) => {
         const dot = e.target?.closest?.('[data-dot]');
         if (!dot) return;
         const i = Number(dot.getAttribute('data-dot') || 0);
-        track.scrollTo({ left: i * (track.clientWidth || 0), behavior: 'smooth' });
+        const s = slides[i];
+        if (!s) return;
+        const left = s.offsetLeft - Math.max(0, (track.clientWidth - s.clientWidth) / 2);
+        track.scrollTo({ left, behavior: 'smooth' });
       });
-    }
 
+      // initial sync (including progress)
+      requestAnimationFrame(sync);
+    } else if (track && fill) {
+      // even without dots we still keep progress up-to-date
+      const sync = () => updateReviewsProgress();
+      track.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', sync, { passive: true });
+      requestAnimationFrame(sync);
+    }
     // init default
     setAboutTab('about');
   }
