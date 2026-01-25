@@ -1959,3 +1959,21 @@ html[data-theme="dark"] .reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
 .reviewsSection .reviewsProgress{
   margin: 8px 0 0;
 }
+
+
+/* ===== FIX: About tabs active state must match Services in BOTH themes ===== */
+.aboutTabs .segBtn.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+  color: var(--txt) !important;
+}
+/* Buttons may carry .glass class; ensure it doesn't override active */
+.aboutTabs .segBtn.glass.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+}
+
+/* ===== FIX: Before/After intro overlay should fully cover UI until scroll ===== */
+body.ba-mode .baOverlay{ display:flex; }
+body.ba-mode:not(.ba-scrolled) #aboutPanelCases .baScroller{ opacity: 0; pointer-events:none; }
+body.ba-mode.ba-scrolled #aboutPanelCases .baScroller{ opacity: 1; pointer-events:auto; transition: opacity 220ms ease; }
