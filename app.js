@@ -641,8 +641,18 @@ if (tg) {
         updateReviewsProgress();
       };
 
-      track.addEventListener('scroll', sync, { passive: true });
-      window.addEventListener('resize', sync, { passive: true });
+      // rAF-throttle to avoid jank on scroll (especially iOS)
+      let _raf = 0;
+      const onScroll = () => {
+        if (_raf) return;
+        _raf = requestAnimationFrame(() => {
+          _raf = 0;
+          sync();
+        });
+      };
+
+      track.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
 
       dotsWrap.addEventListener('click', (e) => {
         const dot = e.target?.closest?.('[data-dot]');
@@ -650,8 +660,7 @@ if (tg) {
         const i = Number(dot.getAttribute('data-dot') || 0);
         const s = slides[i];
         if (!s) return;
-        const left = s.offsetLeft - Math.max(0, (track.clientWidth - s.clientWidth) / 2);
-        track.scrollTo({ left, behavior: 'smooth' });
+        track.scrollTo({ left: s.offsetLeft, behavior: 'smooth' });
         haptic('light');
       });
 
