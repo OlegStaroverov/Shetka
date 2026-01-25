@@ -320,10 +320,6 @@ html[data-theme="dark"] .cta.primary{
 
 /* PAGE HEAD */
 .pageHead{ display:flex; gap: 12px; align-items:flex-start; }
-.pageHead.noBack > div{
-  padding-left: 12px;
-}
-
 .backBtn{
   width: 42px;
   height: 42px;
@@ -759,24 +755,6 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .storyGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
-
-/* ===== About segmented (wrap like Services) ===== */
-.segWrap{
-  padding: 10px;
-  border-radius: var(--radius);
-}
-
-/* Make about tabs behave exactly like other .seg groups */
-.segWrap .aboutTabs{
-  margin-top: 0;
-  padding: 0;
-  gap: 8px;
-}
-
-/* Ensure buttons look like Services segmented buttons */
-.segWrap .aboutTabs .segBtn{
-  border-radius: 14px; /* same as base .segBtn */
-}
 
 /* ====== BEFORE/AFTER placeholders (10 cases) ====== */
 .baStory{margin-top:12px;}
@@ -1860,224 +1838,124 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
 }
 
 
-/* ===== Reviews: full-bleed image carousel (20 slots) ===== */
-.reviewsBleed{
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+/* =========================
+   FIXES (About tabs + Reviews)
+   ========================= */
+
+/* 1) About tabs must highlight (same as Services) in BOTH themes */
+.segWrap .aboutTabs.seg{
+  padding: 0;
+  gap: 8px;
+}
+.segWrap .aboutTabs .segBtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+}
+html[data-theme="light"] .segWrap .aboutTabs .segBtn{
+  border-color: rgba(0,0,0,.08);
+  background: rgba(0,0,0,.03);
+}
+.segWrap .aboutTabs .segBtn.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
 }
 
-.reviewsBleed .reviewsTrack{
-  /* keep horizontal carousel behavior, but make it edge-to-edge */
-  padding: 12px var(--pad) 10px;
+/* 2) Reviews: "infinite" full-bleed block (no visible edges) */
+.reviewsSection{
+  position: relative;
+  margin-top: 12px;
+
+  /* go far beyond viewport so edges are not visible */
+  width: 160vw;
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-radius: 0;
+  border: 0;
+
+  /* solid base so it doesn't look transparent */
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+
+  /* space for label + content */
+  padding: 16px var(--pad) 12px;
+  overflow: hidden;
+}
+
+.reviewsLabel{
+  position: absolute;
+  top: 10px;
+  left: var(--pad);
+  z-index: 1;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 950;
+  font-size: 13px;
+}
+
+.reviewsSection .reviewsBleed{
+  /* keep content readable inside infinite strip */
+  margin-top: 28px;
+}
+
+/* Track keeps same behavior, but the slide is "just image centered" */
+.reviewsSection .reviewsTrack{
+  display:flex;
   gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 
-  /* visible scrollbar in both themes */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(15,17,21,.32) transparent;
-}
-html[data-theme="dark"] .reviewsBleed .reviewsTrack{
-  scrollbar-color: rgba(243,245,247,.28) transparent;
-}
-.reviewsBleed .reviewsTrack::-webkit-scrollbar{ height: 8px; }
-.reviewsBleed .reviewsTrack::-webkit-scrollbar-track{ background: transparent; }
-.reviewsBleed .reviewsTrack::-webkit-scrollbar-thumb{
-  background: rgba(15,17,21,.32);
-  border-radius: 999px;
-}
-html[data-theme="dark"] .reviewsBleed .reviewsTrack::-webkit-scrollbar-thumb{
-  background: rgba(243,245,247,.28);
+  padding: 10px 0 8px;
 }
 
-.reviewsBleed .reviewSlide{
-  /* keep “peek” of next slide */
-  flex: 0 0 min(88%, 520px);
+.reviewsSection .reviewSlide{
+  flex: 0 0 86%;
   scroll-snap-align: center;
 
-  border: 1px solid var(--hair);
-  border-radius: 18px;
+  /* fixed "stage" size */
+  height: clamp(280px, 52vh, 420px);
 
-  /* not transparent: solid surface */
-  background: var(--bg1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-  /* make it feel like a real card */
-  box-shadow: var(--shadow);
-
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  height: clamp(320px, 56vh, 520px);
+  /* NO frame */
+  border: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
-html[data-theme="dark"] .reviewsBleed .reviewSlide{
-  background: #0f1115;
-}
-
-.reviewImg{
-  width: 100%;
-  height: 100%;
+.reviewsSection .reviewImg{
+  width: 92%;
+  height: 92%;
   object-fit: contain;
-  display: block;
-  /* avoid accidental blur from scaling */
-  image-rendering: -webkit-optimize-contrast;
-}
-
-/* small progress bar under carousel (extra “visible” indicator) */
-.reviewsProgress{
-  margin: 8px var(--pad) 0;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(15,17,21,.12);
-  overflow: hidden;
-}
-html[data-theme="dark"] .reviewsProgress{
-  background: rgba(243,245,247,.12);
-}
-.reviewsProgressFill{
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--lime), var(--lime2));
-  transition: width 120ms linear;
-}
-
-
-
-/* ====== BEFORE/AFTER (scroll-driven, scenes) ======
-   Scenario:
-   - On entering "До/После": only arrow overlay is visible.
-   - First scroll hides overlay, pairs fly in/out with scroll.
-   - Last pair stays centered, no extra scroll after it.
-*/
-.baOverlay{
-  position: fixed;
-  inset: 0;
-  z-index: 85; /* above content, below modals */
-  display: none;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-
-  /* hide everything behind so user sees ONLY arrow */
-  background: linear-gradient(180deg, var(--bg0), var(--bg1));
-}
-body.ba-mode .baOverlay{ display:flex; }
-body.ba-mode.ba-scrolled .baOverlay{
-  opacity: 0;
-  transition: opacity 220ms ease;
-}
-
-.baOverlayInner{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width: 100%;
-}
-
-.baArrow{
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-  border: 1px solid var(--accentBorder);
-  background: var(--accentBg);
-  position: relative;
-  box-shadow: 0 18px 42px rgba(215,255,0,.18);
-  animation: baArrowFloat 1.15s ease-in-out infinite;
-}
-.baArrow::before{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  width: 12px;
-  height: 12px;
-  border-right: 3px solid rgba(15,17,21,.85);
-  border-bottom: 3px solid rgba(15,17,21,.85);
-  transform: translate(-50%, -60%) rotate(45deg);
-}
-html[data-theme="dark"] .baArrow::before{
-  border-right-color: rgba(15,17,21,.92);
-  border-bottom-color: rgba(15,17,21,.92);
-}
-@keyframes baArrowFloat{
-  0%{ transform: translateY(0); }
-  50%{ transform: translateY(10px); }
-  100%{ transform: translateY(0); }
-}
-
-/* container */
-.baScroller{
-  margin-top: 12px;
-  position: relative;
-}
-
-/* each scene: 2 screens (enter + exit). last: 1 screen (enter only) */
-.baScroller .baScene{ height: calc(var(--vh) * 2); }
-.baScroller .baScene.baLast{ height: var(--vh); }
-
-.baScroller .baSticky{
-  position: sticky;
-  top: 12px;
-  height: calc(var(--vh) - 24px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-/* always 2 columns (as per requirement "по середине") */
-.baScroller .baPair{
-  width: 100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap: 12px;
-}
-
-/* cards */
-.baScroller .baCard{
-  position: relative;
-  width: min(260px, 46%);
-  height: clamp(260px, 56vh, 420px);
-  border-radius: 22px;
-  border: 1px solid var(--hair);
-  background: var(--bg1);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-
-  will-change: transform, opacity;
-  transform: translate3d(0,0,0);
-  opacity: 0;
-}
-
-/* image */
-.baScroller .baImg{
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* no quality loss */
   display:block;
-  padding: 12px;
 }
 
-/* label */
-.baScroller .baLabel{
-  position:absolute;
-  left: 12px;
-  bottom: 10px;
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: .28em;
-  text-indent: .28em;
-  opacity: .65;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--hair);
-  background: rgba(255,255,255,.40);
+/* visible scrollbar (light + dark) */
+.reviewsSection .reviewsTrack{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15,17,21,.35) transparent;
 }
-html[data-theme="dark"] .baScroller .baLabel{
-  background: rgba(255,255,255,.08);
+html[data-theme="dark"] .reviewsSection .reviewsTrack{
+  scrollbar-color: rgba(243,245,247,.25) transparent;
+}
+.reviewsSection .reviewsTrack::-webkit-scrollbar{ height: 6px; }
+.reviewsSection .reviewsTrack::-webkit-scrollbar-track{ background: transparent; }
+.reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
+  background: rgba(15,17,21,.35);
+  border-radius: 999px;
+}
+html[data-theme="dark"] .reviewsSection .reviewsTrack::-webkit-scrollbar-thumb{
+  background: rgba(243,245,247,.25);
+}
+
+/* keep progress bar visible on infinite block */
+.reviewsSection .reviewsProgress{
+  margin: 8px 0 0;
 }
