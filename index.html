@@ -141,6 +141,7 @@
 
         <div class="aboutTabs" id="aboutSeg">
           <button class="segBtn glass active" type="button" data-about-tab="about">О нас</button>
+          <button class="segBtn glass" type="button" data-about-tab="reviews">Отзывы</button>
           <button class="segBtn glass" type="button" data-about-tab="cases">До/После</button>
         </div>
 
@@ -178,10 +179,23 @@
             </div>
           </div>
 
-          <div class="reviewsSection reveal" id="reviewsSection" aria-label="Отзывы">
-            <div class="aboutTitle">Отзывы</div>
-            <div class="reviewsBleed">
-              <div class="reviewsTrack" id="reviewsTrack" aria-label="Отзывы" role="group">
+          
+
+
+        <!-- TAB: REVIEWS -->
+        <div id="aboutPanelReviews" hidden>
+          <div class="aboutTitle">Отзывы</div>
+
+          <div class="reviewsFilters seg" id="reviewsFilters" aria-label="Фильтр отзывов">
+            <button class="segBtn active" type="button" data-revfilter="all">Все</button>
+            <button class="segBtn" type="button" data-revfilter="shoes">Обувь</button>
+            <button class="segBtn" type="button" data-revfilter="bags">Сумки</button>
+            <button class="segBtn" type="button" data-revfilter="jackets">Куртки</button>
+            <button class="segBtn" type="button" data-revfilter="other">Прочее</button>
+          </div>
+
+          <div class="reviewsViewport" id="reviewsViewport" aria-label="Отзывы">
+            <div class="reviewsTrack" id="reviewsTrack" role="group">
               <div class="reviewSlide"><img class="reviewImg" data-review="1" alt="Отзыв 1" loading="lazy" decoding="async" /></div>
               <div class="reviewSlide"><img class="reviewImg" data-review="2" alt="Отзыв 2" loading="lazy" decoding="async" /></div>
               <div class="reviewSlide"><img class="reviewImg" data-review="3" alt="Отзыв 3" loading="lazy" decoding="async" /></div>
@@ -202,13 +216,18 @@
               <div class="reviewSlide"><img class="reviewImg" data-review="18" alt="Отзыв 18" loading="lazy" decoding="async" /></div>
               <div class="reviewSlide"><img class="reviewImg" data-review="19" alt="Отзыв 19" loading="lazy" decoding="async" /></div>
               <div class="reviewSlide"><img class="reviewImg" data-review="20" alt="Отзыв 20" loading="lazy" decoding="async" /></div>
-              </div>
-              <div class="reviewsProgress" aria-hidden="true"><div class="reviewsProgressFill" id="reviewsProgressFill"></div></div>
             </div>
-            <div class="dots" id="reviewsDots" aria-hidden="true"></div>
-          </div>
 
-<!-- TAB: CASES -->
+            <div class="reviewsOverlay" aria-hidden="true">
+              <div class="reviewsProgress">
+                <div class="reviewsProgressFill" id="reviewsProgressFill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- TAB: CASES -->
         <div id="aboutPanelCases" hidden>
           <!-- Intro overlay: on entry shows ONLY arrow -->
           <div class="baOverlay" id="baOverlay" aria-hidden="true">
@@ -449,7 +468,6 @@
 
         <div id="crList" class="orders"></div>
       </section>
-
 
       
     </main>
