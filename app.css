@@ -741,12 +741,121 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
-.reviewsTrack{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:12px 2px 6px;}
-.reviewSlide{flex:0 0 86%; scroll-snap-align:center; border:1px dashed var(--hair); border-radius:18px; min-height:130px; display:flex; align-items:center; justify-content:center; opacity:.85;}
-.dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
-.dot{width:6px; height:6px; border-radius:999px; background: rgba(0,0,0,.25);} 
-html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);} 
-.dot.active{background: var(--lime);} 
+
+/* ===== REVIEWS (full-bleed carousel) ===== */
+.reviewsSection{
+  margin-top: 12px;
+}
+
+/* title must align with FAQ (not full-bleed) */
+.reviewsTitle{
+  font-weight: 800;
+  font-size: 18px;
+  margin: 0 0 10px 0;
+}
+
+/*
+  Bleed container: keeps the infinite/wide background,
+  but content (images) stays exactly edge-to-edge of the viewport.
+*/
+.reviewsBleed{
+  /* push the block beyond the page padding so desktop doesn't show side edges */
+  width: calc(100vw + 160px);
+  margin-left: calc(-1 * (var(--pad) + 80px));
+  margin-right: calc(-1 * (var(--pad) + 80px));
+
+  border-radius: 0;
+  border: 0;
+
+  padding: 12px 0 10px;
+  position: relative;
+}
+
+html[data-theme="dark"] .reviewsBleed{
+  background: #18181a;
+}
+
+/* track: true edge-to-edge carousel */
+.reviewsTrack{
+  display:flex;
+  overflow-x:auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+
+  /* no inner padding so images touch the viewport edges */
+  padding: 0;
+  gap: 0;
+
+  /* hide internal scrollbars (page scrollbar must stay visible) */
+  scrollbar-width: none;
+}
+.reviewsTrack::-webkit-scrollbar{ height: 0; }
+
+/* slide is exactly one viewport wide */
+.reviewSlide{
+  flex: 0 0 100vw;
+  scroll-snap-align: start;
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+
+  /* no placeholder height: height is defined by image */
+  min-height: 0;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  opacity: 1;
+}
+
+/*
+  Image: width edge-to-edge, keep full image vertically (no strong cropping).
+  So: fit by width, height auto.
+*/
+.reviewImg{
+  display:block;
+  width: 100vw;
+  height: auto;
+
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* progress bar (theme-aware) */
+.reviewsProgress{
+  height: 3px;
+  border-radius: 999px;
+  margin: 8px 14px 0;
+  background: rgba(0,0,0,.14);
+  overflow: hidden;
+}
+html[data-theme="dark"] .reviewsProgress{ background: rgba(255,255,255,.14); }
+
+.reviewsProgressFill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--lime);
+}
+
+/* dots: small gap from image and from bottom */
+.dots{
+  display:flex;
+  gap: 6px;
+  justify-content:center;
+  padding: 8px 0 0;
+}
+.dot{
+  width: 6px;
+  height: 6px;
+  border-radius:999px;
+  background: rgba(0,0,0,.25);
+}
+html[data-theme="dark"] .dot{ background: rgba(255,255,255,.25); }
+.dot.active{ background: var(--lime); }
+
 
 .story{margin-top:12px;}
 .storySection{height:140vh;}
@@ -1866,35 +1975,38 @@ html[data-theme="light"] .segWrap .aboutTabs .segBtn{
   position: relative;
   margin-top: 12px;
 
-  /* FULL BLEED even inside centered .app (push a bit beyond edges on desktop) */
-  width: calc(100vw + 64px);
-  margin-left: calc(50% - 50vw - 32px);
+  /* full width of viewport, ignoring parent padding */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 
   border-radius: 0;
   border: 0;
 
-  /* light theme: keep "usual" (transparent like the page) */
-  background: transparent;
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
 
-  /* spacing */
-  padding: 12px 0 12px;
+  /* label + content spacing */
+  padding: 16px 0 12px;
   overflow: hidden;
 }
 
-/* ONLY this block background in dark theme */
-html[data-theme="dark"] .reviewsSection{
-  background: #18181a;
+.reviewsLabel{
+  position: absolute;
+  top: 10px;
+  left: var(--pad);
+  z-index: 2;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 950;
+  font-size: 13px;
 }
 
-/* Title like FAQ header (no bubble) */
-.reviewsTitle{
-  padding: 0 var(--pad);
-  font-weight: 800;
-  font-size: 18px;
-  margin-top: 0;
+.reviewsSection .reviewsBleed{
+  margin-top: 28px;
 }
-
-.reviewsSection .reviewsBleed{ margin-top: 10px; }
 
 /* Slider track: smooth, snap, no lag */
 .reviewsSection .reviewsTrack{
@@ -1921,8 +2033,10 @@ html[data-theme="dark"] .reviewsSection{
   width: 100vw;
   scroll-snap-align: start;
 
+  height: clamp(320px, 56vh, 520px);
+
   display:flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: stretch;
 
   border: 0;
@@ -1930,10 +2044,11 @@ html[data-theme="dark"] .reviewsSection{
   border-radius: 0;
 }
 
-/* Image: edge-to-edge by width, NO hard crop (top/bottom free) */
+/* Image: fill the whole slide without stretching (crop if needed) */
 .reviewsSection .reviewImg{
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
 
   display:block;
   transform: translateZ(0);
