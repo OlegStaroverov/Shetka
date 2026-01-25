@@ -654,6 +654,47 @@ if (tg) {
       track.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
 
+      // Desktop support:
+      // 1) Wheel vertical scroll -> horizontal carousel
+      // 2) Mouse drag / trackpad drag via pointer events
+      // (Mobile touch keeps working as before.)
+      try {
+        track.addEventListener('wheel', (ev) => {
+          // If user is already scrolling horizontally (trackpad), don't fight it.
+          const dx = Math.abs(ev.deltaX || 0);
+          const dy = Math.abs(ev.deltaY || 0);
+          if (dy <= dx) return;
+          ev.preventDefault();
+          track.scrollLeft += (ev.deltaY || 0);
+        }, { passive: false });
+      } catch (_) {}
+
+      let _dragging = false;
+      let _dragStartX = 0;
+      let _dragStartLeft = 0;
+      const onDown = (ev) => {
+        // only primary button for mouse
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+        _dragging = true;
+        _dragStartX = ev.clientX;
+        _dragStartLeft = track.scrollLeft;
+        try { track.setPointerCapture(ev.pointerId); } catch (_) {}
+      };
+      const onMove = (ev) => {
+        if (!_dragging) return;
+        const dx = ev.clientX - _dragStartX;
+        track.scrollLeft = _dragStartLeft - dx;
+      };
+      const onUp = (ev) => {
+        if (!_dragging) return;
+        _dragging = false;
+        try { track.releasePointerCapture(ev.pointerId); } catch (_) {}
+      };
+      track.addEventListener('pointerdown', onDown, { passive: true });
+      track.addEventListener('pointermove', onMove, { passive: true });
+      track.addEventListener('pointerup', onUp, { passive: true });
+      track.addEventListener('pointercancel', onUp, { passive: true });
+
       dotsWrap.addEventListener('click', (e) => {
         const dot = e.target?.closest?.('[data-dot]');
         if (!dot) return;
