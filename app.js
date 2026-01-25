@@ -217,6 +217,7 @@ return true;
   };
 
   const html = document.documentElement;
+
   // ---------------- Reviews helpers (theme-aware images) ----------------
   const reviewImgSrc = (n, mode) => {
     const nn = Number(n) || 0;
@@ -241,7 +242,6 @@ return true;
     const p = Math.max(0, Math.min(1, track.scrollLeft / max));
     fill.style.width = `${Math.round(p * 100)}%`;
   };
-
 
   // sendData bridge
   const sendToBot = (cmd, payload = {}) => {
@@ -436,10 +436,11 @@ const closeModalEl = (el) => {
   const applyTheme = (mode) => {
     html.setAttribute("data-theme", mode);
     localStorage.setItem("shetka_theme", mode);
+
+    
     // update theme-dependent review images instantly
     updateReviewImages(mode);
-
-    if (tg) {
+if (tg) {
       try {
         tg.setHeaderColor(mode === "dark" ? "#0f1115" : "#ffffff");
         tg.setBackgroundColor(mode === "dark" ? "#0b0c0f" : "#f6f7f8");
@@ -597,7 +598,12 @@ const closeModalEl = (el) => {
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    const setAboutTab = (key) => {
+    
+
+    // Before/After engine (will be assigned below)
+    let baStart = () => {};
+    let baStop = () => {};
+const setAboutTab = (key) => {
       const k = String(key || 'about');
       seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
       if (pAbout) pAbout.hidden = (k !== 'about');
@@ -609,6 +615,9 @@ const closeModalEl = (el) => {
       } else {
         baStop();
       }
+);
+        });
+      }
     };
 
     // ---------------- Before/After (scroll-driven scenes, no libs) ----------------
@@ -618,19 +627,15 @@ const closeModalEl = (el) => {
     let _baInited = false;
     let _baRaf = 0;
     let _baScenes = [];
-    let _baScroller = null;
     let _baOverlay = null;
 
     const baEase = (t) => {
-      // smooth but snappy (0..1)
       const x = Math.max(0, Math.min(1, t));
       return 1 - Math.pow(1 - x, 3);
     };
-
     const baLerp = (a, b, t) => a + (b - a) * t;
 
     const baSetSources = () => {
-      // set image sources once (theme-independent)
       document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
         const n = Number(img.getAttribute('data-ba-n') || 0);
         if (!n) return;
@@ -641,12 +646,11 @@ const closeModalEl = (el) => {
     };
 
     const baCollectScenes = () => {
-      _baScroller = document.getElementById('baScroller');
       _baOverlay = document.getElementById('baOverlay');
       _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
         const before = sec.querySelector('.baBefore');
         const after  = sec.querySelector('.baAfter');
-        return { sec, before, after, top: 0, h: 0, last: sec.classList.contains('baLast') };
+        return { sec, before, after, top: 0, last: sec.classList.contains('baLast') };
       });
     };
 
@@ -656,7 +660,6 @@ const closeModalEl = (el) => {
       _baScenes.forEach((s) => {
         const r = s.sec.getBoundingClientRect();
         s.top = r.top + y;
-        s.h = Math.max(1, r.height);
       });
     };
 
@@ -670,20 +673,16 @@ const closeModalEl = (el) => {
 
       const vh = window.innerHeight || 1;
       const y = window.scrollY || 0;
-
-      // how far cards fly from sides
       const off = Math.min((window.innerWidth || 360) * 0.62, 360);
 
       for (const s of _baScenes) {
         if (!s.before || !s.after) continue;
 
-        // progress in "screens": 0..2 for normal scenes, 0..1 for last
         const pRaw = (y - s.top) / vh;
         const maxP = s.last ? 1 : 2;
         const p = Math.max(0, Math.min(maxP, pRaw));
 
-        // visibility guard: if far away, keep it offscreen (saves paints a bit)
-        // still OK for reverse scroll
+        // far above: hide
         if (pRaw < -0.5) {
           s.before.style.transform = `translate3d(${-off}px,0,0)`;
           s.after.style.transform  = `translate3d(${ off}px,0,0)`;
@@ -691,8 +690,8 @@ const closeModalEl = (el) => {
           s.after.style.opacity = '0';
           continue;
         }
+        // far below: keep last centered, others hidden
         if (pRaw > maxP + 0.5) {
-          // passed scene
           if (s.last) {
             s.before.style.transform = `translate3d(0,0,0)`;
             s.after.style.transform  = `translate3d(0,0,0)`;
@@ -707,18 +706,18 @@ const closeModalEl = (el) => {
           continue;
         }
 
-        // Enter: 0..1 => fly to center
+        // 0..1 enter to center
         const enter = baEase(Math.min(1, p));
         let bx = baLerp(-off, 0, enter);
         let ax = baLerp( off, 0, enter);
-        let op = Math.min(1, Math.max(0, p * 1.6)); // fade in quickly
+        let op = Math.min(1, Math.max(0, p * 1.6));
 
-        // Exit (only non-last): 1..2 => fly back to sides
+        // 1..2 exit back to sides (except last)
         if (!s.last && p > 1) {
           const exit = baEase(Math.min(1, p - 1));
           bx = baLerp(0, -off, exit);
           ax = baLerp(0,  off, exit);
-          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.35)); // fade out
+          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.35));
         }
 
         s.before.style.transform = `translate3d(${bx}px,0,0)`;
@@ -730,11 +729,15 @@ const closeModalEl = (el) => {
       _baRaf = requestAnimationFrame(baTick);
     };
 
-    const baStart = () => {
+    baStart = () => {
       const pCases = document.getElementById('aboutPanelCases');
+      const scroller = document.getElementById('baScroller');
+      const overlay = document.getElementById('baOverlay');
       if (!pCases || pCases.hidden) return;
 
-      // one-time init per opening
+      // only run new engine if new markup exists
+      if (!scroller || !overlay) return;
+
       _baInited = true;
       document.body.classList.add('ba-mode');
       document.body.classList.remove('ba-scrolled');
@@ -744,16 +747,14 @@ const closeModalEl = (el) => {
       baRefresh();
       baSetScrolledFlag();
 
-      // listeners
       window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
       window.addEventListener('resize', baRefresh, { passive: true });
 
-      // start rAF loop
       cancelAnimationFrame(_baRaf);
       _baRaf = requestAnimationFrame(baTick);
     };
 
-    const baStop = () => {
+    baStop = () => {
       if (!_baInited) return;
       _baInited = false;
 
@@ -766,21 +767,7 @@ const closeModalEl = (el) => {
       document.body.classList.remove('ba-mode', 'ba-scrolled');
     };
 
-
-    // Before/After: slide-in placeholders from edges (10 cases)
-    try {
-      if ('IntersectionObserver' in window) {
-        const baObs = new IntersectionObserver((entries) => {
-          entries.forEach((e) => {
-            // animate every time: add on enter, remove on leave
-            if (e.isIntersecting) e.target.classList.add('baActive');
-            else e.target.classList.remove('baActive');
-          });
-        }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
-        document.querySelectorAll('[data-ba]').forEach(el => baObs.observe(el));
-      }
-    } catch(_) {}
-
+    // ---------------- Reviews (dots + progress) ----------------
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
       if (!btn) return;
@@ -801,11 +788,9 @@ const closeModalEl = (el) => {
       });
     });
 
-
     // reviews carousel (images) + dots + progress
     const track = document.getElementById('reviewsTrack');
     const dots = document.getElementById('reviewsDots');
-    const fill = document.getElementById('reviewsProgressFill');
 
     // ensure images match current theme on open
     updateReviewImages(html.getAttribute("data-theme") || "light");
@@ -848,15 +833,14 @@ const closeModalEl = (el) => {
         track.scrollTo({ left, behavior: 'smooth' });
       });
 
-      // initial sync (including progress)
       requestAnimationFrame(sync);
-    } else if (track && fill) {
-      // even without dots we still keep progress up-to-date
+    } else if (track) {
       const sync = () => updateReviewsProgress();
       track.addEventListener('scroll', sync, { passive: true });
       window.addEventListener('resize', sync, { passive: true });
       requestAnimationFrame(sync);
     }
+
     // init default
     setAboutTab('about');
   }
