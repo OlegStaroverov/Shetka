@@ -215,15 +215,157 @@
 
         <!-- TAB: CASES -->
         <div id="aboutPanelCases" hidden>
-          <div class="baStory" aria-label="Кейсы До/После">
-            <!-- 10 animated placeholders, no titles/texts -->
-            <section class="baSection" data-ba>
-              <div class="baSticky">
-                <div class="baPair">
-                  <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
-                  <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
-                </div>
-              </div>
+          <!-- Intro overlay: shows only the arrow on entry -->
+          <div class="baOverlay" id="baOverlay" aria-hidden="true">
+            <div class="baOverlayInner">
+              <div class="baArrow" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <!-- Scroll-driven Before/After story -->
+          <div class="baScroller" id="baScroller" aria-label="Кейсы До/После">
+            
+      <section class="baScene" data-ba-scene="1">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="1" alt="До 1" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="1" alt="После 1" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="2">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="2" alt="До 2" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="2" alt="После 2" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="3">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="3" alt="До 3" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="3" alt="После 3" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="4">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="4" alt="До 4" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="4" alt="После 4" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="5">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="5" alt="До 5" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="5" alt="После 5" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="6">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="6" alt="До 6" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="6" alt="После 6" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="7">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="7" alt="До 7" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="7" alt="После 7" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="8">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="8" alt="До 8" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="8" alt="После 8" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene" data-ba-scene="9">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="9" alt="До 9" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="9" alt="После 9" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section class="baScene baLast" data-ba-scene="10">
+        <div class="baSticky">
+          <div class="baPair">
+            <figure class="baCard baBefore" data-ba-side="before">
+              <img class="baImg" data-ba-img="before" data-ba-n="10" alt="До 10" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ДО</figcaption>
+            </figure>
+            <figure class="baCard baAfter" data-ba-side="after">
+              <img class="baImg" data-ba-img="after" data-ba-n="10" alt="После 10" loading="lazy" decoding="async" />
+              <figcaption class="baLabel">ПОСЛЕ</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+          </div></div>
             </section>
             <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
             <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
