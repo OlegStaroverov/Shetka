@@ -218,31 +218,6 @@ return true;
 
   const html = document.documentElement;
 
-  // ---------------- Reviews helpers (theme-aware images) ----------------
-  const reviewImgSrc = (n, mode) => {
-    const nn = Number(n) || 0;
-    const m = (mode === "dark") ? "b" : "l";
-    return `o${nn}${m}.png`;
-  };
-
-  const updateReviewImages = (mode) => {
-    const cur = mode || (html.getAttribute("data-theme") || "light");
-    document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
-      const n = img.getAttribute("data-review");
-      const src = reviewImgSrc(n, cur);
-      if (img.getAttribute("src") !== src) img.setAttribute("src", src);
-    });
-  };
-
-  const updateReviewsProgress = () => {
-    const track = document.getElementById("reviewsTrack");
-    const fill = document.getElementById("reviewsProgressFill");
-    if (!track || !fill) return;
-    const max = Math.max(1, track.scrollWidth - track.clientWidth);
-    const p = Math.max(0, Math.min(1, track.scrollLeft / max));
-    fill.style.width = `${Math.round(p * 100)}%`;
-  };
-
   // sendData bridge
   const sendToBot = (cmd, payload = {}) => {
     const data = JSON.stringify({ cmd, ...payload, ts: Date.now() });
@@ -437,10 +412,7 @@ const closeModalEl = (el) => {
     html.setAttribute("data-theme", mode);
     localStorage.setItem("shetka_theme", mode);
 
-    
-    // update theme-dependent review images instantly
-    updateReviewImages(mode);
-if (tg) {
+    if (tg) {
       try {
         tg.setHeaderColor(mode === "dark" ? "#0f1115" : "#ffffff");
         tg.setBackgroundColor(mode === "dark" ? "#0b0c0f" : "#f6f7f8");
@@ -461,6 +433,17 @@ if (tg) {
     syncThemeSwitch();
     // pattern image depends on theme
     setPatternEnabled(getPatternEnabled());
+
+    // обновляем отзывы под тему
+    try {
+      const theme = html.getAttribute('data-theme') || 'light';
+      const suffix = theme === 'dark' ? 'b' : 'l';
+      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+        const i = Number(img.getAttribute('data-review') || '1');
+        img.src = `o${i}${suffix}.png`;
+      });
+    } catch (_) {}
+
     haptic("light");
   };
 
@@ -588,15 +571,8 @@ if (tg) {
   });
   $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
 
-  
-  // ---------------- ABOUT (segmented + reviews + Before/After) ----------------
-  // ВАЖНО: здесь нельзя ломать навигацию. Мы только:
-  // 1) переключаем вкладки "О нас" / "До/После"
-  // 2) делаем отзывы (dots + progress) и подстановку картинок по теме
-  // 3) запускаем scroll-driven "До/После" только когда открыт cases
-
+  // ---------------- ABOUT (segmented + scroll storytelling) ----------------
   let _aboutInited = false;
-
   function initAboutOnce(){
     if (_aboutInited) return;
     _aboutInited = true;
@@ -606,329 +582,89 @@ if (tg) {
     const pReviews = document.getElementById('aboutPanelReviews');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // --- Reviews wiring (separate tab) ---
-    const track = document.getElementById('reviewsTrack');
-    const filtersWrap = document.getElementById('reviewsFilters');
-
-    // ПРИМЕЧАНИЕ: если захочешь иначе распределить отзывы по категориям —
-    // просто поменяй номера в массивах ниже.
-    const REV_GROUPS = {
-      all:     Array.from({ length: 20 }, (_, i) => i + 1),
-      shoes:   [1,2,3,4,5,6,7,8],
-      bags:    [9,10,11,12,13],
-      jackets: [14,15,16],
-      other:   [17,18,19,20],
-    };
-
-    const setRevFilterActive = (key) => {
-      if (!filtersWrap) return;
-      const k = String(key || 'all');
-      filtersWrap.querySelectorAll('.segBtn[data-revfilter]').forEach((b) => {
-        b.classList.toggle('active', (b.getAttribute('data-revfilter') || 'all') === k);
-      });
-    };
-
-    const applyRevFilter = (key) => {
-      if (!track) return;
-      const k = String(key || 'all');
-      const allowed = new Set((REV_GROUPS[k] || REV_GROUPS.all).map(Number));
-
-      track.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
-        const n = Number(img.getAttribute('data-review') || 0);
-        const slide = img.closest('.reviewSlide');
-        if (!slide) return;
-        slide.style.display = allowed.has(n) ? '' : 'none';
-      });
-
-      // после фильтра — в начало
-      try { track.scrollTo({ left: 0, behavior: 'instant' }); }
-      catch (_) { try { track.scrollLeft = 0; } catch(_e) {} }
-
-      updateReviewsProgress();
-      setRevFilterActive(k);
-    };
-
-    const initReviewsOnce = () => {
-      if (!track) return;
-      if (track.dataset.inited === '1') return;
-      track.dataset.inited = '1';
-
-      // rAF-throttle прогресса (чтобы не лагало)
-      let _raf = 0;
-      const onScroll = () => {
-        if (_raf) return;
-        _raf = requestAnimationFrame(() => {
-          _raf = 0;
-          updateReviewsProgress();
-        });
+    // ====== BEFORE/AFTER: активный слайд по центру (вход/выход только вбок) ======
+    let baObserver = null;
+    
+    const initBaObserver = () => {
+      if (baObserver) return;
+    
+      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
+      if (!sections.length) return;
+    
+      const setActive = (el) => {
+        sections.forEach(s => s.classList.toggle('baActive', s === el));
       };
-
-      track.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll, { passive: true });
-
-      // Desktop: колесо мыши листает картинки, если курсор над лентой
-      try {
-        track.addEventListener('wheel', (ev) => {
-          const max = Math.max(0, track.scrollWidth - track.clientWidth);
-          if (max <= 0) return;
-
-          const dx = Math.abs(ev.deltaX || 0);
-          const dy = Math.abs(ev.deltaY || 0);
-          if (dx > dy) return; // уже горизонтальный жест
-
-          const atStart = track.scrollLeft <= 0;
-          const atEnd = track.scrollLeft >= (max - 1);
-
-          // на краях отдаём колесо странице
-          if ((ev.deltaY < 0 && atStart) || (ev.deltaY > 0 && atEnd)) return;
-
-          ev.preventDefault();
-          track.scrollLeft += ev.deltaY;
-        }, { passive: false });
-      } catch (_) {}
-
-      // Desktop: drag мышкой (как grab)
-      try {
-        let dragging = false;
-        let startX = 0;
-        let startLeft = 0;
-
-        const down = (ev) => {
-          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-          dragging = true;
-          startX = ev.clientX;
-          startLeft = track.scrollLeft;
-          try { track.setPointerCapture(ev.pointerId); } catch (_) {}
-        };
-        const move = (ev) => {
-          if (!dragging) return;
-          track.scrollLeft = startLeft - (ev.clientX - startX);
-        };
-        const up = (ev) => {
-          if (!dragging) return;
-          dragging = false;
-          try { track.releasePointerCapture(ev.pointerId); } catch (_) {}
-        };
-
-        track.addEventListener('pointerdown', down, { passive: true });
-        track.addEventListener('pointermove', move, { passive: true });
-        track.addEventListener('pointerup', up, { passive: true });
-        track.addEventListener('pointercancel', up, { passive: true });
-      } catch (_) {}
-
-      // фильтры
-      filtersWrap?.addEventListener('click', (e) => {
-        const btn = e.target?.closest?.('[data-revfilter]');
-        if (!btn) return;
-        applyRevFilter(btn.getAttribute('data-revfilter') || 'all');
-        haptic('light');
-      });
-
-      // default
-      applyRevFilter('all');
-      requestAnimationFrame(onScroll);
-    };
-// --- Before/After scroll engine ---
-    const BA_COUNT = 10;
-    let _baInited = false;
-    let _baRaf = 0;
-    let _baScenes = [];
-    let _baMaxScroll = null;
-    let _baClampRaf = 0;
-
-    const baEase = (t) => {
-      const x = Math.max(0, Math.min(1, t));
-      return 1 - Math.pow(1 - x, 3);
-    };
-    const baLerp = (a, b, t) => a + (b - a) * t;
-
-    const baSetSources = () => {
-      // doN.png / posleN.png
-      document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
-        const n = Number(img.getAttribute('data-ba-n') || 0);
-        if (!n || n > BA_COUNT) return;
-        const side = img.getAttribute('data-ba-img');
-        const src = side === 'after' ? `posle${n}.png` : `do${n}.png`;
-        if (img.getAttribute('src') !== src) img.setAttribute('src', src);
-      });
-    };
-
-    const baCollectScenes = () => {
-      _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
-        const before = sec.querySelector('.baBefore');
-        const after  = sec.querySelector('.baAfter');
-        return { sec, before, after, top: 0, last: sec.classList.contains('baLast') };
-      });
-    };
-
-    const baRefresh = () => {
-      if (!_baScenes.length) return;
-      const y = window.scrollY || 0;
-      _baScenes.forEach((s) => {
-        const r = s.sec.getBoundingClientRect();
-        s.top = r.top + y;
-      });
-
-      // hard-stop after last scene reaches center (no extra scroll)
-      const last = _baScenes.find(s => s.last) || _baScenes[_baScenes.length - 1];
-      const vh = window.innerHeight || 1;
-      _baMaxScroll = last ? (last.top + vh * 1) : null; // last progress max=1
-    };
-
-    const baSetScrolledFlag = () => {
-      const scrolled = (window.scrollY || 0) > 6;
-      document.body.classList.toggle('ba-scrolled', scrolled);
-    };
-
-    const baClampScroll = () => {
-      if (!_baInited || _baMaxScroll == null) return;
-      const y = window.scrollY || 0;
-      if (y <= _baMaxScroll + 1) return;
-      cancelAnimationFrame(_baClampRaf);
-      _baClampRaf = requestAnimationFrame(() => {
-        try { window.scrollTo(0, _baMaxScroll); } catch(_) {}
-      });
-    };
-
-    const baTick = () => {
-      if (!_baInited) return;
-
-      const vh = window.innerHeight || 1;
-      const y = window.scrollY || 0;
-
-      // dynamic "off-screen" distance so the cards ALWAYS start outside viewport on any device
-      // 0.62w works for most, but we also add half-card width for correctness.
-      const w = window.innerWidth || 360;
-      // card width is ~min(260px, 46%); approximate with 0.46w, capped at 260
-      const cardW = Math.min(260, w * 0.46);
-      const off = Math.min(w * 0.62 + cardW * 0.55, 520);
-
-      for (const s of _baScenes) {
-        if (!s.before || !s.after) continue;
-
-        const maxP = s.last ? 1 : 2;      // last: only enter and stay
-        const pRaw = (y - s.top) / vh;    // scene progress in screens
-        const p = Math.max(0, Math.min(maxP, pRaw));
-
-        // out of view far -> hard hide
-        if (pRaw < -0.5) {
-          s.before.style.transform = `translate3d(${-off}px,0,0)`;
-          s.after.style.transform  = `translate3d(${ off}px,0,0)`;
-          s.before.style.opacity = '0';
-          s.after.style.opacity = '0';
-          continue;
+    
+      // включаем первый сразу
+      setActive(sections[0]);
+    
+      baObserver = new IntersectionObserver((entries) => {
+        let best = null;
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
         }
-        if (pRaw > maxP + 0.6) {
-          if (s.last) {
-            s.before.style.transform = `translate3d(0,0,0)`;
-            s.after.style.transform  = `translate3d(0,0,0)`;
-            s.before.style.opacity = '1';
-            s.after.style.opacity = '1';
-          } else {
-            s.before.style.transform = `translate3d(${-off}px,0,0)`;
-            s.after.style.transform  = `translate3d(${ off}px,0,0)`;
-            s.before.style.opacity = '0';
-            s.after.style.opacity = '0';
-          }
-          continue;
-        }
-
-        // ENTER 0..1
-        const enter = baEase(Math.min(1, p));
-        let bx = baLerp(-off, 0, enter);
-        let ax = baLerp( off, 0, enter);
-
-        // opacity: faster appear, stays visible while centered
-        let op = Math.min(1, Math.max(0, p * 1.9));
-
-        // EXIT 1..2 (except last)
-        if (!s.last && p > 1) {
-          const exit = baEase(Math.min(1, p - 1));
-          bx = baLerp(0, -off, exit);
-          ax = baLerp(0,  off, exit);
-          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.45));
-        }
-
-        s.before.style.transform = `translate3d(${bx}px,0,0)`;
-        s.after.style.transform  = `translate3d(${ax}px,0,0)`;
-        s.before.style.opacity = String(op);
-        s.after.style.opacity  = String(op);
-      }
-
-      // clamp extra scroll after last pair fixed
-      baClampScroll();
-
-      _baRaf = requestAnimationFrame(baTick);
+        if (best) setActive(best.target);
+      }, {
+        root: null,
+        rootMargin: "-40% 0px -40% 0px",
+        threshold: [0.01, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95],
+      });
+    
+      sections.forEach(sec => baObserver.observe(sec));
     };
 
-    let baStart = () => {};
-    let baStop  = () => {};
-
-    baStart = () => {
-      if (!pCases || pCases.hidden) return;
-      const scroller = document.getElementById('baScroller');
-      const overlay  = document.getElementById('baOverlay');
-      if (!scroller || !overlay) return;
-
-      _baInited = true;
-      document.body.classList.add('ba-mode');
-      document.body.classList.remove('ba-scrolled');
-
-      baCollectScenes();
-      baSetSources();
-      baRefresh();
-      baSetScrolledFlag();
-
-      window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
-      window.addEventListener('scroll', baClampScroll, { passive: true });
-      window.addEventListener('resize', baRefresh, { passive: true });
-
-      cancelAnimationFrame(_baRaf);
-      _baRaf = requestAnimationFrame(baTick);
-    };
-
-    baStop = () => {
-      if (!_baInited) return;
-      _baInited = false;
-
-      cancelAnimationFrame(_baRaf);
-      _baRaf = 0;
-
-      window.removeEventListener('scroll', baSetScrolledFlag);
-      window.removeEventListener('scroll', baClampScroll);
-      window.removeEventListener('resize', baRefresh);
-
-      document.body.classList.remove('ba-mode', 'ba-scrolled');
-    };
-
-    // --- About tabs switch (MUST work) ---
     const setAboutTab = (key) => {
       const k = String(key || 'about');
 
+      // visual state
       seg?.querySelectorAll('.segBtn').forEach((b) => {
-        b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k);
+        const isActive = (b.getAttribute('data-about-tab') || '') === k;
+        b.classList.toggle('active', isActive);
+        // for a11y (role="tab")
+        try { b.setAttribute('aria-selected', isActive ? 'true' : 'false'); } catch (_) {}
       });
 
+      // panels
       if (pAbout) pAbout.hidden = (k !== 'about');
       if (pReviews) pReviews.hidden = (k !== 'reviews');
       if (pCases) pCases.hidden = (k !== 'cases');
 
-      // reset scroll so intro starts clean
-      try { window.scrollTo(0, 0); } catch(_) {}
-
+      // reset scroll to top between tabs
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
       initRevealObserver();
 
-      // keep reviews correct in both themes
-      updateReviewImages(html.getAttribute("data-theme") || "light");
-      initReviewsOnce();
-      // прогресс должен быть корректный при открытии вкладки
-      requestAnimationFrame(updateReviewsProgress);
-
-      if (k === 'cases') baStart();
-      else baStop();
+      if (k === 'cases') {
+        applyBaImages();
+        initBaObserver();
+      }
     };
 
-    // event delegation on the wrapper
+    // ====== BEFORE/AFTER assets (do1.png / posle1.png ...) ======
+    const BA_CASES = Array.from({ length: 10 }, (_, i) => ({
+      before: `do${i + 1}.png`,
+      after: `posle${i + 1}.png`,
+    }));
+
+    const applyBaImages = () => {
+      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
+      sections.forEach((sec, idx) => {
+        const pair = BA_CASES[idx];
+        if (!pair) return;
+
+        const beforeEl = sec.querySelector('.baBefore');
+        const afterEl  = sec.querySelector('.baAfter');
+        if (beforeEl) {
+          beforeEl.style.backgroundImage = `url('${pair.before}')`;
+          beforeEl.classList.add('hasImg');
+        }
+        if (afterEl) {
+          afterEl.style.backgroundImage = `url('${pair.after}')`;
+          afterEl.classList.add('hasImg');
+        }
+      });
+    };
+
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
       if (!btn) return;
@@ -936,7 +672,7 @@ if (tg) {
       haptic('light');
     });
 
-    // FAQ accordion (as was)
+    // FAQ accordion
     document.querySelectorAll('[data-acc]')?.forEach((acc) => {
       acc.addEventListener('click', (e) => {
         const head = e.target?.closest?.('[data-acc-head]');
@@ -949,11 +685,59 @@ if (tg) {
       });
     });
 
-    // Init default tab
+    // reviews carousel progress
+    const track = document.getElementById('reviewsTrack');
+    const progressBar = document.getElementById('reviewsProgressBar');
+    if (track && progressBar) {
+      const progressWrap = progressBar.parentElement;
+
+      const updateProgress = () => {
+        const max = (track.scrollWidth - track.clientWidth);
+        const pct = max <= 0 ? 0 : Math.max(0, Math.min(1, track.scrollLeft / max));
+        progressBar.style.width = `${Math.round(pct * 100)}%`;
+      };
+
+      let raf = 0;
+      const onScroll = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; updateProgress(); });
+      };
+
+      track.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+
+      // Click-to-jump on progress bar
+      progressWrap?.addEventListener?.('click', (e) => {
+        try {
+          const rect = progressWrap.getBoundingClientRect();
+          const x = (e?.clientX ?? rect.left) - rect.left;
+          const r = rect.width ? (x / rect.width) : 0;
+          const max = (track.scrollWidth - track.clientWidth);
+          track.scrollTo({ left: Math.max(0, Math.min(max, r * max)), behavior: 'smooth' });
+        } catch (_) {}
+      });
+
+      // init
+      updateProgress();
+    }
+
+    // ====== Reviews assets (o1b.png / o1l.png ...) ======
+    const applyReviewImages = () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      const suffix = theme === 'dark' ? 'b' : 'l';
+      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+        const i = Number(img.getAttribute('data-review') || '1');
+        img.src = `o${i}${suffix}.png`;
+      });
+    };
+
+    applyReviewImages();
+    
+    // init default
     setAboutTab('about');
   }
 
-// ---------------- STATUS NORMALIZATION ----------------
+  // ---------------- STATUS NORMALIZATION ----------------
   const normalizeStatus = (raw) => {
     if (!raw) return { label: "Принят", dot: "blue" };
     const s = String(raw).toLowerCase();
@@ -3173,7 +2957,7 @@ if (tg) {
       saveProfile({ ...cur, saved_addresses: safe });
       try {
         // профиль обновляется через очередь Supabase — чтобы видеть на другом устройстве
-        await enqueueRequest("profile_update", { saved_addresses: safe });
+        await supaEnqueue("profile_update", { saved_addresses: safe });
       } catch (_) {}
     };
 
