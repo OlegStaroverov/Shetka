@@ -588,8 +588,15 @@ if (tg) {
   });
   $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
 
-  // ---------------- ABOUT (segmented + scroll storytelling) ----------------
+  
+  // ---------------- ABOUT (segmented + reviews + Before/After) ----------------
+  // ВАЖНО: здесь нельзя ломать навигацию. Мы только:
+  // 1) переключаем вкладки "О нас" / "До/После"
+  // 2) делаем отзывы (dots + progress) и подстановку картинок по теме
+  // 3) запускаем scroll-driven "До/После" только когда открыт cases
+
   let _aboutInited = false;
+
   function initAboutOnce(){
     if (_aboutInited) return;
     _aboutInited = true;
@@ -598,209 +605,23 @@ if (tg) {
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    
-
-    // Before/After engine (will be assigned below)
-    let baStart = () => {};
-    let baStop = () => {};
-const setAboutTab = (key) => {
-      const k = String(key || 'about');
-      seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
-      if (pAbout) pAbout.hidden = (k !== 'about');
-      if (pCases) pCases.hidden = (k !== 'cases');
-      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
-      initRevealObserver();
-      if (k === 'cases') {
-        baStart();
-      } else {
-        baStop();
-      }
-);
-        });
-      }
-    };
-
-    // ---------------- Before/After (scroll-driven scenes, no libs) ----------------
-    // Files: do1.png / posle1.png ... do10.png / posle10.png
-    const BA_COUNT = 10;
-
-    let _baInited = false;
-    let _baRaf = 0;
-    let _baScenes = [];
-    let _baOverlay = null;
-
-    const baEase = (t) => {
-      const x = Math.max(0, Math.min(1, t));
-      return 1 - Math.pow(1 - x, 3);
-    };
-    const baLerp = (a, b, t) => a + (b - a) * t;
-
-    const baSetSources = () => {
-      document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
-        const n = Number(img.getAttribute('data-ba-n') || 0);
-        if (!n) return;
-        const side = img.getAttribute('data-ba-img');
-        const src = side === 'after' ? `posle${n}.png` : `do${n}.png`;
-        if (img.getAttribute('src') !== src) img.setAttribute('src', src);
-      });
-    };
-
-    const baCollectScenes = () => {
-      _baOverlay = document.getElementById('baOverlay');
-      _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
-        const before = sec.querySelector('.baBefore');
-        const after  = sec.querySelector('.baAfter');
-        return { sec, before, after, top: 0, last: sec.classList.contains('baLast') };
-      });
-    };
-
-    const baRefresh = () => {
-      if (!_baScenes.length) return;
-      const y = window.scrollY || 0;
-      _baScenes.forEach((s) => {
-        const r = s.sec.getBoundingClientRect();
-        s.top = r.top + y;
-      });
-    };
-
-    const baSetScrolledFlag = () => {
-      const scrolled = (window.scrollY || 0) > 6;
-      document.body.classList.toggle('ba-scrolled', scrolled);
-    };
-
-    const baTick = () => {
-      if (!_baInited) return;
-
-      const vh = window.innerHeight || 1;
-      const y = window.scrollY || 0;
-      const off = Math.min((window.innerWidth || 360) * 0.62, 360);
-
-      for (const s of _baScenes) {
-        if (!s.before || !s.after) continue;
-
-        const pRaw = (y - s.top) / vh;
-        const maxP = s.last ? 1 : 2;
-        const p = Math.max(0, Math.min(maxP, pRaw));
-
-        // far above: hide
-        if (pRaw < -0.5) {
-          s.before.style.transform = `translate3d(${-off}px,0,0)`;
-          s.after.style.transform  = `translate3d(${ off}px,0,0)`;
-          s.before.style.opacity = '0';
-          s.after.style.opacity = '0';
-          continue;
-        }
-        // far below: keep last centered, others hidden
-        if (pRaw > maxP + 0.5) {
-          if (s.last) {
-            s.before.style.transform = `translate3d(0,0,0)`;
-            s.after.style.transform  = `translate3d(0,0,0)`;
-            s.before.style.opacity = '1';
-            s.after.style.opacity = '1';
-          } else {
-            s.before.style.transform = `translate3d(${-off}px,0,0)`;
-            s.after.style.transform  = `translate3d(${ off}px,0,0)`;
-            s.before.style.opacity = '0';
-            s.after.style.opacity = '0';
-          }
-          continue;
-        }
-
-        // 0..1 enter to center
-        const enter = baEase(Math.min(1, p));
-        let bx = baLerp(-off, 0, enter);
-        let ax = baLerp( off, 0, enter);
-        let op = Math.min(1, Math.max(0, p * 1.6));
-
-        // 1..2 exit back to sides (except last)
-        if (!s.last && p > 1) {
-          const exit = baEase(Math.min(1, p - 1));
-          bx = baLerp(0, -off, exit);
-          ax = baLerp(0,  off, exit);
-          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.35));
-        }
-
-        s.before.style.transform = `translate3d(${bx}px,0,0)`;
-        s.after.style.transform  = `translate3d(${ax}px,0,0)`;
-        s.before.style.opacity = String(op);
-        s.after.style.opacity  = String(op);
-      }
-
-      _baRaf = requestAnimationFrame(baTick);
-    };
-
-    baStart = () => {
-      const pCases = document.getElementById('aboutPanelCases');
-      const scroller = document.getElementById('baScroller');
-      const overlay = document.getElementById('baOverlay');
-      if (!pCases || pCases.hidden) return;
-
-      // only run new engine if new markup exists
-      if (!scroller || !overlay) return;
-
-      _baInited = true;
-      document.body.classList.add('ba-mode');
-      document.body.classList.remove('ba-scrolled');
-
-      baCollectScenes();
-      baSetSources();
-      baRefresh();
-      baSetScrolledFlag();
-
-      window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
-      window.addEventListener('resize', baRefresh, { passive: true });
-
-      cancelAnimationFrame(_baRaf);
-      _baRaf = requestAnimationFrame(baTick);
-    };
-
-    baStop = () => {
-      if (!_baInited) return;
-      _baInited = false;
-
-      cancelAnimationFrame(_baRaf);
-      _baRaf = 0;
-
-      window.removeEventListener('scroll', baSetScrolledFlag);
-      window.removeEventListener('resize', baRefresh);
-
-      document.body.classList.remove('ba-mode', 'ba-scrolled');
-    };
-
-    // ---------------- Reviews (dots + progress) ----------------
-    seg?.addEventListener('click', (e) => {
-      const btn = e.target?.closest?.('button[data-about-tab]');
-      if (!btn) return;
-      setAboutTab(btn.getAttribute('data-about-tab'));
-      haptic('light');
-    });
-
-    // FAQ accordion
-    document.querySelectorAll('[data-acc]')?.forEach((acc) => {
-      acc.addEventListener('click', (e) => {
-        const head = e.target?.closest?.('[data-acc-head]');
-        if (!head) return;
-        const item = head.closest('[data-acc-item]');
-        if (!item) return;
-        const open = item.classList.toggle('open');
-        item.setAttribute('aria-expanded', open ? 'true' : 'false');
-        haptic('light');
-      });
-    });
-
-    // reviews carousel (images) + dots + progress
+    // --- Reviews wiring (20 images, theme-aware) ---
     const track = document.getElementById('reviewsTrack');
-    const dots = document.getElementById('reviewsDots');
+    const dotsWrap = document.getElementById('reviewsDots');
 
-    // ensure images match current theme on open
-    updateReviewImages(html.getAttribute("data-theme") || "light");
-
-    if (track && dots) {
+    const buildReviewsDotsOnce = () => {
+      if (!track || !dotsWrap) return;
       const slides = Array.from(track.querySelectorAll('.reviewSlide'));
-      dots.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+      if (!slides.length) return;
+
+      // prevent duplicates
+      if (dotsWrap.dataset.built === "1") return;
+      dotsWrap.dataset.built = "1";
+
+      dotsWrap.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
 
       const setDot = (i) => {
-        dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+        dotsWrap.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
       };
 
       const getActiveIndex = () => {
@@ -823,7 +644,7 @@ const setAboutTab = (key) => {
       track.addEventListener('scroll', sync, { passive: true });
       window.addEventListener('resize', sync, { passive: true });
 
-      dots.addEventListener('click', (e) => {
+      dotsWrap.addEventListener('click', (e) => {
         const dot = e.target?.closest?.('[data-dot]');
         if (!dot) return;
         const i = Number(dot.getAttribute('data-dot') || 0);
@@ -831,21 +652,235 @@ const setAboutTab = (key) => {
         if (!s) return;
         const left = s.offsetLeft - Math.max(0, (track.clientWidth - s.clientWidth) / 2);
         track.scrollTo({ left, behavior: 'smooth' });
+        haptic('light');
       });
 
       requestAnimationFrame(sync);
-    } else if (track) {
-      const sync = () => updateReviewsProgress();
-      track.addEventListener('scroll', sync, { passive: true });
-      window.addEventListener('resize', sync, { passive: true });
-      requestAnimationFrame(sync);
-    }
+    };
 
-    // init default
+    // --- Before/After scroll engine ---
+    const BA_COUNT = 10;
+    let _baInited = false;
+    let _baRaf = 0;
+    let _baScenes = [];
+    let _baMaxScroll = null;
+    let _baClampRaf = 0;
+
+    const baEase = (t) => {
+      const x = Math.max(0, Math.min(1, t));
+      return 1 - Math.pow(1 - x, 3);
+    };
+    const baLerp = (a, b, t) => a + (b - a) * t;
+
+    const baSetSources = () => {
+      // doN.png / posleN.png
+      document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
+        const n = Number(img.getAttribute('data-ba-n') || 0);
+        if (!n || n > BA_COUNT) return;
+        const side = img.getAttribute('data-ba-img');
+        const src = side === 'after' ? `posle${n}.png` : `do${n}.png`;
+        if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+      });
+    };
+
+    const baCollectScenes = () => {
+      _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
+        const before = sec.querySelector('.baBefore');
+        const after  = sec.querySelector('.baAfter');
+        return { sec, before, after, top: 0, last: sec.classList.contains('baLast') };
+      });
+    };
+
+    const baRefresh = () => {
+      if (!_baScenes.length) return;
+      const y = window.scrollY || 0;
+      _baScenes.forEach((s) => {
+        const r = s.sec.getBoundingClientRect();
+        s.top = r.top + y;
+      });
+
+      // hard-stop after last scene reaches center (no extra scroll)
+      const last = _baScenes.find(s => s.last) || _baScenes[_baScenes.length - 1];
+      const vh = window.innerHeight || 1;
+      _baMaxScroll = last ? (last.top + vh * 1) : null; // last progress max=1
+    };
+
+    const baSetScrolledFlag = () => {
+      const scrolled = (window.scrollY || 0) > 6;
+      document.body.classList.toggle('ba-scrolled', scrolled);
+    };
+
+    const baClampScroll = () => {
+      if (!_baInited || _baMaxScroll == null) return;
+      const y = window.scrollY || 0;
+      if (y <= _baMaxScroll + 1) return;
+      cancelAnimationFrame(_baClampRaf);
+      _baClampRaf = requestAnimationFrame(() => {
+        try { window.scrollTo(0, _baMaxScroll); } catch(_) {}
+      });
+    };
+
+    const baTick = () => {
+      if (!_baInited) return;
+
+      const vh = window.innerHeight || 1;
+      const y = window.scrollY || 0;
+
+      // dynamic "off-screen" distance so the cards ALWAYS start outside viewport on any device
+      // 0.62w works for most, but we also add half-card width for correctness.
+      const w = window.innerWidth || 360;
+      // card width is ~min(260px, 46%); approximate with 0.46w, capped at 260
+      const cardW = Math.min(260, w * 0.46);
+      const off = Math.min(w * 0.62 + cardW * 0.55, 520);
+
+      for (const s of _baScenes) {
+        if (!s.before || !s.after) continue;
+
+        const maxP = s.last ? 1 : 2;      // last: only enter and stay
+        const pRaw = (y - s.top) / vh;    // scene progress in screens
+        const p = Math.max(0, Math.min(maxP, pRaw));
+
+        // out of view far -> hard hide
+        if (pRaw < -0.5) {
+          s.before.style.transform = `translate3d(${-off}px,0,0)`;
+          s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+          s.before.style.opacity = '0';
+          s.after.style.opacity = '0';
+          continue;
+        }
+        if (pRaw > maxP + 0.6) {
+          if (s.last) {
+            s.before.style.transform = `translate3d(0,0,0)`;
+            s.after.style.transform  = `translate3d(0,0,0)`;
+            s.before.style.opacity = '1';
+            s.after.style.opacity = '1';
+          } else {
+            s.before.style.transform = `translate3d(${-off}px,0,0)`;
+            s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+            s.before.style.opacity = '0';
+            s.after.style.opacity = '0';
+          }
+          continue;
+        }
+
+        // ENTER 0..1
+        const enter = baEase(Math.min(1, p));
+        let bx = baLerp(-off, 0, enter);
+        let ax = baLerp( off, 0, enter);
+
+        // opacity: faster appear, stays visible while centered
+        let op = Math.min(1, Math.max(0, p * 1.9));
+
+        // EXIT 1..2 (except last)
+        if (!s.last && p > 1) {
+          const exit = baEase(Math.min(1, p - 1));
+          bx = baLerp(0, -off, exit);
+          ax = baLerp(0,  off, exit);
+          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.45));
+        }
+
+        s.before.style.transform = `translate3d(${bx}px,0,0)`;
+        s.after.style.transform  = `translate3d(${ax}px,0,0)`;
+        s.before.style.opacity = String(op);
+        s.after.style.opacity  = String(op);
+      }
+
+      // clamp extra scroll after last pair fixed
+      baClampScroll();
+
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    let baStart = () => {};
+    let baStop  = () => {};
+
+    baStart = () => {
+      if (!pCases || pCases.hidden) return;
+      const scroller = document.getElementById('baScroller');
+      const overlay  = document.getElementById('baOverlay');
+      if (!scroller || !overlay) return;
+
+      _baInited = true;
+      document.body.classList.add('ba-mode');
+      document.body.classList.remove('ba-scrolled');
+
+      baCollectScenes();
+      baSetSources();
+      baRefresh();
+      baSetScrolledFlag();
+
+      window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
+      window.addEventListener('scroll', baClampScroll, { passive: true });
+      window.addEventListener('resize', baRefresh, { passive: true });
+
+      cancelAnimationFrame(_baRaf);
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    baStop = () => {
+      if (!_baInited) return;
+      _baInited = false;
+
+      cancelAnimationFrame(_baRaf);
+      _baRaf = 0;
+
+      window.removeEventListener('scroll', baSetScrolledFlag);
+      window.removeEventListener('scroll', baClampScroll);
+      window.removeEventListener('resize', baRefresh);
+
+      document.body.classList.remove('ba-mode', 'ba-scrolled');
+    };
+
+    // --- About tabs switch (MUST work) ---
+    const setAboutTab = (key) => {
+      const k = String(key || 'about');
+
+      seg?.querySelectorAll('.segBtn').forEach((b) => {
+        b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k);
+      });
+
+      if (pAbout) pAbout.hidden = (k !== 'about');
+      if (pCases) pCases.hidden = (k !== 'cases');
+
+      // reset scroll so intro starts clean
+      try { window.scrollTo(0, 0); } catch(_) {}
+
+      initRevealObserver();
+
+      // keep reviews correct in both themes
+      updateReviewImages(html.getAttribute("data-theme") || "light");
+      buildReviewsDotsOnce();
+
+      if (k === 'cases') baStart();
+      else baStop();
+    };
+
+    // event delegation on the wrapper
+    seg?.addEventListener('click', (e) => {
+      const btn = e.target?.closest?.('button[data-about-tab]');
+      if (!btn) return;
+      setAboutTab(btn.getAttribute('data-about-tab'));
+      haptic('light');
+    });
+
+    // FAQ accordion (as was)
+    document.querySelectorAll('[data-acc]')?.forEach((acc) => {
+      acc.addEventListener('click', (e) => {
+        const head = e.target?.closest?.('[data-acc-head]');
+        if (!head) return;
+        const item = head.closest('[data-acc-item]');
+        if (!item) return;
+        const open = item.classList.toggle('open');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+        haptic('light');
+      });
+    });
+
+    // Init default tab
     setAboutTab('about');
   }
 
-  // ---------------- STATUS NORMALIZATION ----------------
+// ---------------- STATUS NORMALIZATION ----------------
   const normalizeStatus = (raw) => {
     if (!raw) return { label: "Принят", dot: "blue" };
     const s = String(raw).toLowerCase();
