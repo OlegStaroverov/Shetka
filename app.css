@@ -78,6 +78,24 @@ html,body{
   -webkit-text-size-adjust: 100%;
 }
 
+/* Page scrollbar: in light theme make thumb darker so it's visible */
+html, body{
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(15,17,21,.35) transparent;
+}
+html[data-theme="dark"],
+html[data-theme="dark"] body{
+  scrollbar-color: rgba(243,245,247,.25) transparent;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{ width: 10px; height: 10px; }
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track{ background: transparent; }
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb{ background: rgba(15,17,21,.35); border-radius: 999px; }
+html[data-theme="dark"]::-webkit-scrollbar-thumb,
+html[data-theme="dark"] body::-webkit-scrollbar-thumb{ background: rgba(243,245,247,.25); }
+
 /* Prevent accidental horizontal overflow from long text/flex children */
 .glass, .page, .stage, .hero, .svcCard, .tile, .crItemCard, .modalCard{ min-width: 0; }
 .svcTitle, .svcSub, .pageTitle, .pageSub, .crPreviewItemTitle, .crPreviewItemProblem{ overflow-wrap:anywhere; }
@@ -775,14 +793,15 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   margin-top:12px;
 }
 
-/* первый "этаж" — подсказка со стрелкой */
-.baIntro{
-  height: 100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* fixed overlay arrow (always centered in viewport) */
+.baArrowOverlay{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  pointer-events: none;
 }
-.baIntroInner{ width:100%; display:flex; align-items:center; justify-content:center; padding: 12px; }
 .baArrow{
   width: 34px;
   height: 34px;
@@ -801,8 +820,8 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 /* когда стрелку нужно скрыть (скроллим в кейсы) */
 .baArrow.baHidden{ opacity:0; transform: translateY(-16px) rotate(45deg); animation: none; transition: opacity 220ms ease, transform 220ms ease; }
 
-/* каждый кейс = отдельный "этаж" (ровно 1 экран) */
-.baSection{ height: 100vh; }
+/* каждый кейс = отдельный "этаж" (должно хватать прокрутки на въезд + выезд) */
+.baSection{ height: 220vh; }
 
 
 /* держим пару по центру экрана (двигается только вбок, вертикаль фикс) */
