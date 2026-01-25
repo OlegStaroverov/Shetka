@@ -786,8 +786,8 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .baArrow{
   width: 34px;
   height: 34px;
-  border-right: 4px solid var(--text);
-  border-bottom: 4px solid var(--text);
+  border-right: 4px solid var(--txt);
+  border-bottom: 4px solid var(--txt);
   transform: rotate(45deg);
   opacity: .8;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.18));
@@ -1970,4 +1970,32 @@ html[data-theme="dark"] .reviewsProgress{ background: rgba(243,245,247,.16); }
   padding: 10px !important;
   gap: 8px;
   overflow:auto;
+}
+
+
+/* скрытие стрелки (управляется JS через класс baHidden) */
+.baHidden{
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-6px) rotate(45deg) !important;
+}
+
+/* ===== Scrollbar (светлая тема: тёмный ползунок) ===== */
+:root{
+  scrollbar-color: rgba(15,17,21,.55) transparent; /* Firefox */
+  scrollbar-width: thin;
+}
+html::-webkit-scrollbar{ width: 10px; height: 10px; }
+html::-webkit-scrollbar-track{ background: transparent; }
+html::-webkit-scrollbar-thumb{
+  background-color: rgba(15,17,21,.55);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+html[data-theme="dark"]{
+  scrollbar-color: rgba(255,255,255,.35) transparent;
+}
+html[data-theme="dark"]::-webkit-scrollbar-thumb{
+  background-color: rgba(255,255,255,.35);
 }
