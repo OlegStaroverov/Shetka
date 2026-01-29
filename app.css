@@ -343,12 +343,7 @@ html[data-theme="dark"] .cta.primary{
 .tileChevron{ font-size: 24px; opacity:.30; }
 
 /* PAGE HEAD */
-.pageHead{ 
-  display:flex; 
-  gap: 12px; 
-  align-items:flex-start;
-  transition: opacity 300ms ease;
-}
+.pageHead{ display:flex; gap: 12px; align-items:flex-start; }
 .backBtn{
   width: 42px;
   height: 42px;
@@ -794,19 +789,26 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
 /* ====== BEFORE/AFTER ====== */
+/* 
+  ВАЖНО:
+  - Движение ТОЛЬКО по горизонтали, строго от прокрутки (никаких таймеров).
+  - Стрелка фиксирована по центру, не участвует в потоке.
+  - Используем 100dvh где доступно, с fallback на var(--vh) (Telegram/iOS).
+*/
+
 .baStory{
   margin-top:12px;
+  position: relative;
 }
 
-/* fixed overlay arrow (always centered in viewport) */
+/* фиксированная стрелка (всегда по центру экрана) */
 .baArrowOverlay{
   position: fixed;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 999;
+  z-index: 50;
   pointer-events: none;
-  display: none; /* скрыта по умолчанию, показывается JS */
 }
 .baArrow{
   width: 34px;
@@ -823,17 +825,19 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   50%{ transform: translateY(10px) rotate(45deg); opacity: 1; }
 }
 
-/* когда стрелку нужно скрыть (скроллим в кейсы) */
-.baArrow.baHidden{ 
-  opacity: 0; 
-  transform: translateY(-16px) rotate(45deg); 
-  animation: none; 
-  transition: opacity 220ms ease, transform 220ms ease; 
+/* состояние скрытия стрелки (когда стартуют кейсы) */
+.baArrow.baHidden{
+  opacity:0;
+  transform: translateY(-16px) rotate(45deg);
+  animation: none;
+  transition: opacity 220ms ease, transform 220ms ease;
 }
 
-/* каждый кейс = отдельный "этаж" (должно хватать прокрутки на въезд + выезд) */
-.baSection{ height: 220vh; }
-
+/* сцена: одна пара, которая анимируется по скроллу */
+.baStage{
+  position: relative;
+  z-index: 1;
+}
 
 /* держим пару по центру экрана (двигается только вбок, вертикаль фикс) */
 .baSticky{
@@ -842,7 +846,6 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   transform: translateY(-50%);
   padding: 14px;
 }
-
 
 /* пара "до/после" */
 .baPair{
@@ -855,11 +858,10 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   .baPair{grid-template-columns:1fr;}
 }
 
-/* плейсхолдер/картинка */
+/* плитка/картинка */
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
-  /* карточки большие и читаемые на всех экранах */
   height: min(62vh, 420px);
   min-height: 220px;
   display:flex;
@@ -870,7 +872,6 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   text-indent: .22em;
   opacity:.92;
 
-  /* важно для будущих реальных картинок */
   background: rgba(255,255,255,.35);
   background-size: cover;
   background-position: center;
@@ -885,10 +886,21 @@ html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
 /* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
 .baPh.hasImg span{ opacity: 0; }
 
-/* начальное состояние: карты готовы, а движение задаёт JS на скролле */
+/* стартовые значения (JS выставит точно по скроллу) */
 .baBefore,.baAfter{ opacity: 0; }
 
+/* 10 "этажей" прокрутки: без контента, без скачков */
+.baFloor{
+  /* 100dvh + fallback: var(--vh) задаётся JS (Telegram viewport) */
+  height: 100dvh;
+  height: var(--vh);
+}
 
+/* последний этаж — без дополнительного пустого хвоста */
+.baFloorLast{
+  height: 100dvh;
+  height: var(--vh);
+}
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
 .mapFrameWrap{margin-top:10px; border-radius:18px; overflow:hidden; border:1px solid var(--hair);}
@@ -2000,7 +2012,6 @@ html[data-theme="dark"] .reviewsProgress{ background: rgba(243,245,247,.16); }
   padding: 10px !important;
   gap: 8px;
   overflow:auto;
-  transition: opacity 300ms ease;
 }
 
 
