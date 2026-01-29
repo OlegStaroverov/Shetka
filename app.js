@@ -592,132 +592,141 @@ const closeModalEl = (el) => {
       _baScrollInited = true;
 
       const introArrow = document.querySelector('.baArrow');
+      const arrowOverlay = document.getElementById('baArrowOverlay');
       const segEl = document.getElementById('aboutSeg');
       const pageHead = document.querySelector('[data-page="about"] .pageHead');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
+      
       if (!sections.length) return;
 
-      // начальное состояние: всё скрыто по бокам, стрелка видна
+      // Применяем изображения
+      sections.forEach((sec, idx) => {
+        const pair = BA_CASES[idx];
+        if (!pair) return;
+
+        const beforeEl = sec.querySelector('.baBefore');
+        const afterEl = sec.querySelector('.baAfter');
+        
+        if (beforeEl) {
+          beforeEl.style.backgroundImage = `url('${pair.before}')`;
+          beforeEl.style.backgroundSize = 'cover';
+          beforeEl.style.backgroundPosition = 'center';
+          beforeEl.classList.add('hasImg');
+        }
+        if (afterEl) {
+          afterEl.style.backgroundImage = `url('${pair.after}')`;
+          afterEl.style.backgroundSize = 'cover';
+          afterEl.style.backgroundPosition = 'center';
+          afterEl.classList.add('hasImg');
+        }
+      });
+
+      // Начальное состояние: всё скрыто по бокам
       sections.forEach((sec) => {
         const b = sec.querySelector('.baBefore');
         const a = sec.querySelector('.baAfter');
-        if (b) { b.style.opacity = '0'; b.style.transform = 'translate3d(-100vw,0,0)'; }
-        if (a) { a.style.opacity = '0'; a.style.transform = 'translate3d(100vw,0,0)'; }
+        if (b) { 
+          b.style.opacity = '0';
+          b.style.transform = 'translate3d(-100vw,0,0)';
+          b.style.transition = 'none';
+        }
+        if (a) { 
+          a.style.opacity = '0';
+          a.style.transform = 'translate3d(100vw,0,0)';
+          a.style.transition = 'none';
+        }
       });
-      try { introArrow?.classList?.remove?.('baHidden'); } catch (_) {}
+
+      // Стрелка видна в начале
+      if (arrowOverlay) arrowOverlay.style.display = 'block';
+      if (introArrow) introArrow.classList.remove('baHidden');
 
       const update = () => {
         _baRaf = 0;
         const vh = Math.max(1, window.innerHeight || 1);
         const vw = Math.max(1, window.innerWidth || 1);
-        const off = Math.round(vw * 0.55); // насколько уезжаем влево/вправо
+        const off = Math.round(vw * 0.50);
 
         const scrollY = window.scrollY || window.pageYOffset || 0;
 
-        // Проверяем, скрылись ли заголовок И кнопки полностью
-        let hideArrow = false;
-        let hideHeader = false;
-        let hideButtons = false;
+        // Проверяем скрытие заголовка и кнопок
+        let headerHidden = false;
+        let buttonsHidden = false;
 
         try {
           if (pageHead) {
             const headRect = pageHead.getBoundingClientRect();
-            if (headRect.bottom <= 0) hideHeader = true;
+            headerHidden = headRect.bottom <= 0;
           }
           if (segEl) {
             const segRect = segEl.getBoundingClientRect();
-            if (segRect.bottom <= 0) hideButtons = true;
+            buttonsHidden = segRect.bottom <= 0;
           }
         } catch (_) {}
 
-        // Стрелка скрывается только когда И заголовок И кнопки полностью скрылись
-        hideArrow = hideHeader && hideButtons;
-        
+        // Стрелка скрывается ТОЛЬКО когда И заголовок И кнопки полностью скрылись
+        const shouldHideArrow = headerHidden && buttonsHidden;
+
+        // Управляем стрелкой
         if (introArrow) {
-          introArrow.classList.toggle('baHidden', hideArrow);
+          introArrow.classList.toggle('baHidden', shouldHideArrow);
         }
 
-        // Скрываем заголовок и кнопки при скролле вниз
-        if (pageHead) {
-          pageHead.style.opacity = hideHeader ? '0' : '1';
-          pageHead.style.pointerEvents = hideHeader ? 'none' : 'auto';
-        }
-        if (segEl) {
-          segEl.style.opacity = hideButtons ? '0' : '1';
-          segEl.style.pointerEvents = hideButtons ? 'none' : 'auto';
-        }
-
-        // Пока заголовок и кнопки не скрылись — кейсы НЕ выезжают
-        if (!hideArrow) {
-          for (let i = 0; i < sections.length; i++) {
-            const sec = sections[i];
+        // Пока стрелка видна - ДО/ПОСЛЕ не выезжают
+        if (!shouldHideArrow) {
+          sections.forEach((sec) => {
             const beforeEl = sec.querySelector('.baBefore');
-            const afterEl  = sec.querySelector('.baAfter');
-            if (beforeEl) { beforeEl.style.opacity = '0'; beforeEl.style.transform = 'translate3d(-100vw,0,0)'; }
-            if (afterEl)  { afterEl.style.opacity  = '0'; afterEl.style.transform  = 'translate3d(100vw,0,0)'; }
-          }
+            const afterEl = sec.querySelector('.baAfter');
+            if (beforeEl) { 
+              beforeEl.style.opacity = '0';
+              beforeEl.style.transform = 'translate3d(-100vw,0,0)';
+            }
+            if (afterEl) { 
+              afterEl.style.opacity = '0';
+              afterEl.style.transform = 'translate3d(100vw,0,0)';
+            }
+          });
           return;
         }
 
-        // Когда прокручиваем к первой секции обратно - показываем заголовок и кнопки
-        if (sections.length > 0) {
-          const firstSec = sections[0];
-          const firstSecTop = firstSec.offsetTop;
-          if (scrollY < firstSecTop - vh * 0.3) {
-            if (pageHead) {
-              pageHead.style.opacity = '1';
-              pageHead.style.pointerEvents = 'auto';
-            }
-            if (segEl) {
-              segEl.style.opacity = '1';
-              segEl.style.pointerEvents = 'auto';
-            }
-            if (introArrow) {
-              introArrow.classList.remove('baHidden');
-            }
-          }
-        }
-
-        // Анимация секций: каждая секция выезжает из боков к центру, потом обратно в бока
-        for (let i = 0; i < sections.length; i++) {
-          const sec = sections[i];
+        // Анимация каждой секции
+        sections.forEach((sec, i) => {
           const start = sec.offsetTop;
           const end = start + sec.offsetHeight - vh;
-          const denom = Math.max(1, (end - start));
+          const denom = Math.max(1, end - start);
           const progress = Math.max(0, Math.min(1, (scrollY - start) / denom));
           const isLast = (i === sections.length - 1);
 
-          // Для последней секции: только въезд до центра (прогресс до 0.5)
+          // Для последней: только въезд до центра
           const p = isLast ? Math.min(progress, 0.5) : progress;
 
           let tx, op;
-          
-          // Фаза 1 (0 → 0.5): выезжают из боков к центру
+
+          // Фаза 1: выезд из боков к центру (0 → 0.5)
           if (p <= 0.5) {
             const t = _ease(p / 0.5);
-            tx = Math.round((-off) + (off * t)); // от -off до 0
-            op = 0.15 + (0.85 * t); // от 0.15 до 1
+            tx = Math.round(-off + (off * t)); // от -off до 0
+            op = 0.1 + (0.9 * t);
           } 
-          // Фаза 2 (0.5 → 1): уезжают обратно в бока (в ТУ ЖЕ сторону!)
+          // Фаза 2: возврат обратно в бока (0.5 → 1)
           else {
             const t = _ease((p - 0.5) / 0.5);
-            tx = Math.round(0 + (-off * t)); // от 0 до -off (влево для ДО, вправо для ПОСЛЕ)
-            op = 1 - (0.85 * t); // от 1 до 0.15
+            tx = Math.round(0 - (off * t)); // от 0 до -off
+            op = 1 - (0.9 * t);
           }
 
           const beforeEl = sec.querySelector('.baBefore');
           const afterEl = sec.querySelector('.baAfter');
-          
+
           if (beforeEl) {
-            beforeEl.style.transform = `translate3d(${tx}px,0,0)`;
+            beforeEl.style.transform = `translate3d(${tx}px, 0, 0)`;
             beforeEl.style.opacity = String(op);
           }
           if (afterEl) {
-            // ПОСЛЕ зеркально: выезжает справа (tx с минусом)
-            afterEl.style.transform = `translate3d(${-tx}px,0,0)`;
+            afterEl.style.transform = `translate3d(${-tx}px, 0, 0)`;
             afterEl.style.opacity = String(op);
           }
-        }
+        });
       };
 
       const onScroll = () => {
@@ -727,7 +736,8 @@ const closeModalEl = (el) => {
 
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
-      // первый прогон
+      
+      // Первый прогон
       onScroll();
     };
 
@@ -752,7 +762,6 @@ const closeModalEl = (el) => {
       initRevealObserver();
 
       if (k === 'cases') {
-        applyBaImages();
         initBaScroll();
       }
     };
