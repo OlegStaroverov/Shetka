@@ -343,7 +343,12 @@ html[data-theme="dark"] .cta.primary{
 .tileChevron{ font-size: 24px; opacity:.30; }
 
 /* PAGE HEAD */
-.pageHead{ display:flex; gap: 12px; align-items:flex-start; }
+.pageHead{ 
+  display:flex; 
+  gap: 12px; 
+  align-items:flex-start;
+  transition: opacity 300ms ease;
+}
 .backBtn{
   width: 42px;
   height: 42px;
@@ -1989,6 +1994,7 @@ html[data-theme="dark"] .reviewsProgress{ background: rgba(243,245,247,.16); }
   padding: 10px !important;
   gap: 8px;
   overflow:auto;
+  transition: opacity 300ms ease;
 }
 
 
