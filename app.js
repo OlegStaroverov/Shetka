@@ -1,14 +1,27 @@
 (() => {
-  const tg = window.Telegram?.WebApp;
+  // ===============================
+  // ИНИЦИАЛИЗАЦИЯ (защита от падения на старых WebView)
+  // ===============================
+  // Telegram WebApp может отсутствовать при открытии вне Telegram — работаем безопасно.
+  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 
-  // Диагностика: ловим ошибки JS и показываем алерт в Telegram
+  // Диагностика: ловим ошибки JS и, если возможно, показываем алерт в Telegram.
+  // Важно: НЕ используем optional chaining здесь, чтобы не ломаться на старых WebView.
   const _showFatal = (err) => {
     try { console.error(err); } catch (_) {}
-    const msg = (err && (err.message || err.reason)) ? String(err.message || err.reason) : String(err);
-    try { tg?.showAlert?.('Ошибка в мини‑аппе: ' + msg.slice(0, 220)); } catch (_) {}
+    let msg = '';
+    try {
+      if (err && (err.message || err.reason)) msg = String(err.message || err.reason);
+      else msg = String(err);
+    } catch (_) { msg = 'Неизвестная ошибка'; }
+    try { if (tg && tg.showAlert) tg.showAlert(('Ошибка в мини‑аппе: ' + msg).slice(0, 220)); } catch (_) {}
   };
-  window.addEventListener('error', (ev) => _showFatal(ev?.error || ev?.message || ev));
-  window.addEventListener('unhandledrejection', (ev) => _showFatal(ev?.reason || ev));
+  window.addEventListener('error', (ev) => {
+    try { _showFatal(ev && (ev.error || ev.message) ? (ev.error || ev.message) : ev); } catch (_) {}
+  });
+  window.addEventListener('unhandledrejection', (ev) => {
+    try { _showFatal(ev && ev.reason ? ev.reason : ev); } catch (_) {}
+  });
 
   try {
 
@@ -4033,13 +4046,14 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   headerLogoFade();
   
   // ---------------- INIT ----------------
-  setTabActive("home");
-  // mark first page as active for CSS transitions
-  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
-  hydrateProfile();
-  try { runHomeIntro(); } catch(_) {}
-  initRevealObserver();
-  renderChat();
+  // Важно: инициализация должна быть "неубиваемой" — одна ошибка не должна ломать весь мини‑апп.
+  try { setTabActive("home"); } catch (e) { _showFatal(e); }
+  // помечаем первую страницу активной для CSS-переходов
+  try { var _pHome = document.querySelector('.page[data-page="home"]'); if (_pHome && _pHome.classList) _pHome.classList.add('pageActive'); } catch (e) { _showFatal(e); }
+  try { hydrateProfile(); } catch (e) { _showFatal(e); }
+  try { runHomeIntro(); } catch (e) { /* интро не критично */ }
+  try { initRevealObserver(); } catch (e) { _showFatal(e); }
+  try { renderChat(); } catch (e) { _showFatal(e); }
   } catch (e) {
     _showFatal(e);
   }
