@@ -203,22 +203,38 @@
         </div>
 
         <!-- TAB: CASES -->
+        
         <div id="aboutPanelCases" hidden>
-          <!-- FIXED overlay arrow (always centered in viewport) - OUTSIDE baStory! -->
-          <div class="baArrowOverlay" id="baArrowOverlay" aria-hidden="true">
-            <div class="baArrow"></div>
-          </div>
-          
           <div class="baStory" aria-label="Кейсы До/После">
-            <!-- 10 animated placeholders, no titles/texts -->
-            <section class="baSection" data-ba>
+            <!-- СТРЕЛКА (FIXED OVERLAY) -->
+            <div class="baArrowOverlay" aria-hidden="true">
+              <div class="baArrow" id="baArrow"></div>
+            </div>
+
+            <!-- СЦЕНА: ОДНА ПАРА КАРТИНОК, КОТОРАЯ АНИМИРУЕТСЯ СТРОГО ПО СКРОЛЛУ -->
+            <div class="baStage" data-ba-stage>
               <div class="baSticky">
                 <div class="baPair">
                   <div class="baPh baBefore" aria-label="До"><span>ДО</span></div>
                   <div class="baPh baAfter" aria-label="После"><span>ПОСЛЕ</span></div>
                 </div>
               </div>
-            </section>
+            </div>
+
+            <!-- 10 "ЭТАЖЕЙ" ПРОКРУТКИ (НЕ СОДЕРЖАТ КОНТЕНТ, ТОЛЬКО ФОРМИРУЮТ СКРОЛЛ) -->
+            <section class="baFloor" data-ba-floor="1" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="2" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="3" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="4" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="5" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="6" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="7" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="8" aria-hidden="true"></section>
+            <section class="baFloor" data-ba-floor="9" aria-hidden="true"></section>
+            <section class="baFloor baFloorLast" data-ba-floor="10" aria-hidden="true"></section>
+          </div>
+        </div>
+
             <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
             <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
             <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
