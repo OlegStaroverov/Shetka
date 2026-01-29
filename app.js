@@ -582,151 +582,207 @@ const closeModalEl = (el) => {
     const pReviews = document.getElementById('aboutPanelReviews');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER: управление строго скроллом (въезд/выезд только вбок) ======
+    // ====== ДО/ПОСЛЕ: СТРОГО СКРОЛЛ-ДРАЙВЕН (БЕЗ ТАЙМЕРОВ) ======
+    // Правила:
+    // - Стрелка видна сразу и исчезает ТОЛЬКО когда:
+    //   1) Заголовок "О нас" полностью ушёл вверх
+    //   2) Вкладки (О нас / Отзывы / До/После) полностью ушли вверх
+    // - После этого начинаем анимацию кейсов.
+    // - Движение ТОЛЬКО по X, скролл вниз = вперёд, скролл вверх = идеальный реверс.
+    // - Кейсов 10. Последний (#10) въезжает в центр и там остаётся (не выезжает).
+
     let _baScrollInited = false;
     let _baRaf = 0;
-    const _ease = (t) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+    let _baActive = false; // вкладка "cases" активна
+    const _clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const _easeOutCubic = (t) => 1 - Math.pow(1 - _clamp01(t), 3);
+
+    const BA_CASES = Array.from({ length: 10 }, (_, i) => ({
+      before: `do${i + 1}.png`,
+      after: `posle${i + 1}.png`,
+    }));
+
+    // Без падений: если файла нет — ставим do1/posle1
+    const safeSetBg = (el, url, fallbackUrl) => {
+      if (!el) return;
+      const img = new Image();
+      img.onload = () => {
+        el.style.backgroundImage = `url('${url}')`;
+        el.classList.add('hasImg');
+      };
+      img.onerror = () => {
+        el.style.backgroundImage = `url('${fallbackUrl}')`;
+        el.classList.add('hasImg');
+      };
+      img.src = url;
+    };
+
+    const applyBaImages = () => {
+      const stage = document.querySelector('[data-ba-stage]');
+      if (!stage) return;
+      const beforeEl = stage.querySelector('.baBefore');
+      const afterEl  = stage.querySelector('.baAfter');
+      // Подготовим фолбэк сразу (без пустых блоков)
+      if (beforeEl && !beforeEl.style.backgroundImage) {
+        beforeEl.style.backgroundImage = `url('do1.png')`;
+        beforeEl.classList.add('hasImg');
+      }
+      if (afterEl && !afterEl.style.backgroundImage) {
+        afterEl.style.backgroundImage = `url('posle1.png')`;
+        afterEl.classList.add('hasImg');
+      }
+    };
+
+    const setStageCase = (idx) => {
+      const stage = document.querySelector('[data-ba-stage]');
+      if (!stage) return;
+      const beforeEl = stage.querySelector('.baBefore');
+      const afterEl  = stage.querySelector('.baAfter');
+      const c = BA_CASES[idx] || BA_CASES[0];
+      safeSetBg(beforeEl, c.before, 'do1.png');
+      safeSetBg(afterEl,  c.after,  'posle1.png');
+    };
 
     const initBaScroll = () => {
       if (_baScrollInited) return;
       _baScrollInited = true;
 
-      const introArrow = document.querySelector('.baArrow');
-      const arrowOverlay = document.getElementById('baArrowOverlay');
-      const segEl = document.getElementById('aboutSeg');
-      const pageHead = document.querySelector('[data-page="about"] .pageHead');
-      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      
-      if (!sections.length) return;
+      const arrowEl = document.getElementById('baArrow') || document.querySelector('.baArrow');
+      const headEl = document.querySelector('.page[data-page="about"] .pageHead');  // "О нас" + подзаголовок
+      const tabsEl = document.getElementById('aboutSeg');                         // вкладки
 
-      // Применяем изображения
-      sections.forEach((sec, idx) => {
-        const pair = BA_CASES[idx];
-        if (!pair) return;
+      const storyEl = document.querySelector('.baStory');
+      const stageEl = document.querySelector('[data-ba-stage]');
+      const floors = Array.from(document.querySelectorAll('.baFloor[data-ba-floor]'));
 
-        const beforeEl = sec.querySelector('.baBefore');
-        const afterEl = sec.querySelector('.baAfter');
-        
-        if (beforeEl) {
-          beforeEl.style.backgroundImage = `url('${pair.before}')`;
-          beforeEl.style.backgroundSize = 'cover';
-          beforeEl.style.backgroundPosition = 'center';
-          beforeEl.classList.add('hasImg');
-        }
-        if (afterEl) {
-          afterEl.style.backgroundImage = `url('${pair.after}')`;
-          afterEl.style.backgroundSize = 'cover';
-          afterEl.style.backgroundPosition = 'center';
-          afterEl.classList.add('hasImg');
-        }
-      });
+      if (!storyEl || !stageEl || floors.length !== 10) return;
 
-      // Начальное состояние: всё скрыто по бокам
-      sections.forEach((sec) => {
-        const b = sec.querySelector('.baBefore');
-        const a = sec.querySelector('.baAfter');
-        if (b) { 
-          b.style.opacity = '0';
-          b.style.transform = 'translate3d(-100vw,0,0)';
-          b.style.transition = 'none';
-        }
-        if (a) { 
-          a.style.opacity = '0';
-          a.style.transform = 'translate3d(100vw,0,0)';
-          a.style.transition = 'none';
-        }
-      });
+      // Инициализация: сцена скрыта, стрелка видна
+      const beforeEl = stageEl.querySelector('.baBefore');
+      const afterEl  = stageEl.querySelector('.baAfter');
 
-      // Стрелка видна в начале
-      if (arrowOverlay) arrowOverlay.style.display = 'block';
-      if (introArrow) introArrow.classList.remove('baHidden');
+      const hideStage = () => {
+        if (beforeEl) { beforeEl.style.opacity = '0'; beforeEl.style.transform = 'translate3d(-120vw,0,0)'; }
+        if (afterEl)  { afterEl.style.opacity  = '0'; afterEl.style.transform  = 'translate3d( 120vw,0,0)'; }
+      };
+
+      const showStage = () => {
+        if (beforeEl) beforeEl.style.opacity = '1';
+        if (afterEl)  afterEl.style.opacity = '1';
+      };
+
+      hideStage();
+      try { arrowEl?.classList?.remove?.('baHidden'); } catch (_) {}
+
+      // Текущая "витрина" кейса
+      let curCase = -1;
 
       const update = () => {
         _baRaf = 0;
-        const vh = Math.max(1, window.innerHeight || 1);
-        const vw = Math.max(1, window.innerWidth || 1);
-        const off = Math.round(vw * 0.50);
 
-        const scrollY = window.scrollY || window.pageYOffset || 0;
-
-        // Проверяем скрытие заголовка и кнопок
-        let headerHidden = false;
-        let buttonsHidden = false;
-
-        try {
-          if (pageHead) {
-            const headRect = pageHead.getBoundingClientRect();
-            headerHidden = headRect.bottom <= 0;
-          }
-          if (segEl) {
-            const segRect = segEl.getBoundingClientRect();
-            buttonsHidden = segRect.bottom <= 0;
-          }
-        } catch (_) {}
-
-        // Стрелка скрывается ТОЛЬКО когда И заголовок И кнопки полностью скрылись
-        const shouldHideArrow = headerHidden && buttonsHidden;
-
-        // Управляем стрелкой
-        if (introArrow) {
-          introArrow.classList.toggle('baHidden', shouldHideArrow);
-        }
-
-        // Пока стрелка видна - ДО/ПОСЛЕ не выезжают
-        if (!shouldHideArrow) {
-          sections.forEach((sec) => {
-            const beforeEl = sec.querySelector('.baBefore');
-            const afterEl = sec.querySelector('.baAfter');
-            if (beforeEl) { 
-              beforeEl.style.opacity = '0';
-              beforeEl.style.transform = 'translate3d(-100vw,0,0)';
-            }
-            if (afterEl) { 
-              afterEl.style.opacity = '0';
-              afterEl.style.transform = 'translate3d(100vw,0,0)';
-            }
-          });
+        // Если вкладка не активна — выключаем анимацию полностью (anti-bug)
+        if (!_baActive) {
+          try { arrowEl?.classList?.remove?.('baHidden'); } catch (_) {}
+          hideStage();
           return;
         }
 
-        // Анимация каждой секции
-        sections.forEach((sec, i) => {
-          const start = sec.offsetTop;
-          const end = start + sec.offsetHeight - vh;
-          const denom = Math.max(1, end - start);
-          const progress = Math.max(0, Math.min(1, (scrollY - start) / denom));
-          const isLast = (i === sections.length - 1);
+        const vh = Math.max(1, window.innerHeight || 1);
+        const vw = Math.max(1, window.innerWidth || 1);
+        const off = Math.round(vw * 0.62);
 
-          // Для последней: только въезд до центра
-          const p = isLast ? Math.min(progress, 0.5) : progress;
+        const scrollY = window.scrollY || window.pageYOffset || 0;
 
-          let tx, op;
+        // 1) ЛОГИКА СТРЕЛКИ: исчезает, когда header И tabs полностью ушли вверх
+        const headR = headEl?.getBoundingClientRect?.();
+        const tabsR = tabsEl?.getBoundingClientRect?.();
 
-          // Фаза 1: выезд из боков к центру (0 → 0.5)
-          if (p <= 0.5) {
-            const t = _ease(p / 0.5);
-            tx = Math.round(-off + (off * t)); // от -off до 0
-            op = 0.1 + (0.9 * t);
-          } 
-          // Фаза 2: возврат обратно в бока (0.5 → 1)
-          else {
-            const t = _ease((p - 0.5) / 0.5);
-            tx = Math.round(0 - (off * t)); // от 0 до -off
-            op = 1 - (0.9 * t);
-          }
+        const headOut = !!(headR && headR.bottom <= 0);
+        const tabsOut = !!(tabsR && tabsR.bottom <= 0);
 
-          const beforeEl = sec.querySelector('.baBefore');
-          const afterEl = sec.querySelector('.baAfter');
+        const canStartCases = headOut && tabsOut;
 
-          if (beforeEl) {
-            beforeEl.style.transform = `translate3d(${tx}px, 0, 0)`;
-            beforeEl.style.opacity = String(op);
-          }
-          if (afterEl) {
-            afterEl.style.transform = `translate3d(${-tx}px, 0, 0)`;
-            afterEl.style.opacity = String(op);
-          }
-        });
+        // 2) ВКЛ/ВЫКЛ кейсов по условию (до этого — кейсы не показываем)
+        if (!canStartCases) {
+          // Стрелка может появиться только когда header+tabs видны,
+          // и при этом сцена (кейс) полностью скрыта (вверх до самого начала).
+          const headVisible = !!(headR && headR.top >= 0 && headR.bottom > 0);
+          const tabsVisible = !!(tabsR && tabsR.top >= 0 && tabsR.bottom > 0);
+
+          // Если мы в самом верху: показываем стрелку. Иначе (например, промежуточно) — тоже показываем.
+          if (arrowEl) arrowEl.classList.toggle('baHidden', !(headVisible && tabsVisible));
+          hideStage();
+          curCase = -1;
+          return;
+        }
+
+        // Стартовали кейсы -> стрелку прячем
+        if (arrowEl) arrowEl.classList.add('baHidden');
+
+        // 3) ОПРЕДЕЛЯЕМ ТЕКУЩИЙ "ЭТАЖ" (кейс) И ПРОГРЕСС 0..1
+        // Берём первый этаж, который "активен" по scrollY.
+        let idx = 0;
+        for (let i = 0; i < floors.length; i++) {
+          const f = floors[i];
+          const start = f.offsetTop;
+          const end = start + f.offsetHeight;
+          if (scrollY >= start && scrollY < end) { idx = i; break; }
+          if (scrollY >= end) idx = i;
+        }
+        idx = Math.max(0, Math.min(9, idx));
+
+        const f = floors[idx];
+        const start = f.offsetTop;
+        const end = start + f.offsetHeight - vh;
+        const denom = Math.max(1, (end - start));
+        const progress = _clamp01((scrollY - start) / denom); // 0..1
+
+        // 4) КЕЙС #10: только въезд и стоп по центру (не выезжает)
+        const isLast = (idx === 9);
+        const p = isLast ? (0.5 * progress) : progress; // 0..0.5 для последнего
+
+        // если кейс сменился — подменяем изображения
+        if (idx !== curCase) {
+          curCase = idx;
+          setStageCase(curCase);
+        }
+
+        // 5) АНИМАЦИЯ ВНУТРИ КЕЙСА (ГОРИЗОНТАЛЬ)
+        // p: 0..0.5 -> въезд в центр, 0.5..1 -> выезд на стороны (кроме последнего)
+        let tIn = 0;
+        let tOut = 0;
+        if (p <= 0.5) tIn = _easeOutCubic(p / 0.5);
+        else tOut = _easeOutCubic((p - 0.5) / 0.5);
+
+        // BEFORE: слева -> центр -> влево
+        // AFTER:  справа -> центр -> вправо
+        let x;
+        if (p <= 0.5) {
+          // от -off / +off к 0
+          x = Math.round((-off) + (off * tIn));
+        } else {
+          // от 0 к -off / +off
+          x = Math.round(0 + (-off * tOut));
+        }
+
+        // Прозрачность: чтобы не было "пустого" экрана.
+        // На въезде плавно до 1. На выезде остаётся 1 (т.к. картинка возвращается на сторону и должна быть видимой).
+        const op = (p <= 0.12) ? (0.1 + (p / 0.12) * 0.9) : 1;
+
+        // Применяем
+        if (beforeEl) {
+          beforeEl.style.transform = `translate3d(${x}px,0,0)`;
+          beforeEl.style.opacity = String(op);
+        }
+        if (afterEl) {
+          afterEl.style.transform = `translate3d(${-x}px,0,0)`;
+          afterEl.style.opacity = String(op);
+        }
+
+        // 6) ВОЗВРАТ СТРЕЛКИ: она не должна появляться, пока сцена видима.
+        // Здесь стрелка всегда скрыта, потому что canStartCases=true.
+        // Стрелка вернётся только когда скроллим вверх так, что header+tabs снова видны (см. ветку выше).
+        showStage();
       };
 
       const onScroll = () => {
@@ -736,12 +792,11 @@ const closeModalEl = (el) => {
 
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
-      
+
       // Первый прогон
       onScroll();
     };
-
-    const setAboutTab = (key) => {
+const setAboutTab = (key) => {
       const k = String(key || 'about');
 
       // visual state
@@ -762,7 +817,11 @@ const closeModalEl = (el) => {
       initRevealObserver();
 
       if (k === 'cases') {
+        _baActive = true;
+        applyBaImages();
         initBaScroll();
+      } else {
+        _baActive = false;
       }
     };
 
