@@ -804,8 +804,9 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 50;
+  z-index: 999;
   pointer-events: none;
+  display: none; /* скрыта по умолчанию, показывается JS */
 }
 .baArrow{
   width: 34px;
@@ -823,7 +824,12 @@ html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);}
 }
 
 /* когда стрелку нужно скрыть (скроллим в кейсы) */
-.baArrow.baHidden{ opacity:0; transform: translateY(-16px) rotate(45deg); animation: none; transition: opacity 220ms ease, transform 220ms ease; }
+.baArrow.baHidden{ 
+  opacity: 0; 
+  transform: translateY(-16px) rotate(45deg); 
+  animation: none; 
+  transition: opacity 220ms ease, transform 220ms ease; 
+}
 
 /* каждый кейс = отдельный "этаж" (должно хватать прокрутки на въезд + выезд) */
 .baSection{ height: 220vh; }
