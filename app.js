@@ -593,6 +593,7 @@ const closeModalEl = (el) => {
 
       const introArrow = document.querySelector('.baArrow');
       const segEl = document.getElementById('aboutSeg');
+      const pageHead = document.querySelector('[data-page="about"] .pageHead');
       const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
       if (!sections.length) return;
 
@@ -600,8 +601,8 @@ const closeModalEl = (el) => {
       sections.forEach((sec) => {
         const b = sec.querySelector('.baBefore');
         const a = sec.querySelector('.baAfter');
-        if (b) { b.style.opacity = '0'; b.style.transform = 'translate3d(-120vw,0,0)'; }
-        if (a) { a.style.opacity = '0'; a.style.transform = 'translate3d( 120vw,0,0)'; }
+        if (b) { b.style.opacity = '0'; b.style.transform = 'translate3d(-100vw,0,0)'; }
+        if (a) { a.style.opacity = '0'; a.style.transform = 'translate3d(100vw,0,0)'; }
       });
       try { introArrow?.classList?.remove?.('baHidden'); } catch (_) {}
 
@@ -609,33 +610,75 @@ const closeModalEl = (el) => {
         _baRaf = 0;
         const vh = Math.max(1, window.innerHeight || 1);
         const vw = Math.max(1, window.innerWidth || 1);
-        const off = Math.round(vw * 0.62); // насколько уезжаем влево/вправо
+        const off = Math.round(vw * 0.55); // насколько уезжаем влево/вправо
 
-        // Текущий скролл страницы (важно для точного прогресса по каждой секции)
         const scrollY = window.scrollY || window.pageYOffset || 0;
 
-        // скрываем стрелку только когда сегменты (кнопки) полностью ушли вверх
+        // Проверяем, скрылись ли заголовок И кнопки полностью
         let hideArrow = false;
-        try {
-          const r = segEl?.getBoundingClientRect?.();
-          if (r && r.bottom <= 0) hideArrow = true;
-        } catch (_) {}
-        if (introArrow) introArrow.classList.toggle('baHidden', hideArrow);
+        let hideHeader = false;
+        let hideButtons = false;
 
-        // По ТЗ: пока кнопки (seg) не скрылись за экраном — кейсы НЕ выезжают.
+        try {
+          if (pageHead) {
+            const headRect = pageHead.getBoundingClientRect();
+            if (headRect.bottom <= 0) hideHeader = true;
+          }
+          if (segEl) {
+            const segRect = segEl.getBoundingClientRect();
+            if (segRect.bottom <= 0) hideButtons = true;
+          }
+        } catch (_) {}
+
+        // Стрелка скрывается только когда И заголовок И кнопки полностью скрылись
+        hideArrow = hideHeader && hideButtons;
+        
+        if (introArrow) {
+          introArrow.classList.toggle('baHidden', hideArrow);
+        }
+
+        // Скрываем заголовок и кнопки при скролле вниз
+        if (pageHead) {
+          pageHead.style.opacity = hideHeader ? '0' : '1';
+          pageHead.style.pointerEvents = hideHeader ? 'none' : 'auto';
+        }
+        if (segEl) {
+          segEl.style.opacity = hideButtons ? '0' : '1';
+          segEl.style.pointerEvents = hideButtons ? 'none' : 'auto';
+        }
+
+        // Пока заголовок и кнопки не скрылись — кейсы НЕ выезжают
         if (!hideArrow) {
           for (let i = 0; i < sections.length; i++) {
             const sec = sections[i];
             const beforeEl = sec.querySelector('.baBefore');
             const afterEl  = sec.querySelector('.baAfter');
-            if (beforeEl) { beforeEl.style.opacity = '0'; beforeEl.style.transform = 'translate3d(-120vw,0,0)'; }
-            if (afterEl)  { afterEl.style.opacity  = '0'; afterEl.style.transform  = 'translate3d( 120vw,0,0)'; }
+            if (beforeEl) { beforeEl.style.opacity = '0'; beforeEl.style.transform = 'translate3d(-100vw,0,0)'; }
+            if (afterEl)  { afterEl.style.opacity  = '0'; afterEl.style.transform  = 'translate3d(100vw,0,0)'; }
           }
           return;
         }
 
-        // анимация секций: прогресс 0..1 рассчитываем от scrollY относительно секции.
-        // Для sticky-сторителлинга важно: прогресс идёт по (height - vh).
+        // Когда прокручиваем к первой секции обратно - показываем заголовок и кнопки
+        if (sections.length > 0) {
+          const firstSec = sections[0];
+          const firstSecTop = firstSec.offsetTop;
+          if (scrollY < firstSecTop - vh * 0.3) {
+            if (pageHead) {
+              pageHead.style.opacity = '1';
+              pageHead.style.pointerEvents = 'auto';
+            }
+            if (segEl) {
+              segEl.style.opacity = '1';
+              segEl.style.pointerEvents = 'auto';
+            }
+            if (introArrow) {
+              introArrow.classList.remove('baHidden');
+            }
+          }
+        }
+
+        // Анимация секций: каждая секция выезжает из боков к центру, потом обратно в бока
         for (let i = 0; i < sections.length; i++) {
           const sec = sections[i];
           const start = sec.offsetTop;
@@ -644,29 +687,33 @@ const closeModalEl = (el) => {
           const progress = Math.max(0, Math.min(1, (scrollY - start) / denom));
           const isLast = (i === sections.length - 1);
 
-          // обычные: 0..0.5 въезд, 0.5..1 выезд обратно
-          // последний: только въезд и стоп по центру (дальше скроллить некуда)
+          // Для последней секции: только въезд до центра (прогресс до 0.5)
           const p = isLast ? Math.min(progress, 0.5) : progress;
 
-          let tx;
-          let op;
+          let tx, op;
+          
+          // Фаза 1 (0 → 0.5): выезжают из боков к центру
           if (p <= 0.5) {
             const t = _ease(p / 0.5);
-            tx = Math.round((-off) + (off * t));
-            op = 0.12 + (0.88 * t);
-          } else {
+            tx = Math.round((-off) + (off * t)); // от -off до 0
+            op = 0.15 + (0.85 * t); // от 0.15 до 1
+          } 
+          // Фаза 2 (0.5 → 1): уезжают обратно в бока (в ТУ ЖЕ сторону!)
+          else {
             const t = _ease((p - 0.5) / 0.5);
-            tx = Math.round(0 + (-off * t));
-            op = 1 - (0.88 * t);
+            tx = Math.round(0 + (-off * t)); // от 0 до -off (влево для ДО, вправо для ПОСЛЕ)
+            op = 1 - (0.85 * t); // от 1 до 0.15
           }
 
           const beforeEl = sec.querySelector('.baBefore');
           const afterEl = sec.querySelector('.baAfter');
+          
           if (beforeEl) {
             beforeEl.style.transform = `translate3d(${tx}px,0,0)`;
             beforeEl.style.opacity = String(op);
           }
           if (afterEl) {
+            // ПОСЛЕ зеркально: выезжает справа (tx с минусом)
             afterEl.style.transform = `translate3d(${-tx}px,0,0)`;
             afterEl.style.opacity = String(op);
           }
