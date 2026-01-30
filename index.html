@@ -205,11 +205,48 @@
         <!-- TAB: CASES -->
         
         <div id="aboutPanelCases" hidden>
-          <div class="baStory" aria-label="Кейсы До/После">
-            <!-- СТРЕЛКА (FIXED OVERLAY) -->
-            <div class="baArrowOverlay" aria-hidden="true">
-              <div class="baArrow" id="baArrow"></div>
-            </div>
+  <div class="baGallery" aria-label="До/После — галерея">
+    <!-- thumbnails scattered around -->
+    <div class="baThumbs" id="baThumbs" aria-label="Выберите кейс">
+      <button class="baThumb" type="button" data-pair="1" style="--x:12;--y:18;--r:-10">
+        <span class="baThumbTag">1</span>
+      </button>
+      <button class="baThumb" type="button" data-pair="1" style="--x:62;--y:12;--r:8">
+        <span class="baThumbTag">2</span>
+      </button>
+      <button class="baThumb" type="button" data-pair="1" style="--x:78;--y:48;--r:-6">
+        <span class="baThumbTag">3</span>
+      </button>
+      <button class="baThumb" type="button" data-pair="1" style="--x:26;--y:58;--r:6">
+        <span class="baThumbTag">4</span>
+      </button>
+      <button class="baThumb" type="button" data-pair="1" style="--x:46;--y:34;--r:-3">
+        <span class="baThumbTag">5</span>
+      </button>
+    </div>
+
+    <!-- viewer overlay -->
+    <div class="baViewer" id="baViewer" aria-hidden="true">
+      <div class="baViewerBackdrop" data-ba-close></div>
+
+      <div class="baViewerStage" role="dialog" aria-label="Просмотр До/После">
+        <button class="baClose" type="button" data-ba-close aria-label="Закрыть">✕</button>
+
+        <div class="baBig baBigBefore" id="baBigBefore" aria-label="До">
+          <div class="baBigLabel">ДО</div>
+          <img id="baImgBefore" alt="До" />
+        </div>
+
+        <div class="baBig baBigAfter" id="baBigAfter" aria-label="После">
+          <div class="baBigLabel">ПОСЛЕ</div>
+          <img id="baImgAfter" alt="После" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
 
             <!-- СЦЕНА: ОДНА ПАРА КАРТИНОК, КОТОРАЯ АНИМИРУЕТСЯ СТРОГО ПО СКРОЛЛУ -->
             <div class="baStage" data-ba-stage>
@@ -235,16 +272,14 @@
           </div>
         </div>
 
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-            <section class="baSection" data-ba><div class="baSticky"><div class="baPair"><div class="baPh baBefore"><span>ДО</span></div><div class="baPh baAfter"><span>ПОСЛЕ</span></div></div></div></section>
-          </div>
+
+
+
+
+
+
+
+</div>
         </div>
       </section>
 
