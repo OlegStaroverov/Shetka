@@ -2732,10 +2732,6 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
     };
 
     const step = CR_WIZ.step;
-
-    // keep backward-compatible name used throughout the wizard renderer
-    const wizStep = step;
-
     const formatDt = (dateStr, timeStr) => {
       try {
         const dt = new Date(`${dateStr}T${timeStr}:00`);
@@ -2851,7 +2847,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return null;
     };
 
-    if (wizStep === "items") {
+    if (step === "items") {
       crSetStepSub("Что забрать");
 
       const st = String(CR_WIZ.status || "");
@@ -3049,7 +3045,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (wizStep === "address") {
+    if (step === "address") {
       crSetStepSub("Адрес");
       const a = CR_WIZ.address || {};
       const saved = loadSavedAddrs();
@@ -3226,7 +3222,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (wizStep === "time") {
+    if (step === "time") {
       crSetStepSub("Дата и время");
       // Telegram WebView (some Android/iOS) can be strict; keep syntax simple.
       const address = CR_WIZ.address || {};
@@ -3393,7 +3389,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (wizStep === "confirm") {
+    if (step === "confirm") {
       crSetStepSub("Подтверждение");
 
       const a = CR_WIZ.address || {};
@@ -3536,13 +3532,10 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
   if (courierBackBtn) courierBackBtn.addEventListener("click", () => {
     if (!CR_WIZ) { goBack(); return; }
     const step = CR_WIZ.step;
-
-    // keep backward-compatible name used throughout the wizard renderer
-    const wizStep = step;
-    if (wizStep === "items") { confirmLeaveCourier(() => goBack()); return; }
-    if (wizStep === "address") CR_WIZ.step = "items";
-    else if (wizStep === "time") CR_WIZ.step = "address";
-    else if (wizStep === "confirm") CR_WIZ.step = "time";
+    if (step === "items") { confirmLeaveCourier(() => goBack()); return; }
+    if (step === "address") CR_WIZ.step = "items";
+    else if (step === "time") CR_WIZ.step = "address";
+    else if (step === "confirm") CR_WIZ.step = "time";
     crRenderWizard();
     haptic("light");
   });
