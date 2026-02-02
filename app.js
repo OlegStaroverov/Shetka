@@ -244,16 +244,9 @@ return true;
 
   // ---------------- Micro-animations helpers ----------------
   let _revealObs = null;
-  function initRevealObserver(){ return; }
-    if (!('IntersectionObserver' in window)) return;
-    _revealObs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        e.target.classList.add('is-revealed');
-        _revealObs.unobserve(e.target);
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
-    $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
+  function initRevealObserver(){
+    // animations removed for performance
+    return;
   }
 
   // Home intro animation (CTA buttons slide in every time Home opens)
