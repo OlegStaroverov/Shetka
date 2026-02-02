@@ -203,50 +203,26 @@
         </div>
 
         <!-- TAB: CASES -->
-        
         <div id="aboutPanelCases" hidden>
-  <div class="baGallery" aria-label="До/После — галерея">
-    <!-- thumbnails scattered around -->
-    <div class="baThumbs" id="baThumbs" aria-label="Выберите кейс">
-      <button class="baThumb" type="button" data-pair="1" style="--x:12;--y:18;--r:-10">
-        <span class="baThumbTag">1</span>
-      </button>
-      <button class="baThumb" type="button" data-pair="1" style="--x:62;--y:12;--r:8">
-        <span class="baThumbTag">2</span>
-      </button>
-      <button class="baThumb" type="button" data-pair="1" style="--x:78;--y:48;--r:-6">
-        <span class="baThumbTag">3</span>
-      </button>
-      <button class="baThumb" type="button" data-pair="1" style="--x:26;--y:58;--r:6">
-        <span class="baThumbTag">4</span>
-      </button>
-      <button class="baThumb" type="button" data-pair="1" style="--x:46;--y:34;--r:-3">
-        <span class="baThumbTag">5</span>
-      </button>
-    </div>
+          <div class="reviewsCarousel" aria-label="Кейсы До/После: листайте вправо/влево">
+            <div class="reviewsTrack reviewsTrackFull" id="casesTrack" aria-label="Лента кейсов До/После">
+              <!-- Alternating: ДО / ПОСЛЕ / ДО / ПОСЛЕ ... -->
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="do1" alt="До 1"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="posle1" alt="После 1"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="do1" alt="До 2"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="posle1" alt="После 2"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="do1" alt="До 3"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="posle1" alt="После 3"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="do1" alt="До 4"></div>
+              <div class="reviewSlide reviewSlideFull"><img class="reviewImg reviewImgFull" data-case="posle1" alt="После 4"></div>
+            </div>
 
-    <!-- viewer overlay -->
-    <div class="baViewer" id="baViewer" aria-hidden="true">
-      <div class="baViewerBackdrop" data-ba-close></div>
-
-      <div class="baViewerStage" role="dialog" aria-label="Просмотр До/После">
-        <button class="baClose" type="button" data-ba-close aria-label="Закрыть">✕</button>
-
-        <div class="baBig baBigBefore" id="baBigBefore" aria-label="До">
-          <div class="baBigLabel">ДО</div>
-          <img id="baImgBefore" alt="До" />
+            <div class="reviewsProgress" aria-hidden="true">
+              <div class="reviewsProgressBar" id="casesProgressBar"></div>
+            </div>
+          </div>
         </div>
-
-        <div class="baBig baBigAfter" id="baBigAfter" aria-label="После">
-          <div class="baBigLabel">ПОСЛЕ</div>
-          <img id="baImgAfter" alt="После" />
-        </div>
-      </div>
-    </div>
-  </div>
-	</div>
-
-	      </section>
+      </section>
 
       <section class="page" data-page="estimate" hidden>
         <div class="pageHead">
