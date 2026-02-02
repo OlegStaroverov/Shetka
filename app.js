@@ -5,16 +5,53 @@
   // Telegram WebApp может отсутствовать при открытии вне Telegram — работаем безопасно.
   const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 
-  // -----------------------------------------------------------------
-  // Safety: prevent hard crashes from accidental undeclared identifiers
-  // -----------------------------------------------------------------
-  // During rapid edits, some handlers referenced `step` / `wizStep` without
-  // declaring them in the local scope (ReferenceError => app won't start).
-  // Declaring them here makes such bugs non-fatal; real logic should still
-  // use local `const step = ...` where needed.
-  var step = undefined;   // eslint-disable-line no-var
-  var wizStep = undefined; // eslint-disable-line no-var
+  // ===============================
+  // UTILS (must exist globally inside this bundle)
+  // ===============================
+  const escapeHtml = (val) => {
+    const s = String(val == null ? "" : val);
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
 
+  const formatMoney = (v) => {
+    if (v === null || v === undefined || v === "" || v === "—") return "—";
+    const n = Number(v);
+    if (!Number.isFinite(n)) return String(v);
+    try { return `${n.toLocaleString("ru-RU")} ₽`; } catch(_) { return `${n} ₽`; }
+  };
+
+  const formatDate = (ts) => {
+    try {
+      const d = new Date(ts);
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${dd}.${mm}.${yy}`;
+    } catch (_) {
+      return "—";
+    }
+  };
+
+  const normalizeStatus = (raw) => {
+    if (!raw) return { label: "Принят", dot: "blue" };
+    const s = String(raw).toLowerCase();
+
+    const internal = ["из симфера", "из муссона", "отправили", "в цех", "севастополь"];
+    if (internal.some(x => s.includes(x))) return { label: "В логистике", dot: "orange" };
+
+    if (s.includes("соглас")) return { label: "Согласование", dot: "orange" };
+    if (s.includes("готов")) return { label: "Готов", dot: "green" };
+    if (s.includes("в работе") || s.includes("работе")) return { label: "В работе", dot: "orange" };
+    if (s.includes("возврат")) return { label: "Возврат", dot: "red" };
+    if (s.includes("закрыт") || s.includes("выдан") || s.includes("заверш")) return { label: "Завершён", dot: "gray" };
+    if (s.includes("нов")) return { label: "Принят", dot: "blue" };
+    return { label: "В работе", dot: "orange" };
+  };
   // Диагностика: ловим ошибки JS и, если возможно, показываем алерт в Telegram.
   // Важно: НЕ используем optional chaining здесь, чтобы не ломаться на старых WebView.
   const _showFatal = (err) => {
@@ -207,12 +244,7 @@ return true;
 
   // ---------------- Micro-animations helpers ----------------
   let _revealObs = null;
-  function initRevealObserver(){
-    if (_revealObs) {
-      // обновим список на текущем DOM
-      $$('[data-reveal], .reveal').forEach(el => _revealObs.observe(el));
-      return;
-    }
+  function initRevealObserver(){ return; }
     if (!('IntersectionObserver' in window)) return;
     _revealObs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
@@ -225,20 +257,7 @@ return true;
   }
 
   // Home intro animation (CTA buttons slide in every time Home opens)
-  const runHomeIntro = () => {
-    const home = document.querySelector('.page[data-page="home"]');
-    if (!home || home.hidden) return;
-    const nodes = Array.from(home.querySelectorAll('.homeAnim'));
-    if (!nodes.length) return;
-    // reset
-    nodes.forEach(n => n.classList.remove('in'));
-    // force reflow so transitions replay
-    // eslint-disable-next-line no-unused-expressions
-    home.offsetHeight;
-    requestAnimationFrame(() => {
-      nodes.forEach(n => n.classList.add('in'));
-    });
-  };
+  const runHomeIntro = () => {};
 
   const html = document.documentElement;
   try { html.classList.add("static-ui", "no-bg"); } catch (_) {}
@@ -497,7 +516,153 @@ const closeModalEl = (el) => {
   if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
   // patternBtn отсутствует (фон всегда включен)
 
-  // ---------------- NAV ----------------
+  
+  // =====================
+  // ORDERS
+  // =====================
+  const ordersList = document.getElementById("ordersList");
+  const searchInput = document.getElementById("orderSearchInput");
+  const searchBtn = document.getElementById("orderSearchBtn");
+  const searchResult = document.getElementById("searchResult");
+
+  const modal = document.getElementById("orderModal");
+  const modalContent = document.getElementById("modalContent");
+
+  const myTgId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? (tg.initDataUnsafe.user.id || 0) : 0;
+
+  // Demo data (если нужен реальный бэкенд — подключим позже; UI уже готов)
+  let ORDERS = [];
+  (function initDemoOrders(){
+    const now = Date.now();
+    ORDERS = [
+      {
+        id: "10234",
+        owner_tg_id: myTgId,
+        created_ts: now - 2 * 60 * 60 * 1000,
+        item: "Обувь · кроссовки",
+        services: ["Химчистка обуви"],
+        status_raw: "В работе",
+        price: 1990
+      }
+    ];
+  })();
+
+  const isMine = (o) => !!(myTgId && o && o.owner_tg_id === myTgId);
+
+  const orderCard = (o, limited) => {
+    const st = normalizeStatus(o.status_raw);
+    const date = formatDate(o.created_ts);
+
+    const lines = limited
+      ? `
+        <div class="orderLine"><span>Изделие:</span> ${escapeHtml(o.item || "—")}</div>
+        <div class="orderLine"><span>Статус:</span> ${escapeHtml(st.label)}</div>
+        <div class="orderLine"><span>Дата:</span> ${escapeHtml(date)}</div>
+      `
+      : `
+        <div class="orderLine"><span>Изделие:</span> ${escapeHtml(o.item || "—")}</div>
+        <div class="orderLine"><span>Услуги:</span> ${escapeHtml((o.services || []).join(", ") || "—")}</div>
+        <div class="orderLine"><span>Статус:</span> ${escapeHtml(st.label)}</div>
+        <div class="orderLine"><span>Стоимость:</span> ${escapeHtml(formatMoney(o.price))}</div>
+        <div class="orderLine"><span>Дата:</span> ${escapeHtml(date)}</div>
+      `;
+
+    const wrap = document.createElement("div");
+    wrap.className = "order glass";
+    wrap.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderId">Заказ №${escapeHtml(o.id)}</div>
+          <div class="orderMeta">${escapeHtml(date)}</div>
+        </div>
+        <div class="status"><span class="sDot ${escapeHtml(st.dot)}"></span>${escapeHtml(st.label)}</div>
+      </div>
+      <div class="orderBody">${lines}</div>
+    `;
+    wrap.addEventListener("click", () => openOrderModal(o, limited));
+    return wrap;
+  };
+
+  const renderSearchResult = (order) => {
+    if (!searchResult) return;
+    searchResult.innerHTML = "";
+    if (!order) {
+      const box = document.createElement("div");
+      box.className = "order glass";
+      box.innerHTML = `
+        <div class="orderTop">
+          <div>
+            <div class="orderId">Ничего не найдено</div>
+            <div class="orderMeta">Проверьте номер заказа</div>
+          </div>
+        </div>
+      `;
+      searchResult.appendChild(box);
+      return;
+    }
+    const limited = !isMine(order);
+    searchResult.appendChild(orderCard(order, limited));
+  };
+
+  const findOrderById = (id) => {
+    const needle = String(id || "").trim();
+    if (!needle) return null;
+    return ORDERS.find(o => String(o.id) === needle) || null;
+  };
+
+  const openOrderModal = (o, limited) => {
+    if (!modal || !modalContent) return;
+    const st = normalizeStatus(o.status_raw);
+    const date = formatDate(o.created_ts);
+
+    modalContent.innerHTML = `
+      <div class="modalH">Заказ №${escapeHtml(o.id)}</div>
+      <p class="modalP">${limited ? "Показана краткая карточка заказа." : "Детали заказа."}</p>
+      <div class="modalGrid">
+        <div class="modalRow"><span>Статус</span><b>${escapeHtml(st.label)}</b></div>
+        <div class="modalRow"><span>Изделие</span><b>${escapeHtml(o.item || "—")}</b></div>
+        ${limited ? "" : `<div class="modalRow"><span>Услуги</span><b>${escapeHtml((o.services||[]).join(", ") || "—")}</b></div>`}
+        ${limited ? "" : `<div class="modalRow"><span>Стоимость</span><b>${escapeHtml(formatMoney(o.price))}</b></div>`}
+        <div class="modalRow"><span>Дата</span><b>${escapeHtml(date)}</b></div>
+      </div>
+    `;
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  (function bindOrdersUi(){
+    try {
+      document.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", closeModal));
+      searchBtn && searchBtn.addEventListener("click", () => {
+        const id = (searchInput && searchInput.value ? searchInput.value : "").trim();
+        if (!id) return;
+        renderSearchResult(findOrderById(id));
+      });
+      searchInput && searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          searchBtn && searchBtn.click();
+        }
+      });
+    } catch(_) {}
+  })();
+
+  const renderOrders = () => {
+    if (!ordersList) return;
+    ordersList.innerHTML = "";
+    const my = ORDERS.filter(isMine);
+    my.forEach(o => ordersList.appendChild(orderCard(o, false)));
+  };
+
+// ---------------- NAV ----------------
   // Tab pages (bottom nav): home | orders | services | about
   // Flow pages (push stack): estimate | courierWizard | courier_requests | photo_estimates | ...
   let currentPage = "home";
@@ -969,7 +1134,28 @@ function initAboutOnce(){
   ];
   let activeServicesKey = SERVICES_SEG[0].key;
 
-  function buildServiceCardsByKeys(keys){
+  
+  const svcEmojiFor = (sourceKey, name) => {
+    const k = String(sourceKey || "").toLowerCase();
+    if (k.includes("clean_shoes")) return "👟🧼";
+    if (k.includes("clean_bags")) return "👜🧼";
+    if (k.includes("clean_other")) return "🧽";
+    if (k.includes("global_leather")) return "🧥✨";
+    if (k.includes("dis")) return "🦠";
+    if (k.includes("repair")) return "🛠️";
+    if (k.includes("sew")) return "🧵";
+    if (k.includes("insoles")) return "🦶";
+    if (k.includes("color")) return "🎨";
+    if (k.includes("restore")) return "✨";
+    // fallback by name hints
+    const n = String(name || "").toLowerCase();
+    if (n.includes("молни")) return "🧵";
+    if (n.includes("подошв")) return "🛠️";
+    if (n.includes("покра")) return "🎨";
+    return "✨";
+  };
+
+function buildServiceCardsByKeys(keys){
     const out = [];
     (keys || []).forEach(k => {
       const cat = PRICE.find(x => x.key === k);
@@ -1015,7 +1201,7 @@ function initAboutOnce(){
     const cards = buildServiceCardsByKeys(seg.price_keys);
 
     servicesContent.innerHTML = `
-      <div class="servicesHero glass reveal">
+      <div class="servicesHero glass">
         <div class="servicesHeroTitle">${escapeHtml(seg.title)}</div>
         <div class="servicesHeroSub">Базовый прайс и сроки выполнения по категориям.</div>
       </div>
@@ -1023,7 +1209,7 @@ function initAboutOnce(){
         ${cards.map(c => {
           if (c.__section) {
             return `
-              <div class="svcSection reveal" data-reveal="left">
+              <div class="svcSection">
                 <div class="svcSectionTitle">${escapeHtml(c.title)}</div>
                 ${c.duration ? `<div class="svcSectionSub">Сроки: ${escapeHtml(c.duration)}</div>` : ``}
               </div>
@@ -1033,7 +1219,7 @@ function initAboutOnce(){
           const noteTxt = c.note ? `<div class="svcNote">${escapeHtml(c.note)}</div>` : ``;
           return `
             <div class="svcCard glass reveal" data-reveal="${Math.random() > 0.5 ? "right" : "up"}" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
-              <div class="svcIco" aria-hidden="true">✨</div>
+              <div class="svcIco" aria-hidden="true">${escapeHtml(svcEmojiFor(c.source_key, c.name))}</div>
               <div class="svcBody">
                 <div class="svcTitle">${escapeHtml(c.name)}</div>
                 ${noteTxt}
@@ -1069,7 +1255,6 @@ function initAboutOnce(){
       });
     });
 
-    initRevealObserver();
   };
 
   // ---------------- PROFILE ----------------
@@ -3729,3 +3914,33 @@ if (estimateSubmitBtn) estimateSubmitBtn.addEventListener("click", async () => {
 	try { renderChat(); } catch (e) { _showFatal(e); }
 
 })();
+    const applyCaseImages = () => {
+      document.querySelectorAll('img.reviewImg[data-case]').forEach((img) => {
+        const key = String(img.getAttribute('data-case') || '').trim();
+        if (key === 'do1') img.src = 'do1.png';
+        else if (key === 'posle1') img.src = 'posle1.png';
+      });
+    };
+
+    const initCasesProgress = () => {
+      const track = document.getElementById('casesTrack');
+      const bar = document.getElementById('casesProgressBar');
+      if (!track || !bar) return;
+
+      const update = () => {
+        const max = (track.scrollWidth - track.clientWidth);
+        const pct = max <= 0 ? 0 : Math.max(0, Math.min(1, track.scrollLeft / max));
+        bar.style.width = `${Math.round(pct * 100)}%`;
+      };
+
+      let raf = 0;
+      const onScroll = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; update(); });
+      };
+      track.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      update();
+    };
+
+
