@@ -23,8 +23,9 @@
     try { _showFatal(ev && ev.reason ? ev.reason : ev); } catch (_) {}
   });
 
-  try {
-
+	// NOTE: We used to wrap the whole app in a single try/catch.
+	// On some builds this wrapper got out of sync during edits and could break parsing.
+	// We keep smaller try/catch blocks around risky init parts instead.
   const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
   const SUPABASE_REST_URL = "https://jcnusmqellszoiuupaat.supabase.co/rest/v1";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
@@ -703,15 +704,88 @@ function initAboutOnce(){
       viewer.classList.add('open');
       try { viewer.setAttribute('aria-hidden', 'false'); } catch (_) {}
     }
+
+	  // lock background scroll + dim backdrop
+	  try { document.body.classList.add('baOpen'); } catch (_) {}
+	  try { document.documentElement.classList.add('baOpen'); } catch (_) {}
   };
 
   const closeViewer = () => {
     if (!viewer) return;
     viewer.classList.remove('open');
     try { viewer.setAttribute('aria-hidden', 'true'); } catch (_) {}
+	  try { document.body.classList.remove('baOpen'); } catch (_) {}
+	  try { document.documentElement.classList.remove('baOpen'); } catch (_) {}
   };
 
-  if (thumbs) thumbs.addEventListener('click', (e) => {
+	// ------- 3D/parallax movement for scattered thumbs (mobile only) -------
+	const isMobile = () => {
+	  try {
+	    const w = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+	    return w > 0 && w <= 820;
+	  } catch (_) { return false; }
+	};
+
+	let _baOriOn = false;
+	let _baGamma = 0;
+	let _baBeta = 0;
+	let _baRAF = 0;
+
+	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+	const applyBaParallax = () => {
+	  _baRAF = 0;
+	  if (!thumbs) return;
+	  // normalize: gamma=-45..45 (left/right), beta=-45..45 (front/back)
+	  const g = clamp(_baGamma, -35, 35) / 35; // -1..1
+	  const b = clamp(_baBeta, -35, 35) / 35;
+		  // subtle movement so it feels premium, not "crazy"
+		  const btns = thumbs.querySelectorAll ? thumbs.querySelectorAll('.baThumb') : [];
+		  for (let i = 0; i < btns.length; i++) {
+		    const el = btns[i];
+		    // pseudo-depth: spread a bit by index so cards move differently
+		    const depth = 0.6 + (i % 5) * 0.18;
+		    const dx = g * 14 * depth;
+		    const dy = b * 12 * depth;
+		    try { el.style.setProperty('--tx', dx.toFixed(2) + 'px'); } catch (_) {}
+		    try { el.style.setProperty('--ty', dy.toFixed(2) + 'px'); } catch (_) {}
+		  }
+	};
+
+	const scheduleBaParallax = () => {
+	  if (_baRAF) return;
+	  _baRAF = requestAnimationFrame(applyBaParallax);
+	};
+
+	const enableDeviceParallax = () => {
+	  if (_baOriOn || !isMobile()) return;
+	  _baOriOn = true;
+	  window.addEventListener('deviceorientation', (ev) => {
+	    // some devices provide nulls
+	    _baGamma = (ev && typeof ev.gamma === 'number') ? ev.gamma : 0;
+	    _baBeta  = (ev && typeof ev.beta === 'number') ? ev.beta : 0;
+	    scheduleBaParallax();
+	  }, { passive: true });
+	};
+
+	// iOS 13+ requires permission — request on first user gesture inside cases tab
+	const requestDevicePermissionIfNeeded = async () => {
+	  try {
+	    const D = window.DeviceOrientationEvent;
+	    if (!D) return;
+	    if (typeof D.requestPermission === 'function') {
+	      const res = await D.requestPermission();
+	      if (res === 'granted') enableDeviceParallax();
+	      return;
+	    }
+	    enableDeviceParallax();
+	  } catch (_) {
+	    // ignore
+	  }
+	};
+
+	  let _baAsked = false;
+	  if (thumbs) thumbs.addEventListener('click', (e) => {
+	    if (!_baAsked) { _baAsked = true; requestDevicePermissionIfNeeded(); }
     const btn = (e && e.target && e.target.closest) ? e.target.closest('button.baThumb') : null;
     if (!btn) return;
     const raw = btn.getAttribute('data-pair') || '1';
@@ -1447,13 +1521,13 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       if (!raw) return [];
       const arr = JSON.parse(raw);
       return Array.isArray(arr) ? arr : [];
-    } catch {
+    } catch (e) { 
       return [];
     }
   };
 
   const saveChat = (arr) => {
-    try { localStorage.setItem(CHAT_KEY, JSON.stringify(arr)); } catch {}
+    try { localStorage.setItem(CHAT_KEY, JSON.stringify(arr)); } catch (e) { }
   };
 
   let chatMessages = loadChat();
@@ -1537,7 +1611,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       const mo = String(d.getMonth()+1).padStart(2,"0");
       const yy = d.getFullYear();
       return `${hh}:${mm} ${dd}.${mo}.${yy}`;
-    }catch{ return "—"; }
+    }catch (e) {  return "—"; }
   };
   
   const statusLabel = (s) => {
@@ -1574,14 +1648,14 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       const raw = localStorage.getItem(PE_READ_KEY);
       const arr = raw ? JSON.parse(raw) : [];
       return new Set(Array.isArray(arr) ? arr : []);
-    }catch{
+    }catch (e) { 
       return new Set();
     }
   }
   function peSaveReadSet(set){
     try{
       localStorage.setItem(PE_READ_KEY, JSON.stringify(Array.from(set)));
-    }catch{}
+    }catch (e) { }
   }
   
   let peReadSet = peLoadReadSet();
@@ -1616,7 +1690,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
           body: JSON.stringify({ action: "mark_read", tg_id, id: n }),
         }).catch(() => null);
       }
-    }catch{}
+    }catch (e) { }
 
     // 2) локальный fallback (если бэкенд ещё не обновлён)
     if (peReadSet.has(n)) return;
@@ -2001,7 +2075,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
   if (peTile) peTile.addEventListener("click", async () => {
     try{
       await peRefreshAll(true);
-    }catch{}
+    }catch (e) { }
     showPage("photo_estimates");
     // рендер страницы
     peRenderPage(PE_CACHE.active);
@@ -2577,7 +2651,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       const d = new Date(`${dateStr}T${String(hh).padStart(2,"0")}:${String(mm||0).padStart(2,"0")}:00`);
       const cutoff = new Date(d.getTime() - 2 * 60 * 60 * 1000);
       return Date.now() < cutoff.getTime();
-    } catch {
+    } catch (e) { 
       return false;
     }
   }
@@ -2642,7 +2716,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       const chosen = new Date(`${d}T${t}:00`);
       const min = new Date(Date.now() + 60 * 60 * 1000);
       return chosen.getTime() >= min.getTime();
-    } catch {
+    } catch (e) { 
       return false;
     }
   }
@@ -2668,7 +2742,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
         d = d.replace(/\s?г\.?\s?/g, "").trim();
         const t = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(dt);
         return `в ${t}, ${d}`;
-      } catch {
+      } catch (e) { 
         return "—";
       }
     };
@@ -2691,7 +2765,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
         const mm = Number(m);
         if (!isFinite(hh) || !isFinite(mm)) return null;
         return hh * 60 + mm;
-      } catch {
+      } catch (e) { 
         return null;
       }
     };
@@ -2717,7 +2791,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
         const raw = localStorage.getItem(getSavedKey());
         const arr = JSON.parse(raw || "[]");
         return Array.isArray(arr) ? arr.slice(0, 5) : [];
-      } catch {
+      } catch (e) { 
         return [];
       }
     };
@@ -3151,7 +3225,9 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
 
     if (step === "time") {
       crSetStepSub("Дата и время");
-      const city = String(CR_WIZ.(address && address.city) || "").trim();
+      // Telegram WebView (some Android/iOS) can be strict; keep syntax simple.
+      const address = CR_WIZ.address || {};
+      const city = String((address && address.city) || "").trim();
       const wh = WORK_HOURS[city] || WORK_HOURS.default;
 
       const today = (() => {
@@ -3257,7 +3333,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
             showErr("Можно выбрать время не раньше, чем через 1 час от текущего момента.");
             return false;
           }
-        } catch {
+        } catch (e) { 
           showErr("Некорректная дата или время");
           return false;
         }
@@ -3451,9 +3527,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       var __el = $("#crSendNo"); if (__el && __el.addEventListener) __el.addEventListener("click", () => { haptic("light"); doSend(false).catch(e => { try { if (tg && tg.showAlert) tg.showAlert("Ошибка: " + String((e && e.message) || e)); } catch(_){} }); });
       return;
     }
-  }
-
-  // back button in wizard header
+	  // back button in wizard header
 
   // back button in wizard header
   if (courierBackBtn) courierBackBtn.addEventListener("click", () => {
@@ -3643,9 +3717,6 @@ if (estimateSubmitBtn) estimateSubmitBtn.addEventListener("click", async () => {
   try { hydrateProfile(); } catch (e) { _showFatal(e); }
   try { runHomeIntro(); } catch (e) { /* интро не критично */ }
   try { initRevealObserver(); } catch (e) { _showFatal(e); }
-  try { renderChat(); } catch (e) { _showFatal(e); }
-  } catch (e) {
-    _showFatal(e);
-  }
+	try { renderChat(); } catch (e) { _showFatal(e); }
 
 })();
