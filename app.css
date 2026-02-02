@@ -2158,3 +2158,22 @@ html[data-theme="dark"]{
 html[data-theme="dark"]::-webkit-scrollbar-thumb{
   background-color: rgba(255,255,255,.35);
 }
+
+
+/* ===============================
+   OPTIMIZATION: NO ANIMATIONS
+   =============================== */
+*{ animation: none !important; transition: none !important; }
+
+/* Pages are instant (no fade/slide) */
+.page{ opacity: 1 !important; transform: none !important; }
+.reveal, [data-reveal]{ opacity: 1 !important; transform: none !important; }
+
+/* Modals are instant */
+.modal .modalCard{ opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+
+/* Remove background pattern completely (keep light/dark theme colors) */
+html::after, body::before, body::after{ opacity: 0 !important; background-image: none !important; }
+html.pattern-on::after, html.pattern-on body::before, html.pattern-on body::after{ opacity: 0 !important; }
+
+/* Keep gradient background, but you can make it flatter if needed */
