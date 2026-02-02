@@ -836,7 +836,9 @@ html[data-theme="dark"] .baThumbs{ background: rgba(15,17,21,.35); }
   position: absolute;
   left: calc(var(--x) * 1%);
   top:  calc(var(--y) * 1%);
-  transform: translate(-50%, -50%) rotate(calc(var(--r) * 1deg));
+  --tx: 0px;
+  --ty: 0px;
+  transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--r) * 1deg));
   width: 104px;
   height: 104px;
   border-radius: 20px;
@@ -884,9 +886,23 @@ html[data-theme="dark"] .baThumbs{ background: rgba(15,17,21,.35); }
 }
 html[data-theme="dark"] .baThumbTag{ background: rgba(18,20,26,.78); }
 
-.baThumb:active{ transform: translate(-50%, -50%) rotate(calc(var(--r) * 1deg)) scale(.98); }
+.baThumb:active{ transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--r) * 1deg)) scale(.98); }
+
+/* lock scroll when viewer is open */
+html.baOpen, body.baOpen{
+  overflow: hidden !important;
+  height: 100%;
+  overscroll-behavior: none;
+}
 
 /* Viewer overlay */
+html.baOpen,
+body.baOpen{
+  overflow: hidden !important;
+  height: 100%;
+  touch-action: none;
+}
+
 .baViewer{
   position: fixed;
   inset: 0;
