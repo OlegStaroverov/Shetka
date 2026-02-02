@@ -5,6 +5,16 @@
   // Telegram WebApp может отсутствовать при открытии вне Telegram — работаем безопасно.
   const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 
+  // -----------------------------------------------------------------
+  // Safety: prevent hard crashes from accidental undeclared identifiers
+  // -----------------------------------------------------------------
+  // During rapid edits, some handlers referenced `step` / `wizStep` without
+  // declaring them in the local scope (ReferenceError => app won't start).
+  // Declaring them here makes such bugs non-fatal; real logic should still
+  // use local `const step = ...` where needed.
+  var step = undefined;   // eslint-disable-line no-var
+  var wizStep = undefined; // eslint-disable-line no-var
+
   // Диагностика: ловим ошибки JS и, если возможно, показываем алерт в Telegram.
   // Важно: НЕ используем optional chaining здесь, чтобы не ломаться на старых WebView.
   const _showFatal = (err) => {
