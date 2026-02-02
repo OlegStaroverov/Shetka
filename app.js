@@ -2848,7 +2848,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return null;
     };
 
-    if (step === "items") {
+    if (wizStep === "items") {
       crSetStepSub("Что забрать");
 
       const st = String(CR_WIZ.status || "");
@@ -3046,7 +3046,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (step === "address") {
+    if (wizStep === "address") {
       crSetStepSub("Адрес");
       const a = CR_WIZ.address || {};
       const saved = loadSavedAddrs();
@@ -3223,7 +3223,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (step === "time") {
+    if (wizStep === "time") {
       crSetStepSub("Дата и время");
       // Telegram WebView (some Android/iOS) can be strict; keep syntax simple.
       const address = CR_WIZ.address || {};
@@ -3390,7 +3390,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       return;
     }
 
-    if (step === "confirm") {
+    if (wizStep === "confirm") {
       crSetStepSub("Подтверждение");
 
       const a = CR_WIZ.address || {};
@@ -3533,10 +3533,10 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
   if (courierBackBtn) courierBackBtn.addEventListener("click", () => {
     if (!CR_WIZ) { goBack(); return; }
     const step = CR_WIZ.step;
-    if (step === "items") { confirmLeaveCourier(() => goBack()); return; }
-    if (step === "address") CR_WIZ.step = "items";
-    else if (step === "time") CR_WIZ.step = "address";
-    else if (step === "confirm") CR_WIZ.step = "time";
+    if (wizStep === "items") { confirmLeaveCourier(() => goBack()); return; }
+    if (wizStep === "address") CR_WIZ.step = "items";
+    else if (wizStep === "time") CR_WIZ.step = "address";
+    else if (wizStep === "confirm") CR_WIZ.step = "time";
     crRenderWizard();
     haptic("light");
   });
