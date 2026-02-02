@@ -2733,6 +2733,9 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
 
     const step = CR_WIZ.step;
 
+    // keep backward-compatible name used throughout the wizard renderer
+    const wizStep = step;
+
     const formatDt = (dateStr, timeStr) => {
       try {
         const dt = new Date(`${dateStr}T${timeStr}:00`);
@@ -3533,6 +3536,9 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
   if (courierBackBtn) courierBackBtn.addEventListener("click", () => {
     if (!CR_WIZ) { goBack(); return; }
     const step = CR_WIZ.step;
+
+    // keep backward-compatible name used throughout the wizard renderer
+    const wizStep = step;
     if (wizStep === "items") { confirmLeaveCourier(() => goBack()); return; }
     if (wizStep === "address") CR_WIZ.step = "items";
     else if (wizStep === "time") CR_WIZ.step = "address";
