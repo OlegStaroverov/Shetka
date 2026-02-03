@@ -4,6 +4,9 @@
   // ===============================
   // Telegram WebApp может отсутствовать при открытии вне Telegram — работаем безопасно.
   const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  // Root <html> element (used for theme toggles)
+  const html = document.documentElement;
+
 
   // ===============================
   // UTILS (must exist globally inside this bundle)
