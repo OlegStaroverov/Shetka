@@ -7,6 +7,10 @@
   // Root <html> element (used for theme toggles)
   const html = document.documentElement;
 
+  // Local compatibility shims for legacy handlers (do NOT leak to window)
+  var step = null;
+  var wizStep = null;
+
 
   // ===============================
   // UTILS (must exist globally inside this bundle)
@@ -30,11 +34,6 @@
 
   const formatDate = (ts) => {
     try {
-
-  // Compatibility shims: some legacy handlers referenced global `step`/`wizStep`.
-  // We keep them as local vars inside this IIFE and proxy them to the courier wizard step.
-  var step = null;
-  var wizStep = null;
       const d = new Date(ts);
       const dd = String(d.getDate()).padStart(2, "0");
       const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -252,6 +251,36 @@ return true;
   // ---------------- Micro-animations helpers ----------------
   let _revealObs = null;
   function initRevealObserver(){ /* disabled: no animations */ };
+
+// ---------------- UX helpers (must exist; some handlers call them)
+var __scrollY = 0;
+
+function lockScroll() {
+  try {
+    __scrollY = window.pageYOffset || window.scrollY || 0;
+    document.body.style.position = "fixed";
+    document.body.style.top = (-__scrollY) + "px";
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+  } catch (_) {}
+}
+
+function haptic(kind) {
+  // kind: "light" | "medium" | "heavy" | "rigid" | "soft" | "success" | "warning" | "error"
+  try {
+    if (!tg || !tg.HapticFeedback) return;
+    var hf = tg.HapticFeedback;
+    if (kind === "success" || kind === "warning" || kind === "error") {
+      if (hf.notificationOccurred) hf.notificationOccurred(kind);
+      return;
+    }
+    var k = kind || "light";
+    if (hf.impactOccurred) hf.impactOccurred(k);
+  } catch (_) {}
+}
+
 
 const unlockScroll = () => {
   document.body.style.position = "";
