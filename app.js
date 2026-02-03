@@ -4,6 +4,19 @@
   // ===============================
   // Telegram WebApp может отсутствовать при открытии вне Telegram — работаем безопасно.
   const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+
+// === API wrappers (api.js) ===
+function apiEnqueue(kind, tg_id, payload){ return window.API.enqueueRequest(kind, payload, tg_id); }
+function apiEstimates(action, body){ return window.API.estimates(action, body); }
+function apiGetProfile(tg_id){ return window.API.getProfile(tg_id); }
+function apiReservePromo(){ return window.API.reservePromo(); }
+function apiListCourier(tg_id){ return window.API.listCourierRequests(tg_id); }
+
+// Совместимость со старым кодом (если где-то остались ссылки)
+var SUPABASE_ANON_KEY = (window.API && window.API.cfg ? window.API.cfg().SUPABASE_ANON_KEY : "");
+var SUPABASE_REST_URL = (window.API && window.API.cfg ? window.API.cfg().SUPABASE_REST_URL : "");
+var SUPABASE_FUNCTION_URL = (window.API && window.API.cfg ? window.API.cfg().FN_ENQUEUE : "");
+
   // Root <html> element (used for theme toggles)
   const html = document.documentElement;
 
@@ -80,33 +93,11 @@
 	// NOTE: We used to wrap the whole app in a single try/catch.
 	// On some builds this wrapper got out of sync during edits and could break parsing.
 	// We keep smaller try/catch blocks around risky init parts instead.
-  const SUPABASE_FUNCTION_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/enqueue_request";
-  const SUPABASE_REST_URL = "https://jcnusmqellszoiuupaat.supabase.co/rest/v1";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbnVzbXFlbGxzem9pdXVwYWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMzc1NjEsImV4cCI6MjA4MzgxMzU2MX0.6rtU1xX0kB_eJDaeoSnrIC47ChqxLAtSz3sv8Oo5TJQ";
-  const SUPABASE_ESTIMATES_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/estimates";
-  const SUPABASE_RESERVE_PROMO_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/reserve_promo";
-  const SUPABASE_GET_PROFILE_URL = "https://jcnusmqellszoiuupaat.functions.supabase.co/get_profile";
+    // Supabase конфиг вынесен в api.js (window.API)
 
-  async function reservePromoCode() {
-    const res = await fetch(SUPABASE_RESERVE_PROMO_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({}),
-    });
-  
-    const raw = await res.text();
-    let data = null;
-    try { data = JSON.parse(raw); } catch (_) {}
-  
-    if (!res.ok || !(data && data.ok) || !(data && data.code)) {
-      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
-    }
-  
+    async function reservePromoCode(){
+    var data = await apiReservePromo();
+    if (!data || !data.ok || !data.code) throw new Error((data && data.error) || 'reserve_failed');
     return String(data.code);
   }
 
@@ -2298,27 +2289,11 @@ phone,
     return "gray";
   };
 
-  async function crFetchList() {
-    const tg_id = getTgId();
+    async function crFetchList(){
+    var tg_id = getTgId();
     if (!tg_id) return [];
-
-    // читаем напрямую из Supabase REST (минимально, как fallback)
-    const url = `${SUPABASE_REST_URL}/courier_requests?tg_id=eq.${encodeURIComponent(tg_id)}&select=id,date,slot,address_json,items_json,status,cancel_reason,created_at,updated_at&order=created_at.desc`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "accept": "application/json",
-      },
-    });
-
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !Array.isArray(data)) {
-      const msg = (data && data.message) ? data.message : `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-
+    var data = await apiListCourier(tg_id);
+    if (!Array.isArray(data)) return [];
     return data;
   }
 
