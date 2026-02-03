@@ -1,3 +1,7 @@
+/* MOTION DISABLED (per spec): no transitions/animations except natural scroll */
+*{transition:none !important; animation:none !important;}
+html{scroll-behavior:auto !important;}
+
 :root{
   --bg0:#f6f7f8;
   --bg1:#ffffff;
@@ -25,6 +29,12 @@
   --lime2:#b9ff00;
 
   --pad: 16px;
+
+  /* === Manual spacing controls (you can tweak these) === */
+  --pageTitleMarginTop: 0px;
+  --pageSubMarginTop: 2px;
+  --pageTitleMarginBottom: 0px;
+
   --tabH: 76px;
   --headerH: 88px;
 
@@ -72,11 +82,54 @@ html,body{
   -webkit-text-size-adjust: 100%;
 }
 
+/* Page scrollbar: in light theme make thumb darker so it's visible */
+html, body{
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(15,17,21,.35) transparent;
+}
+html[data-theme="dark"],
+html[data-theme="dark"] body{
+  scrollbar-color: rgba(243,245,247,.25) transparent;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{ width: 10px; height: 10px; }
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track{ background: transparent; }
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb{ background: rgba(15,17,21,.35); border-radius: 999px; }
+html[data-theme="dark"]::-webkit-scrollbar-thumb,
+html[data-theme="dark"] body::-webkit-scrollbar-thumb{ background: rgba(243,245,247,.25); }
+
 /* Prevent accidental horizontal overflow from long text/flex children */
 .glass, .page, .stage, .hero, .svcCard, .tile, .crItemCard, .modalCard{ min-width: 0; }
 .svcTitle, .svcSub, .pageTitle, .pageSub, .crPreviewItemTitle, .crPreviewItemProblem{ overflow-wrap:anywhere; }
 
 html{ position: relative; }
+/* ===== STATIC MODE OPTIMIZATION ===== */
+html.no-bg::before,
+html.no-bg::after,
+html.no-bg body::before,
+html.no-bg body::after{
+  display:none !important;
+}
+html.no-bg, html.no-bg body{
+  background: var(--bg0) !important;
+}
+
+/* Turn off transitions/animations everywhere to avoid WebView glitches */
+html.static-ui *{
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Allow animation only inside Before/After viewer */
+html.static-ui .baViewer *,
+html.static-ui .baViewer{
+  transition: none; /* will be overridden on needed elements */
+  animation: none;
+}
+
 
 /* gradient */
 html::before{
@@ -331,8 +384,8 @@ html[data-theme="dark"] .cta.primary{
 }
 html[data-theme="dark"] .backBtn{ background: rgba(255,255,255,.06); }
 .backBtn:active{ transform: scale(.96); }
-.pageTitle{ font-weight: 950; font-size: 18px; letter-spacing:-.2px; }
-.pageSub{ margin-top:2px; font-size: 12px; color: var(--muted); }
+.pageTitle{ font-weight: 950; font-size: 18px; letter-spacing:-.2px; margin-top: var(--pageTitleMarginTop); margin-bottom: var(--pageTitleMarginBottom); }
+.pageSub{ margin-top: var(--pageSubMarginTop); font-size: 12px; color: var(--muted); }
 
 /* чтобы заголовки не терялись на фоне логотипа */
 .pageTitle,
@@ -726,12 +779,12 @@ html[data-theme="dark"] .svcSection{ background: rgba(255,255,255,.06); }
   padding: 0 14px;
   margin-top: 12px;
 }
-.aboutTabs .segBtn{
+.aboutTabs .segBtn:not(.priceTab){
   border-radius: 18px;
   border: 1px solid var(--hair);
   background: rgba(255,255,255,.35);
 }
-html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+html[data-theme="dark"] .aboutTabs .segBtn:not(.priceTab){ background: rgba(255,255,255,.06); }
 .acc{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
 .accItem{border:1px solid var(--hair); border-radius:16px; overflow:hidden; background: rgba(255,255,255,.5);} 
 html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);} 
@@ -741,139 +794,20 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
+.reviewsTrack{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:12px 2px 6px;}
+.reviewSlide{flex:0 0 86%; scroll-snap-align:center; border:1px dashed var(--hair); border-radius:18px; min-height:130px; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.dots{display:flex; gap:6px; justify-content:center; padding:8px 0 2px;}
+.dot{width:6px; height:6px; border-radius:999px; background: rgba(0,0,0,.25);} 
+html[data-theme="dark"] .dot{background: rgba(255,255,255,.25);} 
+.dot.active{background: var(--lime);} 
 
-/* ===== REVIEWS (full-bleed carousel) ===== */
-.reviewsSection{
-  margin-top: 12px;
-}
-
-.reviewsSection .aboutTitle{ margin: 0 0 10px 0; }
-
-/* Заголовок "Отзывы" — идентичен FAQ (используем тот же класс .aboutTitle в HTML) */
-
-/*
-  Контейнер отзывов:
-  - фон может "уходить" за края (псевдо-элемент)
-  - контент (картинки) строго в пределах экрана пользователя (100vw) с микрозазором
-  - ничего не должно перекрывать системный скроллбар страницы
-*/
-.reviewsBleed{
-  position: relative;
-  z-index: 0;
-
-  /* ровно ширина экрана */
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-
-  /* без скруглений (как просила) */
-  border-radius: 0;
-  border: 0;
-
-  /* аккуратные отступы вокруг трека/полоски */
-  padding: 10px 0 8px;
-  overflow: visible;
-}
-
-/* ВЫТЯНУТЫЙ фон, который уходит за экран (но НЕ трогает контент) */
-.reviewsBleed::before{
-  content:"";
-  position:absolute;
-  top:0;
-  bottom:0;
-  left:-140px;
-  right:-140px;
-  background: transparent;
-  z-index:-1;
-  pointer-events:none;
-}
-
-/* 1) цвет блока в тёмной теме */
-html[data-theme="dark"] .reviewsBleed::before{
-  background: #18181a;
-}
-
-/* track: горизонтальная лента, без внутренних скроллбаров */
-.reviewsTrack{
-  display:flex;
-  overflow-x:auto;
-  overflow-y:hidden;
-  overscroll-behavior-x: contain;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-
-  padding: 0;
-  gap: 0;
-
-  scrollbar-width: none;
-  touch-action: pan-x;
-}
-.reviewsTrack::-webkit-scrollbar{ height: 0; }
-
-/* slide = ровно один экран */
-.reviewSlide{
-  flex: 0 0 100vw;
-  scroll-snap-align: start;
-
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
-
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-/*
-  Картинка:
-  - строго в пределах экрана (не уходит за края)
-  - почти "от края до края" (микро-отступ 1px с каждой стороны)
-  - без сильного кропа: показываем целиком по ширине, высота свободная
-*/
 .reviewImg{
-  display:block;
-  width: calc(100vw - 2px);
-  max-width: calc(100vw - 2px);
-  height: auto;
-
-  object-fit: contain;
-  image-rendering: -webkit-optimize-contrast;
-}
-
-/* progress bar (theme-aware) */
-.reviewsProgress{
-  height: 3px;
-  border-radius: 999px;
-  margin: 8px 14px 0;
-  background: rgba(0,0,0,.14);
-  overflow: hidden;
-}
-html[data-theme="dark"] .reviewsProgress{ background: rgba(255,255,255,.14); }
-
-.reviewsProgressFill{
+  width: 100%;
   height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: var(--lime);
+  object-fit: cover;
+  border-radius: 18px;
+  display:block;
 }
-
-/* dots: небольшой отступ под ползунком */
-.dots{
-  display:flex;
-  gap: 6px;
-  justify-content:center;
-  padding: 8px 0 0;
-}
-.dot{
-  width: 6px;
-  height: 6px;
-  border-radius:999px;
-  background: rgba(0,0,0,.25);
-}
-html[data-theme="dark"] .dot{ background: rgba(255,255,255,.25); }
-.dot.active{ background: var(--lime); }
-
 
 .story{margin-top:12px;}
 .storySection{height:140vh;}
@@ -883,38 +817,211 @@ html[data-theme="dark"] .dot{ background: rgba(255,255,255,.25); }
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
-/* ====== BEFORE/AFTER placeholders (10 cases) ====== */
-.baStory{margin-top:12px;}
-.baSection{height:160vh;}
-.baSticky{position:sticky; top:12px;}
-.baPair{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-@media (max-width:420px){
-  .baPair{grid-template-columns:1fr;}
+/* ====== BEFORE/AFTER (ONLY PLACE WITH ANIMATION) ====== */
+.baGallery{
+  margin-top: 12px;
+  position: relative;
+  min-height: 64vh;
 }
-.baPh{
-  border-radius: 18px;
+
+/* scattered thumbnails area */
+.baThumbs{
+  position: relative;
+  height: min(66vh, 520px);
+  border-radius: 22px;
   border: 1px dashed var(--hair);
-  min-height: 220px;
+  background: rgba(255,255,255,.22);
+  overflow: hidden;
+}
+html[data-theme="dark"] .baThumbs{ background: rgba(15,17,21,.35); }
+
+/* each thumb is an overlapped pair (before on top of after) */
+.baThumb{
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top:  calc(var(--y) * 1%);
+  --tx: 0px;
+  --ty: 0px;
+  transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--r) * 1deg));
+  width: 104px;
+  height: 104px;
+  border-radius: 20px;
+  border: 1px solid var(--hair);
+  box-shadow: var(--shadow);
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* overlapped visuals: 2 layers */
+.baThumb::before,
+.baThumb::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.baThumb::before{
+  /* BEFORE */
+  background-image: url("do1.png");
+  opacity: .98;
+}
+.baThumb::after{
+  /* AFTER under it */
+  background-image: url("posle1.png");
+  opacity: .92;
+  transform: scale(1.04);
+  filter: blur(.0px);
+}
+
+/* small tag */
+.baThumbTag{
+  position:absolute;
+  left: 10px;
+  top: 10px;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid var(--hair);
+}
+html[data-theme="dark"] .baThumbTag{ background: rgba(18,20,26,.78); }
+
+.baThumb:active{ transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--r) * 1deg)) scale(.98); }
+
+/* lock scroll when viewer is open */
+html.baOpen, body.baOpen{
+  overflow: hidden !important;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+/* Viewer overlay */
+html.baOpen,
+body.baOpen{
+  overflow: hidden !important;
+  height: 100%;
+  touch-action: none;
+}
+
+.baViewer{
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+  opacity: 0;
+}
+.baViewer.open{
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.baViewerBackdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.38);
+}
+
+.baViewerStage{
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* Big cards (slide-in to center) */
+.baBig{
+  position: absolute;
+  width: min(46vw, 340px);
+  height: min(56vh, 420px);
+  border-radius: 22px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* allow animation here even in static-ui */
+html.static-ui .baBig{
+  transition: transform 260ms cubic-bezier(0.2, 1, 0.2, 1), opacity 220ms ease !important;
+}
+
+.baBig img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+/* labels */
+.baBigLabel{
+  position:absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-indent: .14em;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid var(--hair);
+}
+html[data-theme="dark"] .baBigLabel{ background: rgba(18,20,26,.78); }
+
+/* positions + different "levels" so they don't cover each other */
+.baBigBefore{
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% - 120vw), -56%);
+  opacity: 0;
+  z-index: 1;
+}
+.baBigAfter{
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + 120vw), -42%);
+  opacity: 0;
+  z-index: 2;
+}
+
+/* open state => slide to center */
+.baViewer.open .baBigBefore{
+  transform: translate(calc(-50% - 54px), -56%);
+  opacity: 1;
+}
+.baViewer.open .baBigAfter{
+  transform: translate(calc(-50% + 54px), -42%);
+  opacity: 1;
+}
+
+@media (max-width: 420px){
+  .baBig{ width: 82vw; height: 44vh; }
+  .baViewer.open .baBigBefore{ transform: translate(-50%, -62%); }
+  .baViewer.open .baBigAfter{ transform: translate(-50%, -32%); }
+}
+
+/* close button */
+.baClose{
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight:900;
-  letter-spacing: .22em;
-  text-indent: .22em;
-  opacity:.92;
-  will-change: transform, opacity;
-  transform: translate3d(0,0,0);
-  background: rgba(255,255,255,.35);
+  font-size: 18px;
 }
-html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
-.baPh span{font-size:20px; opacity:.78;}
-
-/* entrance from edges */
-.baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
-.baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
-.baSection.baActive .baBefore,
-.baSection.baActive .baAfter{ transform: translate3d(0,0,0); opacity:1; transition: transform 680ms cubic-bezier(0.25,1,0.33,1), opacity 520ms cubic-bezier(0.25,1,0.33,1); }
-
+.baClose:active{ transform: scale(.98); }
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
 .mapFrameWrap{margin-top:10px; border-radius:18px; overflow:hidden; border:1px solid var(--hair);}
@@ -1631,8 +1738,8 @@ html[data-theme="dark"] .peReplyBox{ background: rgba(255,255,255,.06); }
 
 /* About top tabs: buttons are standalone (no shared glass container) */
 .aboutTabs{ display:flex; gap:10px; padding: 0 var(--pad); margin-top: 10px; }
-.aboutTabs .segBtn{ border-radius: 18px; border:1px solid var(--hair); background: rgba(255,255,255,.30); }
-html[data-theme="dark"] .aboutTabs .segBtn{ background: rgba(255,255,255,.06); }
+.aboutTabs .segBtn:not(.priceTab){ border-radius: 18px; border:1px solid var(--hair); background: rgba(255,255,255,.30); }
+html[data-theme="dark"] .aboutTabs .segBtn:not(.priceTab){ background: rgba(255,255,255,.06); }
 
 /* Center loader (used e.g. for Before/After image loading) */
 .centerLoader{
@@ -1964,158 +2071,113 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   max-width: 420px;
 }
 
+/* =========================================================
+   REVIEWS (About → "Отзывы")
+   Edge-to-edge carousel + progress bar
+   ========================================================= */
 
-/* =========================
-   FIXES (About tabs + Reviews)
-   ========================= */
+.reviewsCarousel{ margin-top: 10px; }
 
-/* 1) About tabs must highlight (same as Services) in BOTH themes */
-.segWrap .aboutTabs.seg{
-  padding: 0;
-  gap: 8px;
-}
-.segWrap .aboutTabs .segBtn{
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: var(--txt);
-}
-html[data-theme="light"] .segWrap .aboutTabs .segBtn{
-  border-color: rgba(0,0,0,.08);
-  background: rgba(0,0,0,.03);
-}
-.segWrap .aboutTabs .segBtn.active{
-  border-color: var(--accentBorder) !important;
-  background: var(--accentBg) !important;
-}
-
-/* 2) Reviews: full-bleed (edge-to-edge) + smooth snap slider */
-.reviewsSection{
-  position: relative;
-  margin-top: 12px;
-
-  /* full width of viewport, ignoring parent padding */
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-
-  border-radius: 0;
-  border: 0;
-
-  background: linear-gradient(180deg, var(--bg0), var(--bg1));
-
-  /* label + content spacing */
-  padding: 16px 0 12px;
-  overflow: hidden;
-}
-
-.reviewsLabel{
-  position: absolute;
-  top: 10px;
-  left: var(--pad);
-  z-index: 2;
-
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--hair);
-  background: var(--glass);
-  box-shadow: var(--shadow);
-  font-weight: 950;
-  font-size: 13px;
-}
-
-.reviewsSection .reviewsBleed{
-  margin-top: 28px;
-}
-
-/* Slider track: smooth, snap, no lag */
-.reviewsSection .reviewsTrack{
+/* Make track span from screen edge to edge (ignore page padding) */
+.reviewsTrackFull{
   display:flex;
   gap: 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-x:auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 
-  /* edge-to-edge images */
   padding: 0;
-  margin: 0;
+  margin-left: calc(-1 * var(--pad));
+  margin-right: calc(-1 * var(--pad));
+  width: calc(100% + (var(--pad) * 2));
 
-  scroll-behavior: smooth;
   scrollbar-width: none; /* Firefox */
-  will-change: scroll-position;
 }
-.reviewsSection .reviewsTrack::-webkit-scrollbar{ display:none; }
+.reviewsTrackFull::-webkit-scrollbar{ display:none; }
 
-/* Each slide takes the full screen width */
-.reviewsSection .reviewSlide{
+.reviewSlideFull{
   flex: 0 0 100%;
-  width: 100vw;
   scroll-snap-align: start;
-
-  height: clamp(320px, 56vh, 520px);
-
-  display:flex;
-  align-items: stretch;
-  justify-content: stretch;
-
   border: 0;
-  background: transparent;
+  border-radius: 0;
+  min-height: unset;
+}
+
+.reviewImgFull{
+  width: 100%;
+  height: auto;
+  display:block;
+  object-fit: cover;
   border-radius: 0;
 }
 
-/* Image: fill the whole slide without stretching (crop if needed) */
-.reviewsSection .reviewImg{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  display:block;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-transform: translateZ(0);
-}
-
-/* Custom progress "ползунок" (theme-aware) */
-.reviewsSection .reviewsProgress{
-  margin: 10px var(--pad) 0;
+.reviewsProgress{
   height: 6px;
   border-radius: 999px;
-  background: rgba(15,17,21,.12);
-  overflow: hidden;
+  overflow:hidden;
+  margin-top: 10px;
+  background: rgba(15,17,21,.14);
 }
-html[data-theme="dark"] .reviewsSection .reviewsProgress{
-  background: rgba(243,245,247,.10);
-}
+html[data-theme="dark"] .reviewsProgress{ background: rgba(243,245,247,.16); }
 
-.reviewsSection .reviewsProgressFill{
+.reviewsProgressBar{
   height: 100%;
   width: 0%;
   border-radius: 999px;
-  background: rgba(15,17,21,.38);
-  transition: width 80ms linear;
-}
-html[data-theme="dark"] .reviewsSection .reviewsProgressFill{
-  background: rgba(243,245,247,.28);
+  background: var(--lime);
+  transition: width 140ms linear;
 }
 
-/* Dots stay readable on full-bleed */
-.reviewsSection + .dots,
-.reviewsSection .dots{
-  padding-left: var(--pad);
-  padding-right: var(--pad);
-}
-/* ===== FIX: About tabs active state must match Services in BOTH themes ===== */
-.aboutTabs .segBtn.active{
-  border-color: var(--accentBorder) !important;
-  background: var(--accentBg) !important;
-  color: var(--txt) !important;
-}
-/* Buttons may carry .glass class; ensure it doesn't override active */
-.aboutTabs .segBtn.glass.active{
-  border-color: var(--accentBorder) !important;
-  background: var(--accentBg) !important;
+/* About tabs: force same layout as .priceTabs (pills row) */
+.aboutTabs{
+  padding: 10px !important;
+  gap: 8px;
+  overflow:auto;
 }
 
-/* ===== FIX: Before/After intro overlay should fully cover UI until scroll ===== */
-body.ba-mode .baOverlay{ display:flex; }
-body.ba-mode:not(.ba-scrolled) #aboutPanelCases .baScroller{ opacity: 0; pointer-events:none; }
-body.ba-mode.ba-scrolled #aboutPanelCases .baScroller{ opacity: 1; pointer-events:auto; transition: opacity 220ms ease; }
+
+/* скрытие стрелки (управляется JS через класс baHidden) */
+.baHidden{
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-6px) rotate(45deg) !important;
+}
+
+/* ===== Scrollbar (светлая тема: тёмный ползунок) ===== */
+:root{
+  scrollbar-color: rgba(15,17,21,.55) transparent; /* Firefox */
+  scrollbar-width: thin;
+}
+html::-webkit-scrollbar{ width: 10px; height: 10px; }
+html::-webkit-scrollbar-track{ background: transparent; }
+html::-webkit-scrollbar-thumb{
+  background-color: rgba(15,17,21,.55);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+html[data-theme="dark"]{
+  scrollbar-color: rgba(255,255,255,.35) transparent;
+}
+html[data-theme="dark"]::-webkit-scrollbar-thumb{
+  background-color: rgba(255,255,255,.35);
+}
+
+
+/* ===============================
+   OPTIMIZATION: NO ANIMATIONS
+   =============================== */
+*{ animation: none !important; transition: none !important; }
+
+/* Pages are instant (no fade/slide) */
+.page{ opacity: 1 !important; transform: none !important; }
+.reveal, [data-reveal]{ opacity: 1 !important; transform: none !important; }
+
+/* Modals are instant */
+.modal .modalCard{ opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+
+/* Remove background pattern completely (keep light/dark theme colors) */
+html::after, body::before, body::after{ opacity: 0 !important; background-image: none !important; }
+html.pattern-on::after, html.pattern-on body::before, html.pattern-on body::after{ opacity: 0 !important; }
+
+/* Keep gradient background, but you can make it flatter if needed */
