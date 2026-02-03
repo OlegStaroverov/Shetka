@@ -1,3 +1,7 @@
+/* MOTION DISABLED (per spec): no transitions/animations except natural scroll */
+*{transition:none !important; animation:none !important;}
+html{scroll-behavior:auto !important;}
+
 :root{
   --bg0:#f6f7f8;
   --bg1:#ffffff;

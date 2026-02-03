@@ -173,8 +173,7 @@
       const remote = {
         city: (rp.city || "").toString(),
         first_name: rp.first_name || "",
-        last_name: rp.last_name || "",
-        phone: rp.phone || "",
+phone: rp.phone || "",
         promo_code: ((rp.promo_code)!=null ? (rp.promo_code) : null),
         promo_percent: ((rp.promo_percent)!=null ? (rp.promo_percent) : null),
         promo_used: !!rp.promo_used,
@@ -192,7 +191,7 @@
       const differs =
         String(local.city || "") !== String(remote.city || "") ||
         String(local.first_name || "") !== String(remote.first_name || "") ||
-        String(local.last_name || "") !== String(remote.last_name || "") ||
+
         String(local.phone || "") !== String(remote.phone || "") ||
         (Array.isArray(remote.saved_addresses) && JSON.stringify(local.saved_addresses || []) !== JSON.stringify(remote.saved_addresses || []));
 
@@ -244,68 +243,7 @@ return true;
 
   // ---------------- Micro-animations helpers ----------------
   let _revealObs = null;
-  function initRevealObserver(){
-    // animations removed for performance
-    return;
-  }
-
-  // Home intro animation (CTA buttons slide in every time Home opens)
-  const runHomeIntro = () => {};
-
-  const html = document.documentElement;
-  try { html.classList.add("static-ui", "no-bg"); } catch (_) {}
-
-  // sendData bridge
-  const sendToBot = (cmd, payload = {}) => {
-    const data = JSON.stringify({ cmd, ...payload, ts: Date.now() });
-    if (tg) tg.sendData(data);
-    else console.log("sendData:", data);
-  };
-
-  const haptic = (kind = "light") => {
-    if (!(tg && tg.HapticFeedback)) return;
-    try { tg.HapticFeedback.impactOccurred(kind); } catch (_) {}
-  };
-
-  // ---------------- SUPABASE QUEUE (enqueue_request) ----------------
-  const getTgId = () => (tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg && tg.initDataUnsafe && tg.initDataUnsafe.user.id : undefined) || 0;
-
-  async function supaEnqueue(kind, payload_json = {}) {
-    const tg_id = getTgId();
-
-    const res = await fetch(SUPABASE_FUNCTION_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ kind, tg_id, payload_json }),
-    });
-
-    const raw = await res.text();
-    let data = null;
-    try { data = JSON.parse(raw); } catch (_) {}
-
-    if (!res.ok || !data || !data.ok) {
-      throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}: ${raw}`);
-    }
-    return data;
-  }
-
-// ---------------- MODALS HELPERS ----------------
-let __scrollY = 0;
-
-const lockScroll = () => {
-  __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${__scrollY}px`;
-  document.body.style.left = "0";
-  document.body.style.right = "0";
-  document.body.style.width = "100%";
-  document.body.style.overflow = "hidden";
-};
+  function initRevealObserver(){ /* disabled: no animations */ };
 
 const unlockScroll = () => {
   document.body.style.position = "";
@@ -479,9 +417,46 @@ const closeModalEl = (el) => {
         const i = Number(img.getAttribute('data-review') || '1');
         img.src = `o${i}${suffix}.png`;
       });
+      // кейсы До/После не зависят от темы
+      try { applyCaseImages(); } catch (_) {}
     } catch (_) {}
 
     haptic("light");
+  };
+
+  const applyCaseImages = () => {
+    // Поддерживаем разные расширения (в архиве бывают .PNG)
+    const map = {
+      do1: ['do1.png', 'do1.png.PNG', 'do1.PNG', 'do1.PNG.PNG'],
+      posle1: ['posle1.png', 'posle1.png.PNG', 'posle1.PNG', 'posle1.PNG.PNG'],
+    };
+    const placeholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">' +
+      '<rect width="100%" height="100%" fill="#e9ecef"/>' +
+      '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" fill="#6c757d">Нет фото</text>' +
+      '</svg>'
+    );
+
+    document.querySelectorAll('img.reviewImg[data-case]').forEach(function(img){
+      const key = String(img.getAttribute('data-case') || '').trim();
+      const list = map[key] || [];
+      // ставим первый вариант; если не загрузится — перебираем следующие, иначе плейсхолдер
+      let idx = 0;
+      const tryNext = function(){
+        if (idx >= list.length) { img.src = placeholder; return; }
+        img.src = list[idx++];
+      };
+      img.onerror = function(){
+        // предотвращаем бесконечный цикл
+        img.onerror = null;
+        tryNext();
+        // если и второй не загрузится — onerror уже null => останется broken, поэтому ставим плейсхолдер через таймер
+        setTimeout(function(){
+          if (!img.complete || !img.naturalWidth) img.src = placeholder;
+        }, 0);
+      };
+      tryNext();
+    });
   };
 
   // ---------------- PATTERN ----------------
@@ -503,6 +478,7 @@ const closeModalEl = (el) => {
 
   // init theme + pattern
   applyTheme(getPreferredTheme());
+  try { applyCaseImages(); } catch (_) {}
   setPatternEnabled(false);
   syncThemeSwitch();
 
@@ -936,20 +912,7 @@ function initAboutOnce(){
 	};
 
 	// iOS 13+ requires permission — request on first user gesture inside cases tab
-	const requestDevicePermissionIfNeeded = async () => {
-	  try {
-	    const D = window.DeviceOrientationEvent;
-	    if (!D) return;
-	    if (typeof D.requestPermission === 'function') {
-	      const res = await D.requestPermission();
-	      if (res === 'granted') enableDeviceParallax();
-	      return;
-	    }
-	    enableDeviceParallax();
-	  } catch (_) {
-	    // ignore
-	  }
-	};
+	const requestDevicePermissionIfNeeded = async () => { /* disabled: no motion effects */ };
 
 	  let _baAsked = false;
 	  if (thumbs) thumbs.addEventListener('click', (e) => {
@@ -1130,10 +1093,10 @@ function initAboutOnce(){
   
   const svcEmojiFor = (sourceKey, name) => {
     const k = String(sourceKey || "").toLowerCase();
-    if (k.includes("clean_shoes")) return "👟🧼";
-    if (k.includes("clean_bags")) return "👜🧼";
+    if (k.includes("clean_shoes")) return "👟";
+    if (k.includes("clean_bags")) return "👜";
     if (k.includes("clean_other")) return "🧽";
-    if (k.includes("global_leather")) return "🧥✨";
+    if (k.includes("global_leather")) return "🧥";
     if (k.includes("dis")) return "🦠";
     if (k.includes("repair")) return "🛠️";
     if (k.includes("sew")) return "🧵";
@@ -1211,7 +1174,7 @@ function buildServiceCardsByKeys(keys){
           const priceTxt = c.price ? escapeHtml(formatMoney(c.price)) : (c.from ? `от ${escapeHtml(formatMoney(c.from))}` : "по запросу");
           const noteTxt = c.note ? `<div class="svcNote">${escapeHtml(c.note)}</div>` : ``;
           return `
-            <div class="svcCard glass reveal" data-reveal="${Math.random() > 0.5 ? "right" : "up"}" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
+            <div class="svcCard glass" role="button" tabindex="0" data-svc-pick="1" data-svc-cat="${escapeHtml(seg.title)}" data-svc-name="${escapeHtml(c.name)}">
               <div class="svcIco" aria-hidden="true">${escapeHtml(svcEmojiFor(c.source_key, c.name))}</div>
               <div class="svcBody">
                 <div class="svcTitle">${escapeHtml(c.name)}</div>
@@ -1240,7 +1203,7 @@ function buildServiceCardsByKeys(keys){
         if (!name) return;
         // Префилл: открываем выбор сдачи и затем курьера с предвыбором
         window.__SHETKA_PREFILL = { category: mapCat(catTitle), service: name };
-        try { document.getElementById('openDropoffChoice' ? 'openDropoffChoice'.click : undefined)(); } catch (_) {}
+        try { var btn = document.getElementById('openDropoffChoice'); if (btn && btn.click) btn.click(); } catch (_) {}
         haptic('light');
       });
       el.addEventListener('keydown', (ev) => {
@@ -1272,8 +1235,8 @@ function buildServiceCardsByKeys(keys){
     const nameEl = $("#tgName");
     const imgEl = null;
 
-    const shownName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
-    const tgName = [(user && user.first_name), (user && user.last_name)].filter(Boolean).join(" ").trim();
+    const shownName = [p.first_name].filter(Boolean).join(" ").trim();
+    const tgName = [(user && user.first_name)].filter(Boolean).join(" ").trim();
     if (nameEl) nameEl.textContent = shownName || tgName || "Пользователь";
 
     if (phoneValue) phoneValue.textContent = (p.phone || "").trim() || "—";
@@ -1345,7 +1308,7 @@ function buildServiceCardsByKeys(keys){
   const regCitySeg = $("#regCitySeg");
   const regGenderSeg = null; // removed
   const regFirstName = $("#regFirstName");
-  const regLastName = $("#regLastName");
+  const regLastName = null; // removed (no last name)
   const regPhone = $("#regPhone");
   const regAvatarGrid = $("#regAvatarGrid");
   const regAvatarFile = $("#regAvatarFile");
@@ -1359,7 +1322,7 @@ function buildServiceCardsByKeys(keys){
   const profCitySeg = $("#profCitySeg");
   const profGenderSeg = null; // removed
   const profFirstName = $("#profFirstName");
-  const profLastName = $("#profLastName");
+  const profLastName = null; // removed (no last name)
   const profPhone = $("#profPhone");
   const profSaveBtn = $("#profSaveBtn");
 
@@ -1368,7 +1331,12 @@ function buildServiceCardsByKeys(keys){
   function loadProfile() {
     try {
       const raw = localStorage.getItem(LS_PROFILE);
-      return raw ? JSON.parse(raw) : null;
+      const obj = raw ? JSON.parse(raw) : null;
+      // Удалили поддержку фамилии: если старые данные есть — игнорируем и чистим.
+      if (obj && typeof obj === "object" && obj.last_name != null) {
+        try { delete obj.last_name; } catch (_) {}
+      }
+      return obj;
     } catch (_) {
       return null;
     }
@@ -1487,7 +1455,7 @@ function buildServiceCardsByKeys(keys){
   applyPhoneAutoprefix(profPhone);
 
   // реактивная валидация профиля
-  [profFirstName, profLastName, profPhone].forEach(function(el){ if (el && el.addEventListener) el.addEventListener("input", syncProfSaveState); });
+  [profFirstName, profPhone].forEach(function(el){ if (el && el.addEventListener) el.addEventListener("input", syncProfSaveState); });
 if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.addEventListener("click", syncProfSaveState);
     
   // --- reset через URL: ?reset=1
@@ -1532,8 +1500,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
           saveProfile({
   city: rp.city,
   first_name: rp.first_name,
-  last_name: rp.last_name || "",
-  phone: rp.phone,
+phone: rp.phone,
   promo_code: rp.promo_code || null,
   promo_percent: rp.promo_percent || null,
   promo_used: !!rp.promo_used,
@@ -1563,8 +1530,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
     $$("#profCitySeg .segBtn").forEach(b => b.classList.toggle("active", (b.dataset.city || "") === city));
 
     if (profFirstName) profFirstName.value = p.first_name || "";
-    if (profLastName) profLastName.value = p.last_name || "";
-    if (profPhone) profPhone.value = p.phone || "";  };
+if (profPhone) profPhone.value = p.phone || "";  };
 
   // --- профиль: открыть модалку настроек
   if (editProfileBtn) editProfileBtn.addEventListener("click", () => {
@@ -1592,8 +1558,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
     try {
       const city = selectedCity;
             const first = ((regFirstName && regFirstName.value) || "").trim();
-      const last = ((regLastName && regLastName.value) || "").trim();
-      const phone = ((regPhone && regPhone.value) || "").trim();
+const phone = ((regPhone && regPhone.value) || "").trim();
 
       // По ТЗ: без красных ошибок. Просто не даём отправить.
       if (!city || !first || !isValidRuPhone(phone)) return;
@@ -1605,8 +1570,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       await supaEnqueue("register", {
         city,
         first_name: first,
-        last_name: last || null,
-        phone,
+phone,
         promo_percent: GIFT_PERCENT,
         promo_code,
       });
@@ -1615,8 +1579,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       saveProfile({
         city,
         first_name: first,
-        last_name: last || "",
-        phone,
+phone,
         promo_code,
         promo_percent: GIFT_PERCENT,
         promo_used: false,
@@ -1650,8 +1613,7 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       const city = (cityBtn && cityBtn.dataset ? cityBtn && cityBtn.dataset.city : undefined) || p.city || "";
 
       const first = ((profFirstName && profFirstName.value) || "").trim();
-      const last = ((profLastName && profLastName.value) || "").trim();
-      const phone = normalizePhone((profPhone && profPhone.value) || "");
+const phone = normalizePhone((profPhone && profPhone.value) || "");
 
       // валидация телефона — как в регистрации
       if (!city || !first || !isValidRuPhone(phone)) {
@@ -1662,16 +1624,14 @@ if (profCitySeg  && profCitySeg && profCitySeg.addEventListener) profCitySeg.add
       await supaEnqueue("profile_update", {
         city,
         first_name: first,
-        last_name: last || null,
-        phone,
+phone,
       });
 
       saveProfile({
         ...p,
         city,
         first_name: first,
-        last_name: last,
-        phone,
+phone,
       });
 
       hydrateProfile();
@@ -3879,22 +3839,8 @@ if (estimateSubmitBtn) estimateSubmitBtn.addEventListener("click", async () => {
 });
   
   syncEstimate();
-
-  // ---------------- HEADER: logo goes behind blocks + fades a bit on scroll ----------------
-  // Throttled (rAF) scroll handler for 60fps
-  let _logoTicking = false;
-  const headerLogoFade = () => {
-    _logoTicking = false;
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    document.body.classList.toggle("logoBehind", y > 12);
-  };
-  const onScroll = () => {
-    if (_logoTicking) return;
-    _logoTicking = true;
-    requestAnimationFrame(headerLogoFade);
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  headerLogoFade();
+  // ---------------- HEADER ----------------
+  // По ТЗ: без анимаций/сдвигов. Скролл‑эффекты отключены.
   
   // ---------------- INIT ----------------
   // Важно: инициализация должна быть "неубиваемой" — одна ошибка не должна ломать весь мини‑апп.
@@ -3902,38 +3848,6 @@ if (estimateSubmitBtn) estimateSubmitBtn.addEventListener("click", async () => {
   // помечаем первую страницу активной для CSS-переходов
   try { var _pHome = document.querySelector('.page[data-page="home"]'); if (_pHome && _pHome.classList) _pHome.classList.add('pageActive'); } catch (e) { _showFatal(e); }
   try { hydrateProfile(); } catch (e) { _showFatal(e); }
-  try { runHomeIntro(); } catch (e) { /* интро не критично */ }
-  try { initRevealObserver(); } catch (e) { _showFatal(e); }
 	try { renderChat(); } catch (e) { _showFatal(e); }
 
 })();
-    const applyCaseImages = () => {
-      document.querySelectorAll('img.reviewImg[data-case]').forEach((img) => {
-        const key = String(img.getAttribute('data-case') || '').trim();
-        if (key === 'do1') img.src = 'do1.png';
-        else if (key === 'posle1') img.src = 'posle1.png';
-      });
-    };
-
-    const initCasesProgress = () => {
-      const track = document.getElementById('casesTrack');
-      const bar = document.getElementById('casesProgressBar');
-      if (!track || !bar) return;
-
-      const update = () => {
-        const max = (track.scrollWidth - track.clientWidth);
-        const pct = max <= 0 ? 0 : Math.max(0, Math.min(1, track.scrollLeft / max));
-        bar.style.width = `${Math.round(pct * 100)}%`;
-      };
-
-      let raf = 0;
-      const onScroll = () => {
-        if (raf) return;
-        raf = requestAnimationFrame(() => { raf = 0; update(); });
-      };
-      track.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll, { passive: true });
-      update();
-    };
-
-
