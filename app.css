@@ -741,56 +741,138 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .accItem.open .accBody{max-height:140px; opacity:1; padding:0 12px 12px;}
 .accItem.open .accIco{transform: rotate(180deg);} 
 
-/* ===== Reviews: full-bleed, no crop, crisp text ===== */
-.aboutReviewsCard{ padding: 14px 0 10px; } /* убрали боковые паддинги у карусели */
-.aboutReviewsTitle{ padding: 0 14px; }
-.aboutReviewsDots{ padding: 10px 0 2px; }
 
-/* full-bleed wrapper */
+/* ===== REVIEWS (full-bleed carousel) ===== */
+.reviewsSection{
+  margin-top: 12px;
+}
+
+.reviewsSection .aboutTitle{ margin: 0 0 10px 0; }
+
+/* Заголовок "Отзывы" — идентичен FAQ (используем тот же класс .aboutTitle в HTML) */
+
+/*
+  Контейнер отзывов:
+  - фон может "уходить" за края (псевдо-элемент)
+  - контент (картинки) строго в пределах экрана пользователя (100vw) с микрозазором
+  - ничего не должно перекрывать системный скроллбар страницы
+*/
 .reviewsBleed{
+  position: relative;
+  z-index: 0;
+
+  /* ровно ширина экрана */
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+
+  /* без скруглений (как просила) */
+  border-radius: 0;
+  border: 0;
+
+  /* аккуратные отступы вокруг трека/полоски */
+  padding: 10px 0 8px;
+  overflow: visible;
 }
 
-/* track */
+/* ВЫТЯНУТЫЙ фон, который уходит за экран (но НЕ трогает контент) */
+.reviewsBleed::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:-140px;
+  right:-140px;
+  background: transparent;
+  z-index:-1;
+  pointer-events:none;
+}
+
+/* 1) цвет блока в тёмной теме */
+html[data-theme="dark"] .reviewsBleed::before{
+  background: #18181a;
+}
+
+/* track: горизонтальная лента, без внутренних скроллбаров */
 .reviewsTrack{
-  border: 0;
-  border-radius: 0;
   display:flex;
-  gap: 0;
   overflow-x:auto;
   overflow-y:hidden;
+  overscroll-behavior-x: contain;
   scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
+  -webkit-overflow-scrolling:touch;
 
-/* slide = ровно экран по ширине */
-.reviewsTrack .reviewSlide{
+  padding: 0;
+  gap: 0;
+
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.reviewsTrack::-webkit-scrollbar{ height: 0; }
+
+/* slide = ровно один экран */
+.reviewSlide{
   flex: 0 0 100vw;
-  scroll-snap-align: center;
+  scroll-snap-align: start;
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+
+  min-height: 0;
+  border: 0;
   border-radius: 0;
-  overflow: hidden;
-  position: relative;
-
-  /* НЕ огромная высота */
-  height: clamp(260px, 56vh, 520px);
-
-  background: color-mix(in oklab, var(--glass) 92%, transparent);
+  background: transparent;
 }
 
-/* image: no crop, no blur */
+/*
+  Картинка:
+  - строго в пределах экрана (не уходит за края)
+  - почти "от края до края" (микро-отступ 1px с каждой стороны)
+  - без сильного кропа: показываем целиком по ширине, высота свободная
+*/
 .reviewImg{
-  width: 100%;
-  height: 100%;
   display:block;
+  width: calc(100vw - 2px);
+  max-width: calc(100vw - 2px);
+  height: auto;
 
-  object-fit: contain;          /* ключ: не режем текст */
-  object-position: center;
-
+  object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
-  transform: translateZ(0);
 }
+
+/* progress bar (theme-aware) */
+.reviewsProgress{
+  height: 3px;
+  border-radius: 999px;
+  margin: 8px 14px 0;
+  background: rgba(0,0,0,.14);
+  overflow: hidden;
+}
+html[data-theme="dark"] .reviewsProgress{ background: rgba(255,255,255,.14); }
+
+.reviewsProgressFill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--lime);
+}
+
+/* dots: небольшой отступ под ползунком */
+.dots{
+  display:flex;
+  gap: 6px;
+  justify-content:center;
+  padding: 8px 0 0;
+}
+.dot{
+  width: 6px;
+  height: 6px;
+  border-radius:999px;
+  background: rgba(0,0,0,.25);
+}
+html[data-theme="dark"] .dot{ background: rgba(255,255,255,.25); }
+.dot.active{ background: var(--lime); }
 
 
 .story{margin-top:12px;}
@@ -801,85 +883,14 @@ html[data-theme="dark"] .accItem{background: rgba(15,17,21,.55);}
 .storyImg{border-radius:16px; border:1px dashed var(--hair); min-height:140px; display:flex; align-items:center; justify-content:center;}
 .storySub{opacity:.7; margin-top:10px; font-size:13px;}
 
-/* ====== BEFORE/AFTER ====== */
-.baStory{
-  margin-top:12px;
-}
-
-/* когда пользователь начал свайпать — стрелка пропадает */
-.baStory.baStarted .baSwipeHint{
-  opacity: 0;
-  transform: translateY(-50%) scale(.92);
-  transition: opacity 420ms ease, transform 420ms ease;
-}
-
-/* каждая секция = "слайд" примерно на 1 экран + чуть запас для входа/выхода */
-.baSection{
-  height: 200vh; /* можно 180vh, но 200 даёт "паузы" в центре красивее */
-}
-
-/* последний кейс: не даём "вытолкнуть" его скроллом вниз */
-.baSection:last-child{
-  height: 100vh; /* или 110vh если хочешь микро-запас */
-}
-
-
-:root{
-  /* безопасный отступ сверху под заголовок + кнопки "О НАС / ДО ПОСЛЕ" */
-  --ba-safe-top: 76px; /* подстрой 64–92px по вкусу */
-}
-
-/* ключ: держим пару по центру, но чуть ниже, чтобы не перекрывать верх */
-.baSticky{
-  position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 14px;
-}
-
-/* свайп-хинт: только анимированная стрелка вниз, без текста */
-.baSwipeHint{
-  position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
-  display:flex;
-  justify-content:center;
-  pointer-events:none;
-  z-index: 3;
-  transition: opacity 320ms ease, transform 320ms ease;
-}
-.baArrow{
-  width: 22px;
-  height: 22px;
-  border-right: 3px solid rgba(0,0,0,.45);
-  border-bottom: 3px solid rgba(0,0,0,.45);
-  transform: rotate(45deg);
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.12));
-  animation: baArrow 1.15s ease-in-out infinite;
-}
-html[data-theme="dark"] .baArrow{
-  border-right-color: rgba(255,255,255,.45);
-  border-bottom-color: rgba(255,255,255,.45);
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
-}
-@keyframes baArrow{
-  0%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
-  50%{ transform: translate3d(0,6px,0) rotate(45deg); opacity:.7; }
-  100%{ transform: translate3d(0,-6px,0) rotate(45deg); opacity:.28; }
-}
-
-/* пара "до/после" */
-.baPair{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
+/* ====== BEFORE/AFTER placeholders (10 cases) ====== */
+.baStory{margin-top:12px;}
+.baSection{height:160vh;}
+.baSticky{position:sticky; top:12px;}
+.baPair{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 @media (max-width:420px){
   .baPair{grid-template-columns:1fr;}
 }
-
-/* плейсхолдер/картинка */
 .baPh{
   border-radius: 18px;
   border: 1px dashed var(--hair);
@@ -891,44 +902,18 @@ html[data-theme="dark"] .baArrow{
   letter-spacing: .22em;
   text-indent: .22em;
   opacity:.92;
-
-  /* важно для будущих реальных картинок */
-  background: rgba(255,255,255,.35);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
   will-change: transform, opacity;
   transform: translate3d(0,0,0);
+  background: rgba(255,255,255,.35);
 }
-
 html[data-theme="dark"] .baPh{ background: rgba(15,17,21,.55); }
-
-/* если подставили реальную картинку — текст ДО/ПОСЛЕ убираем */
-.baPh.hasImg span{ opacity: 0; }
-
-.baBefore,
-.baAfter{
-  transition: transform 900ms cubic-bezier(0.22,1,0.36,1),
-              opacity   720ms cubic-bezier(0.22,1,0.36,1);
-}
+.baPh span{font-size:20px; opacity:.78;}
 
 /* entrance from edges */
 .baBefore{ transform: translate3d(-16vw,0,0); opacity:0; }
 .baAfter { transform: translate3d( 16vw,0,0); opacity:0; }
-
-/* активный кейс = ровно по центру */
 .baSection.baActive .baBefore,
-.baSection.baActive .baAfter{
-  transform: translate3d(0,0,0);
-  opacity:1;
-}
-
-/* до старта свайпа — ничего не показываем (только стрелка) */
-.baStory:not(.baStarted) .baSection .baBefore,
-.baStory:not(.baStarted) .baSection .baAfter{
-  opacity: 0;
-}
+.baSection.baActive .baAfter{ transform: translate3d(0,0,0); opacity:1; transition: transform 680ms cubic-bezier(0.25,1,0.33,1), opacity 520ms cubic-bezier(0.25,1,0.33,1); }
 
 /* --------- Map modal --------- */
 .modalCardWide{width: min(520px, calc(100vw - 28px));}
@@ -1276,18 +1261,6 @@ html[data-theme="dark"] .rateStar{ background: rgba(255,255,255,.06); }
   box-shadow: var(--shadow);
 }
 html[data-theme="dark"] .sheetCard{ background:#0f1115; }
-
-/* ===== Sheet transitions (like modals) ===== */
-.sheet .sheetCard{
-  opacity: 0;
-  transform: translate3d(0, 14px, 0) scale(.985);
-  transition: opacity 240ms cubic-bezier(0.22,1,0.36,1),
-              transform 240ms cubic-bezier(0.22,1,0.36,1);
-}
-.sheet.show .sheetCard{
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-}
 
 .sheetHead{
   display:flex;
@@ -1955,28 +1928,6 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
 .ctaMiniIco{font-size: 20px; line-height: 1;}
 .ctaMiniTxt{font-size: 14px;}
 
-/* ===== Page intro (like Home buttons) ===== */
-.pageIntro{
-  opacity: 0;
-  will-change: transform, opacity;
-  transform: translate3d(0,0,0);
-  transition:
-    transform 560ms cubic-bezier(0.22,1,0.36,1),
-    opacity   560ms cubic-bezier(0.22,1,0.36,1);
-}
-.pageIntro.in{ opacity: 1; transform: translate3d(0,0,0); }
-
-.pageIntro[data-intro="left"]  { transform: translate3d(-18vw, 0, 0); }
-.pageIntro[data-intro="right"] { transform: translate3d( 18vw, 0, 0); }
-.pageIntro[data-intro="up"]    { transform: translate3d(0, 12px, 0); }
-
-/* Чуть медленнее “в процессе скролла” (reveal) */
-.reveal, [data-reveal]{
-  transition:
-    opacity 820ms cubic-bezier(0.25,1,0.33,1),
-    transform 820ms cubic-bezier(0.25,1,0.33,1);
-}
-
 /* animation states */
 .homeAnim{
   opacity: 0;
@@ -2013,88 +1964,158 @@ html[data-theme="dark"] .ctaMini::before{ opacity: .52; }
   max-width: 420px;
 }
 
-/* Courier time inputs: never overflow, slightly smaller */
-#crDate, #crTime{
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: 12px 12px !important;
-  font-size: 15px !important;
-  line-height: 1.2;
-}
 
 /* =========================
-   REVIEWS — как ты просишь
+   FIXES (About tabs + Reviews)
    ========================= */
 
-/* 1) сама карточка — тёмная, без скруглений, края за экран */
-.aboutReviewsCard{
-  background: #1c1c1c !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-
-  /* делаем карточку шире экрана, чтобы её боковые края не было видно */
-  width: 112vw;
-  margin-left: calc(50% - 56vw);
-  margin-right: calc(50% - 56vw);
-
-  /* вертикальные отступы */
-  padding: 10px 0 10px;
+/* 1) About tabs must highlight (same as Services) in BOTH themes */
+.segWrap .aboutTabs.seg{
+  padding: 0;
+  gap: 8px;
+}
+.segWrap .aboutTabs .segBtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+}
+html[data-theme="light"] .segWrap .aboutTabs .segBtn{
+  border-color: rgba(0,0,0,.08);
+  background: rgba(0,0,0,.03);
+}
+.segWrap .aboutTabs .segBtn.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
 }
 
-/* 2) заголовок: чуть больше воздуха до картинки */
-.aboutReviewsTitle{
-  padding: 0 14px;
-  margin-bottom: 14px;  /* больше от заголовка до картинки */
+/* 2) Reviews: full-bleed (edge-to-edge) + smooth snap slider */
+.reviewsSection{
+  position: relative;
+  margin-top: 12px;
+
+  /* full width of viewport, ignoring parent padding */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+
+  border-radius: 0;
+  border: 0;
+
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+
+  /* label + content spacing */
+  padding: 16px 0 12px;
+  overflow: hidden;
 }
 
-/* 3) обёртка: тоже на всю ширину карточки */
-.reviewsBleed{
+.reviewsLabel{
+  position: absolute;
+  top: 10px;
+  left: var(--pad);
+  z-index: 2;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-weight: 950;
+  font-size: 13px;
+}
+
+.reviewsSection .reviewsBleed{
+  margin-top: 28px;
+}
+
+/* Slider track: smooth, snap, no lag */
+.reviewsSection .reviewsTrack{
+  display:flex;
+  gap: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+
+  /* edge-to-edge images */
+  padding: 0;
+  margin: 0;
+
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  will-change: scroll-position;
+}
+.reviewsSection .reviewsTrack::-webkit-scrollbar{ display:none; }
+
+/* Each slide takes the full screen width */
+.reviewsSection .reviewSlide{
+  flex: 0 0 100%;
+  width: 100vw;
+  scroll-snap-align: start;
+
+  height: clamp(320px, 56vh, 520px);
+
+  display:flex;
+  align-items: stretch;
+  justify-content: stretch;
+
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+/* Image: fill the whole slide without stretching (crop if needed) */
+.reviewsSection .reviewImg{
   width: 100%;
-}
+  height: 100%;
+  object-fit: cover;
 
-/* 4) трек: без рамок/скруглений */
-.reviewsTrack{
-  border: 0 !important;
-  border-radius: 0 !important;
-}
-
-/* 5) “рамка” слайда: НЕ гигантская, подстраивается под картинку */
-.reviewSlide{
-  flex: 0 0 100vw;
-  scroll-snap-align: center;
-  border-radius: 0 !important;
-  overflow: visible;          /* важно: не режем */
-  background: transparent !important;
-
-  /* вместо огромной фикс-высоты — нормальная “под картинку” */
-  height: auto !important;
-  padding: 0 0 10px;          /* небольшой отступ снизу до низа блока */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 6) сама картинка: чётко, не режется, размер адекватный */
-.reviewImg{
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-
-  /* чтобы не было “слишком высокой рамки” — ограничиваем максимум */
-  max-height: min(58vh, 520px);
-
-  object-fit: contain;
-  object-position: center;
-
-  image-rendering: -webkit-optimize-contrast;
+  display:block;
   transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
 }
 
-/* 7) точки снизу — компактно */
-.aboutReviewsDots{
-  padding: 6px 0 0;
+/* Custom progress "ползунок" (theme-aware) */
+.reviewsSection .reviewsProgress{
+  margin: 10px var(--pad) 0;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15,17,21,.12);
+  overflow: hidden;
+}
+html[data-theme="dark"] .reviewsSection .reviewsProgress{
+  background: rgba(243,245,247,.10);
 }
 
+.reviewsSection .reviewsProgressFill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(15,17,21,.38);
+  transition: width 80ms linear;
+}
+html[data-theme="dark"] .reviewsSection .reviewsProgressFill{
+  background: rgba(243,245,247,.28);
+}
+
+/* Dots stay readable on full-bleed */
+.reviewsSection + .dots,
+.reviewsSection .dots{
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
+/* ===== FIX: About tabs active state must match Services in BOTH themes ===== */
+.aboutTabs .segBtn.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+  color: var(--txt) !important;
+}
+/* Buttons may carry .glass class; ensure it doesn't override active */
+.aboutTabs .segBtn.glass.active{
+  border-color: var(--accentBorder) !important;
+  background: var(--accentBg) !important;
+}
+
+/* ===== FIX: Before/After intro overlay should fully cover UI until scroll ===== */
+body.ba-mode .baOverlay{ display:flex; }
+body.ba-mode:not(.ba-scrolled) #aboutPanelCases .baScroller{ opacity: 0; pointer-events:none; }
+body.ba-mode.ba-scrolled #aboutPanelCases .baScroller{ opacity: 1; pointer-events:auto; transition: opacity 220ms ease; }

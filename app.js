@@ -216,30 +216,32 @@ return true;
     });
   };
 
-  // Page intro animation (like Home CTAs) for any page
-  const runPageIntro = (page) => {
-    const root = document.querySelector(`.page[data-page="${page}"]`);
-    if (!root || root.hidden) return;
-  
-    const nodes = Array.from(root.querySelectorAll('.pageIntro'));
-    if (!nodes.length) return;
-  
-    nodes.forEach(n => n.classList.remove('in'));
-    // reflow to replay
-    // eslint-disable-next-line no-unused-expressions
-    root.offsetHeight;
-  
-    requestAnimationFrame(() => {
-      nodes.forEach((n, i) => {
-        // ступенчатая задержка как на Home
-        n.style.transitionDelay = `${40 + i * 50}ms`;
-        n.classList.add('in');
-      });
+  const html = document.documentElement;
+
+  // ---------------- Reviews helpers (theme-aware images) ----------------
+  const reviewImgSrc = (n, mode) => {
+    const nn = Number(n) || 0;
+    const m = (mode === "dark") ? "b" : "l";
+    return `o${nn}${m}.png`;
+  };
+
+  const updateReviewImages = (mode) => {
+    const cur = mode || (html.getAttribute("data-theme") || "light");
+    document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
+      const n = img.getAttribute("data-review");
+      const src = reviewImgSrc(n, cur);
+      if (img.getAttribute("src") !== src) img.setAttribute("src", src);
     });
   };
 
-    
-  const html = document.documentElement;
+  const updateReviewsProgress = () => {
+    const track = document.getElementById("reviewsTrack");
+    const fill = document.getElementById("reviewsProgressFill");
+    if (!track || !fill) return;
+    const max = Math.max(1, track.scrollWidth - track.clientWidth);
+    const p = Math.max(0, Math.min(1, track.scrollLeft / max));
+    fill.style.width = `${Math.round(p * 100)}%`;
+  };
 
   // sendData bridge
   const sendToBot = (cmd, payload = {}) => {
@@ -435,7 +437,10 @@ const closeModalEl = (el) => {
     html.setAttribute("data-theme", mode);
     localStorage.setItem("shetka_theme", mode);
 
-    if (tg) {
+    
+    // update theme-dependent review images instantly
+    updateReviewImages(mode);
+if (tg) {
       try {
         tg.setHeaderColor(mode === "dark" ? "#0f1115" : "#ffffff");
         tg.setBackgroundColor(mode === "dark" ? "#0b0c0f" : "#f6f7f8");
@@ -456,10 +461,7 @@ const closeModalEl = (el) => {
     syncThemeSwitch();
     // pattern image depends on theme
     setPatternEnabled(getPatternEnabled());
-
-    // обновляем отзывы под тему
-    try { window.__SHETKA_APPLY_REVIEW_IMAGES?.(); } catch (_) {}
-haptic("light");
+    haptic("light");
   };
 
   // ---------------- PATTERN ----------------
@@ -499,19 +501,7 @@ haptic("light");
 
   const showPage = (page, { push = true } = {}) => {
     if (page === currentPage) {
-      // каждый переход/тап по вкладке начинается с начала страницы + перерисовка
-      try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch (_) { try { window.scrollTo(0, 0); } catch(_) {} }
-
-      // обновляем контент текущей страницы
-      if (page === "home") { try { hydrateProfile(); } catch(_) {} try { runHomeIntro(); } catch(_) {} }
-      if (page === "orders") { try { renderOrders(); } catch(_) {} }
-      if (page === "services") { try { renderServices(); } catch(_) {} }
-      if (page === "about") { try { initAboutOnce(); } catch(_) {} try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
-      if (page === "photo_estimates") { try { peRefreshAll(true).catch(() => {}); } catch(_) {} }
-      if (page === "courier_requests") { try { crRefreshAll(true).catch(() => {}); } catch(_) {} }
-
-      try { runPageIntro(page); } catch(_) {}
-      
+      if (page === "home") { try { runHomeIntro(); } catch(_) {} }
       return;
     }
 
@@ -533,7 +523,6 @@ haptic("light");
     });
 
     currentPage = page;
-    try { runPageIntro(page); } catch(_) {}
     if (push) pageStack.push(page);
     setTabActive(page);
 
@@ -554,7 +543,7 @@ haptic("light");
     }
     if (page === "orders") renderOrders();
     if (page === "services") renderServices();
-    if (page === "about") { initAboutOnce(); try { window.__SHETKA_REFRESH_ABOUT?.(); } catch(_) {} }
+    if (page === "about") initAboutOnce();
     if (page === "photo_estimates") {
       // при заходе обновляем и рисуем
       peRefreshAll(true).catch(() => {});
@@ -599,8 +588,15 @@ haptic("light");
   });
   $$ ("[data-back]").forEach(btn => btn.addEventListener("click", goBack));
 
-  // ---------------- ABOUT (segmented + scroll storytelling) ----------------
+  
+  // ---------------- ABOUT (segmented + reviews + Before/After) ----------------
+  // ВАЖНО: здесь нельзя ломать навигацию. Мы только:
+  // 1) переключаем вкладки "О нас" / "До/После"
+  // 2) делаем отзывы (dots + progress) и подстановку картинок по теме
+  // 3) запускаем scroll-driven "До/После" только когда открыт cases
+
   let _aboutInited = false;
+
   function initAboutOnce(){
     if (_aboutInited) return;
     _aboutInited = true;
@@ -609,152 +605,319 @@ haptic("light");
     const pAbout = document.getElementById('aboutPanelAbout');
     const pCases = document.getElementById('aboutPanelCases');
 
-    // ====== BEFORE/AFTER ======
-    let _baInited = false;
-    const initBaStory = () => {
-      if (_baInited) return;
-      _baInited = true;
+    // --- Reviews wiring (20 images, theme-aware) ---
+    const track = document.getElementById('reviewsTrack');
+    const dotsWrap = document.getElementById('reviewsDots');
 
-      const story = document.querySelector('.baStory');
-      const hint = document.getElementById('baSwipeHint');
-      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      if (!story || !sections.length) return;
+    const buildReviewsDotsOnce = () => {
+      if (!track || !dotsWrap) return;
+      const slides = Array.from(track.querySelectorAll('.reviewSlide'));
+      if (!slides.length) return;
 
-      // Триггер старта: стрелка остаётся, пока полностью не уйдут за экран
-      // заголовок "О нас..." + кнопки "О нас / До‑после"
-      const pageHead = document.querySelector('.page[data-page="about"] .pageHead');
-      const aboutSeg = document.getElementById('aboutSeg');
+      // prevent duplicates
+      if (dotsWrap.dataset.built === "1") return;
+      dotsWrap.dataset.built = "1";
 
-      let started = false;
-      let current = 0;
-      let raf = 0;
+      dotsWrap.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
 
-      const setActive = (idx) => {
-        const i = Math.max(0, Math.min(sections.length - 1, idx | 0));
-        current = i;
-        sections.forEach((s, k) => s.classList.toggle('baActive', k === i));
+      const setDot = (i) => {
+        dotsWrap.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
       };
 
-      const resetToHint = () => {
-        started = false;
-        story.classList.remove('baStarted');
-        if (hint) {
-          hint.style.opacity = "1";
-          hint.style.transform = "translateY(-50%)";
-        }
-        if (hint) hint.setAttribute('aria-hidden', 'false');
-        // снимаем активность — плейсхолдеры уедут в бок (CSS transition)
-        sections.forEach(s => s.classList.remove('baActive'));
+      const getActiveIndex = () => {
+        const center = track.scrollLeft + (track.clientWidth / 2);
+        let bestI = 0;
+        let bestD = Infinity;
+        slides.forEach((s, i) => {
+          const sc = s.offsetLeft + (s.clientWidth / 2);
+          const d = Math.abs(sc - center);
+          if (d < bestD) { bestD = d; bestI = i; }
+        });
+        return bestI;
       };
 
-      const startStory = () => {
-        if (started) return;
-        started = true;
-        story.classList.add('baStarted');
-        if (hint) hint.setAttribute('aria-hidden', 'true');
-        setActive(0);
+      const sync = () => {
+        setDot(getActiveIndex());
+        updateReviewsProgress();
       };
 
-      const canStartNow = () => {
-        const headBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
-        const segBottom  = aboutSeg ? aboutSeg.getBoundingClientRect().bottom : 0;
-      
-        return headBottom <= -28 && segBottom <= -28;
-      };
-
-      const pickIndexByCenter = () => {
-        const vh = window.innerHeight || 1;
-        const centerY = vh * 0.5;
-
-        let bestIdx = 0;
-        let bestDist = Infinity;
-
-        for (let i = 0; i < sections.length; i++) {
-          const r = sections[i].getBoundingClientRect();
-          // игнорируем слишком далёкие, но даём небольшой запас
-          if (r.bottom < -vh * 0.6 || r.top > vh * 1.6) continue;
-          const secCenter = r.top + r.height * 0.5;
-          const dist = Math.abs(secCenter - centerY);
-          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
-        }
-
-        // фиксируем последний, когда центр экрана прошёл центр последней секции
-        const last = sections[sections.length - 1];
-        if (last) {
-          const lr = last.getBoundingClientRect();
-          const lastCenter = lr.top + lr.height * 0.5;
-          if (centerY >= lastCenter) return sections.length - 1;
-        }
-
-        return bestIdx;
-      };
-
+      // rAF-throttle to avoid jank on scroll (especially iOS)
+      let _raf = 0;
       const onScroll = () => {
-        if (raf) return;
-        raf = requestAnimationFrame(() => {
-          raf = 0;
-
-          // До старта держим стрелку, пока не ушли заголовок и кнопки
-          if (!started) {
-            if (canStartNow()) startStory();
-            else { resetToHint(); return; }
-          } else {
-            // Если юзер прокрутил обратно вверх и кнопки снова в кадре —
-            // плейсхолдеры уезжают в бок и возвращается стрелка.
-            if (!canStartNow()) { resetToHint(); return; }
-          }
-
-          const next = pickIndexByCenter();
-          if (next !== current) setActive(next);
+        if (_raf) return;
+        _raf = requestAnimationFrame(() => {
+          _raf = 0;
+          sync();
         });
       };
 
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('touchmove', onScroll, { passive: true });
-      
-      // init
-      resetToHint();
-      onScroll();
+      track.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+
+      // Desktop: wheel (vertical) scrolls the carousel horizontally,
+      // but ONLY while there is horizontal space to scroll.
+      // When we are at the edges — let the page scroll normally (so right scrollbar stays usable).
+      try {
+        track.addEventListener('wheel', (ev) => {
+          const dx = Math.abs(ev.deltaX || 0);
+          const dy = Math.abs(ev.deltaY || 0);
+          if (dy <= dx) return; // user is already doing horizontal gesture
+
+          const max = Math.max(0, track.scrollWidth - track.clientWidth);
+          if (max <= 0) return;
+
+          const atStart = track.scrollLeft <= 0;
+          const atEnd = track.scrollLeft >= (max - 1);
+
+          // allow page scroll at edges
+          if ((ev.deltaY < 0 && atStart) || (ev.deltaY > 0 && atEnd)) return;
+
+          ev.preventDefault();
+          track.scrollLeft += ev.deltaY;
+        }, { passive: false });
+      } catch (_) {}
+
+      // Desktop: drag with mouse (like grabbing the carousel)
+      try {
+        let dragging = false;
+        let startX = 0;
+        let startLeft = 0;
+
+        const down = (ev) => {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          dragging = true;
+          startX = ev.clientX;
+          startLeft = track.scrollLeft;
+          try { track.setPointerCapture(ev.pointerId); } catch (_) {}
+        };
+        const move = (ev) => {
+          if (!dragging) return;
+          track.scrollLeft = startLeft - (ev.clientX - startX);
+        };
+        const up = (ev) => {
+          if (!dragging) return;
+          dragging = false;
+          try { track.releasePointerCapture(ev.pointerId); } catch (_) {}
+        };
+
+        track.addEventListener('pointerdown', down, { passive: true });
+        track.addEventListener('pointermove', move, { passive: true });
+        track.addEventListener('pointerup', up, { passive: true });
+        track.addEventListener('pointercancel', up, { passive: true });
+      } catch (_) {}
+
+
+      dotsWrap.addEventListener('click', (e) => {
+        const dot = e.target?.closest?.('[data-dot]');
+        if (!dot) return;
+        const i = Number(dot.getAttribute('data-dot') || 0);
+        const s = slides[i];
+        if (!s) return;
+        track.scrollTo({ left: s.offsetLeft, behavior: 'smooth' });
+        haptic('light');
+      });
+
+      requestAnimationFrame(sync);
     };
 
-    const setAboutTab = (key) => {
-      const k = String(key || 'about');
-      seg?.querySelectorAll('.segBtn').forEach(b => b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k));
-      if (pAbout) pAbout.hidden = (k !== 'about');
-      if (pCases) pCases.hidden = (k !== 'cases');
-      try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0,0); } catch(_){} }
-      initRevealObserver();
-      if (k === 'cases') {
-        applyBaImages();
-        initBaStory();
-      }
+    // --- Before/After scroll engine ---
+    const BA_COUNT = 10;
+    let _baInited = false;
+    let _baRaf = 0;
+    let _baScenes = [];
+    let _baMaxScroll = null;
+    let _baClampRaf = 0;
+
+    const baEase = (t) => {
+      const x = Math.max(0, Math.min(1, t));
+      return 1 - Math.pow(1 - x, 3);
     };
+    const baLerp = (a, b, t) => a + (b - a) * t;
 
-    // ====== BEFORE/AFTER assets (do1.png / posle1.png ...) ======
-    const BA_CASES = Array.from({ length: 6 }, (_, i) => ({
-      before: `do${i + 1}.png`,
-      after: `posle${i + 1}.png`,
-    }));
-
-    const applyBaImages = () => {
-      const sections = Array.from(document.querySelectorAll('.baSection[data-ba]'));
-      sections.forEach((sec, idx) => {
-        const pair = BA_CASES[idx];
-        if (!pair) return;
-
-        const beforeEl = sec.querySelector('.baBefore');
-        const afterEl  = sec.querySelector('.baAfter');
-        if (beforeEl) {
-          beforeEl.style.backgroundImage = `url('${pair.before}')`;
-          beforeEl.classList.add('hasImg');
-        }
-        if (afterEl) {
-          afterEl.style.backgroundImage = `url('${pair.after}')`;
-          afterEl.classList.add('hasImg');
-        }
+    const baSetSources = () => {
+      // doN.png / posleN.png
+      document.querySelectorAll('#aboutPanelCases img.baImg[data-ba-n]').forEach((img) => {
+        const n = Number(img.getAttribute('data-ba-n') || 0);
+        if (!n || n > BA_COUNT) return;
+        const side = img.getAttribute('data-ba-img');
+        const src = side === 'after' ? `posle${n}.png` : `do${n}.png`;
+        if (img.getAttribute('src') !== src) img.setAttribute('src', src);
       });
     };
 
+    const baCollectScenes = () => {
+      _baScenes = Array.from(document.querySelectorAll('#aboutPanelCases .baScene')).map((sec) => {
+        const before = sec.querySelector('.baBefore');
+        const after  = sec.querySelector('.baAfter');
+        return { sec, before, after, top: 0, last: sec.classList.contains('baLast') };
+      });
+    };
+
+    const baRefresh = () => {
+      if (!_baScenes.length) return;
+      const y = window.scrollY || 0;
+      _baScenes.forEach((s) => {
+        const r = s.sec.getBoundingClientRect();
+        s.top = r.top + y;
+      });
+
+      // hard-stop after last scene reaches center (no extra scroll)
+      const last = _baScenes.find(s => s.last) || _baScenes[_baScenes.length - 1];
+      const vh = window.innerHeight || 1;
+      _baMaxScroll = last ? (last.top + vh * 1) : null; // last progress max=1
+    };
+
+    const baSetScrolledFlag = () => {
+      const scrolled = (window.scrollY || 0) > 6;
+      document.body.classList.toggle('ba-scrolled', scrolled);
+    };
+
+    const baClampScroll = () => {
+      if (!_baInited || _baMaxScroll == null) return;
+      const y = window.scrollY || 0;
+      if (y <= _baMaxScroll + 1) return;
+      cancelAnimationFrame(_baClampRaf);
+      _baClampRaf = requestAnimationFrame(() => {
+        try { window.scrollTo(0, _baMaxScroll); } catch(_) {}
+      });
+    };
+
+    const baTick = () => {
+      if (!_baInited) return;
+
+      const vh = window.innerHeight || 1;
+      const y = window.scrollY || 0;
+
+      // dynamic "off-screen" distance so the cards ALWAYS start outside viewport on any device
+      // 0.62w works for most, but we also add half-card width for correctness.
+      const w = window.innerWidth || 360;
+      // card width is ~min(260px, 46%); approximate with 0.46w, capped at 260
+      const cardW = Math.min(260, w * 0.46);
+      const off = Math.min(w * 0.62 + cardW * 0.55, 520);
+
+      for (const s of _baScenes) {
+        if (!s.before || !s.after) continue;
+
+        const maxP = s.last ? 1 : 2;      // last: only enter and stay
+        const pRaw = (y - s.top) / vh;    // scene progress in screens
+        const p = Math.max(0, Math.min(maxP, pRaw));
+
+        // out of view far -> hard hide
+        if (pRaw < -0.5) {
+          s.before.style.transform = `translate3d(${-off}px,0,0)`;
+          s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+          s.before.style.opacity = '0';
+          s.after.style.opacity = '0';
+          continue;
+        }
+        if (pRaw > maxP + 0.6) {
+          if (s.last) {
+            s.before.style.transform = `translate3d(0,0,0)`;
+            s.after.style.transform  = `translate3d(0,0,0)`;
+            s.before.style.opacity = '1';
+            s.after.style.opacity = '1';
+          } else {
+            s.before.style.transform = `translate3d(${-off}px,0,0)`;
+            s.after.style.transform  = `translate3d(${ off}px,0,0)`;
+            s.before.style.opacity = '0';
+            s.after.style.opacity = '0';
+          }
+          continue;
+        }
+
+        // ENTER 0..1
+        const enter = baEase(Math.min(1, p));
+        let bx = baLerp(-off, 0, enter);
+        let ax = baLerp( off, 0, enter);
+
+        // opacity: faster appear, stays visible while centered
+        let op = Math.min(1, Math.max(0, p * 1.9));
+
+        // EXIT 1..2 (except last)
+        if (!s.last && p > 1) {
+          const exit = baEase(Math.min(1, p - 1));
+          bx = baLerp(0, -off, exit);
+          ax = baLerp(0,  off, exit);
+          op = 1 - Math.min(1, Math.max(0, (p - 1) * 1.45));
+        }
+
+        s.before.style.transform = `translate3d(${bx}px,0,0)`;
+        s.after.style.transform  = `translate3d(${ax}px,0,0)`;
+        s.before.style.opacity = String(op);
+        s.after.style.opacity  = String(op);
+      }
+
+      // clamp extra scroll after last pair fixed
+      baClampScroll();
+
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    let baStart = () => {};
+    let baStop  = () => {};
+
+    baStart = () => {
+      if (!pCases || pCases.hidden) return;
+      const scroller = document.getElementById('baScroller');
+      const overlay  = document.getElementById('baOverlay');
+      if (!scroller || !overlay) return;
+
+      _baInited = true;
+      document.body.classList.add('ba-mode');
+      document.body.classList.remove('ba-scrolled');
+
+      baCollectScenes();
+      baSetSources();
+      baRefresh();
+      baSetScrolledFlag();
+
+      window.addEventListener('scroll', baSetScrolledFlag, { passive: true });
+      window.addEventListener('scroll', baClampScroll, { passive: true });
+      window.addEventListener('resize', baRefresh, { passive: true });
+
+      cancelAnimationFrame(_baRaf);
+      _baRaf = requestAnimationFrame(baTick);
+    };
+
+    baStop = () => {
+      if (!_baInited) return;
+      _baInited = false;
+
+      cancelAnimationFrame(_baRaf);
+      _baRaf = 0;
+
+      window.removeEventListener('scroll', baSetScrolledFlag);
+      window.removeEventListener('scroll', baClampScroll);
+      window.removeEventListener('resize', baRefresh);
+
+      document.body.classList.remove('ba-mode', 'ba-scrolled');
+    };
+
+    // --- About tabs switch (MUST work) ---
+    const setAboutTab = (key) => {
+      const k = String(key || 'about');
+
+      seg?.querySelectorAll('.segBtn').forEach((b) => {
+        b.classList.toggle('active', (b.getAttribute('data-about-tab') || '') === k);
+      });
+
+      if (pAbout) pAbout.hidden = (k !== 'about');
+      if (pCases) pCases.hidden = (k !== 'cases');
+
+      // reset scroll so intro starts clean
+      try { window.scrollTo(0, 0); } catch(_) {}
+
+      initRevealObserver();
+
+      // keep reviews correct in both themes
+      updateReviewImages(html.getAttribute("data-theme") || "light");
+      buildReviewsDotsOnce();
+
+      if (k === 'cases') baStart();
+      else baStop();
+    };
+
+    // event delegation on the wrapper
     seg?.addEventListener('click', (e) => {
       const btn = e.target?.closest?.('button[data-about-tab]');
       if (!btn) return;
@@ -762,7 +925,7 @@ haptic("light");
       haptic('light');
     });
 
-    // FAQ accordion
+    // FAQ accordion (as was)
     document.querySelectorAll('[data-acc]')?.forEach((acc) => {
       acc.addEventListener('click', (e) => {
         const head = e.target?.closest?.('[data-acc-head]');
@@ -775,60 +938,11 @@ haptic("light");
       });
     });
 
-    // reviews carousel dots
-    const track = document.getElementById('reviewsTrack');
-    const dots = document.getElementById('reviewsDots');
-    if (track && dots) {
-      const slides = Array.from(track.querySelectorAll('.reviewSlide'));
-      dots.innerHTML = slides.map((_, i) => `<span class="dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
-      const setDot = (i) => {
-        dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
-      };
-      track.addEventListener('scroll', () => {
-        const w = track.clientWidth || 1;
-        const i = Math.round(track.scrollLeft / w);
-        setDot(Math.max(0, Math.min(slides.length-1, i)));
-      }, { passive: true });
-      dots.addEventListener('click', (e) => {
-        const dot = e.target?.closest?.('[data-dot]');
-        if (!dot) return;
-        const i = Number(dot.getAttribute('data-dot') || 0);
-        track.scrollTo({ left: i * (track.clientWidth || 0), behavior: 'smooth' });
-      });
-    }
-
-    // ====== Reviews assets (o1b.png / o1l.png ...) ======
-    const applyReviewImages = () => {
-      const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      const suffix = theme === 'dark' ? 'b' : 'l';
-
-      document.querySelectorAll('img.reviewImg[data-review]').forEach((img) => {
-        const i = Number(img.getAttribute('data-review') || '1');
-        img.src = `o${i}${suffix}.png`;
-
-        // крупный full-bleed режим: высоту/скейл держим CSS'ом,
-        // а aspect-ratio не фиксируем (иначе на телефоне будет "мелко")
-        const slide = img.closest?.('.reviewSlide');
-        if (slide) slide.style.aspectRatio = '';
-      });
-    };
-
-    window.__SHETKA_APPLY_REVIEW_IMAGES = applyReviewImages;
-    applyReviewImages();
-    
-    // init default
+    // Init default tab
     setAboutTab('about');
-
-    // allow re-open refresh (reset to start + reapply assets)
-    window.__SHETKA_REFRESH_ABOUT = () => {
-      try { setAboutTab('about'); } catch (_) {}
-      try { applyReviewImages(); } catch (_) {}
-      try { applyBaImages(); } catch (_) {}
-      try { initBaStory(); } catch (_) {}
-    };
   }
 
-  // ---------------- STATUS NORMALIZATION ----------------
+// ---------------- STATUS NORMALIZATION ----------------
   const normalizeStatus = (raw) => {
     if (!raw) return { label: "Принят", dot: "blue" };
     const s = String(raw).toLowerCase();
@@ -3048,7 +3162,7 @@ haptic("light");
       saveProfile({ ...cur, saved_addresses: safe });
       try {
         // профиль обновляется через очередь Supabase — чтобы видеть на другом устройстве
-        await supaEnqueue("profile_update", { saved_addresses: safe });
+        await enqueueRequest("profile_update", { saved_addresses: safe });
       } catch (_) {}
     };
 
@@ -3856,22 +3970,14 @@ haptic("light");
       goBack();
     };
   
-    if (!estimateDirty) { doExit(); return; }
-  
-    // ТОЧЬ-В-ТОЧЬ как в курьере
-    try {
-      if (tg?.showConfirm) {
-        tg.showConfirm("Выйти из формы? Данные не сохранятся.", (ok) => {
-          if (ok) doExit();
-        });
-        return;
-      }
-    } catch(_) {}
-  
-    // fallback
-    confirmDialog("Выйти из формы? Данные не сохранятся.").then((ok) => { if (ok) doExit(); });
+    if (estimateDirty) {
+      leaveAction = doExit;
+      openLeaveEstimateModal(leaveEstimateModal);
+    } else {
+      doExit();
+    }
   });
-
+  
   // Далее / Назад
   estimateNextBtn?.addEventListener("click", () => {
     if (!isValid()) return;
@@ -3948,17 +4054,9 @@ estimateSubmitBtn?.addEventListener("click", async () => {
   
   // ---------------- INIT ----------------
   setTabActive("home");
-  
-  try {
-    const home = document.querySelector('.page[data-page="home"]');
-    if (home) {
-      home.hidden = false;              // ВАЖНО: показать страницу
-      home.classList.add('pageActive'); // анимации
-    }
-  } catch (_) {}
-  
+  // mark first page as active for CSS transitions
+  try { document.querySelector('.page[data-page="home"]')?.classList.add('pageActive'); } catch(_) {}
   hydrateProfile();
-
   try { runHomeIntro(); } catch(_) {}
   initRevealObserver();
   renderChat();
